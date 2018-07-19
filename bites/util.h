@@ -15,7 +15,6 @@ typedef struct {
    int id;
 } line;
 
-
 // square of distance of two points
 double distance(double x1, double y1, double x2, double y2);
 

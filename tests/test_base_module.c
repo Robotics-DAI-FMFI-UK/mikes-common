@@ -4,11 +4,11 @@
 #include <math.h>
 #include <unistd.h>
 
-#include "modules/live/base_module.h"
-#include "modules/passive/pose.h"
-#include "modules/passive/mikes_logs.h"
-#include "core/config_mikes.h"
-#include "core/mikes.h"
+#include "../modules/live/base_module.h"
+#include "../modules/passive/pose.h"
+#include "../modules/passive/mikes_logs.h"
+#include "../bites/mikes.h"
+#include "../core/config_mikes.h"
 
 #define TEST_LENGTH 6
 

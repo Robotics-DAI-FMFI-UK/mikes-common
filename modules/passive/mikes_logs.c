@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include "modules/passive/mikes_logs.h"
+#include "mikes_logs.h"
 #include "core/config_mikes.h"
 
 static char *log_filename;

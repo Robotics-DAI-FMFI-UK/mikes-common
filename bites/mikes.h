@@ -4,6 +4,7 @@
 extern volatile unsigned char program_runs;
 
 void threads_running_add(short x);
+
 void mikes_init(int argc, char **argv);
 void mikes_shutdown();
 

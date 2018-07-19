@@ -3,13 +3,13 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <pthread.h>
 
-#include "core/mikes.h"
-#include "modules/passive/mikes_logs.h"
+#include "mikes.h"
+#include "util.h"
+#include "../modules/passive/mikes_logs.h"
 #include "core/config_mikes.h"
-#include "modules/live/base_module.h"
-#include "modules/passive/pose.h"
-#include "bites/util.h"
+
 
 volatile unsigned char program_runs;
 static pthread_mutex_t mikes_lock;
@@ -21,6 +21,7 @@ void threads_running_add(short x)
   threads_running += x;
   pthread_mutex_unlock(&mikes_lock);
 }
+
 
 void signal_term_handler(int signum)
 {

@@ -3,10 +3,10 @@
 #include <pthread.h>
 #include <math.h>
 
-#include "modules/passive/pose.h"
-#include "modules/live/base_module.h"
-#include "modules/passive/mikes_logs.h"
-#include "bites/util.h"
+#include "pose.h"
+#include "../live/base_module.h"
+#include "mikes_logs.h"
+#include "../../bites/util.h"
 
 static double pos_x, pos_y, pos_heading;
 static long old_A = 0, old_B = 0;

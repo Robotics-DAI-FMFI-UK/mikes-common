@@ -3,8 +3,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "modules/passive/pose.h"
-#include "modules/live/base_module.h"
+#include "../modules/passive/pose.h"
+#include "../modules/live/base_module.h"
 
 #define num_test_poses 8
 #define num_test2_poses 18

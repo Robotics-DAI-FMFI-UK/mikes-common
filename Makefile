@@ -16,7 +16,7 @@ TEST_BASE_SRCS=tests/test_base_module.c \
                modules/passive/mikes_logs.c \
                modules/passive/pose.c \
                bites/util.c \
-               core/mikes.c \
+               bites/mikes.c \
                core/config_mikes.c \
                config/config.c
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
@@ -55,5 +55,5 @@ test_base: ${TEST_BASE_OBJS}
 uninstall:
 
 clean:
-	rm -f *.o test_pq test_astar test_pose
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base
 

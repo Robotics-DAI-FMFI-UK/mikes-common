@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "bites/pq.h"
+#include "../bites/pq.h"
 
 int main() {
 	

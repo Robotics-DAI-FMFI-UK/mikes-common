@@ -1,8 +1,8 @@
-#include "core/mikes.h"
-#include "modules/live/base_module.h"
-#include "modules/passive/mikes_logs.h"
-#include "modules/passive/pose.h"
-#include "bites/util.h"
+#include "../../bites/mikes.h"
+#include "base_module.h"
+#include "../passive/mikes_logs.h"
+#include "../passive/pose.h"
+#include "../../bites/util.h"
 
 #include <stdio.h>
 #include <stdlib.h>

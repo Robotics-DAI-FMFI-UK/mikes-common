@@ -1,6 +1,6 @@
 #ifndef _POSE_H_
 #define _POSE_H_
-#include "modules/live/base_module.h"
+#include "../mikes-common/modules/live/base_module.h"
 
 #define STATE_WIDTH 25
 #define STATES_W ((MAP_W/STATE_WIDTH) + 1)

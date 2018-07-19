@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "bites/pq.h"
-#include "modules/passive/astar.h"
-#include "modules/passive/mikes_logs.h"
+#include "../../bites/pq.h"
+#include "astar.h"
+#include "mikes_logs.h"
 
 int path[MAX_PATH_LENGHT][2];
 int path_len;

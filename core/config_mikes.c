@@ -1,4 +1,4 @@
-#include "config/config.h"
+#include "../config/config.h"
 #include "config_mikes.h"
 
 mikes_config_t default_mikes_config = { 0, 0, 0, 0, 0, 0, 0 };

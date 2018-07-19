@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "modules/passive/astar.h"
+#include "../modules/passive/astar.h"
 
 int main() {
 

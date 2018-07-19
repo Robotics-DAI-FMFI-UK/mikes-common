@@ -9,8 +9,9 @@
 #include <libxml/xmlreader.h>
 #include <sys/time.h>
 
-#include "modules/passive/mikes_logs.h"
-#include "bites/util.h"
+#include "../modules/passive/mikes_logs.h"
+#include "util.h"
+
 
 double distance(double x1, double y1, double x2, double y2)
 {
