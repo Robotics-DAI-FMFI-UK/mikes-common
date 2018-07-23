@@ -1,10 +1,10 @@
 #ifndef _NCURSES_CONTROL_
 #define _NCURSES_CONTROL_
 
-#define KEY_UP 259
-#define KEY_DOWN 258
-#define KEY_LEFT 260
-#define KEY_RIGHT 261
+#define KEY_UP_ARROW 259
+#define KEY_DOWN_ARROW 258
+#define KEY_LEFT_ARROW 260
+#define KEY_RIGHT_ARROW 261
 #define KEY_ESC 27
 
 typedef void (*ncurses_control_callback)(int);
@@ -25,6 +25,9 @@ void print_doublemsg_to_window(int window_handle, char *message, int value);
 
 void add_key_listener(char *context, void (callback(int)));
 void remove_key_listener(char *context);
+
+char *get_current_context();
+void set_current_context(char *context);
 
 #endif
 
