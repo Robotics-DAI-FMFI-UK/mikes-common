@@ -14,6 +14,7 @@ void init_ncurses_control();
 // returns windows handle or -1 if no more windows are available
 int open_window();
 void close_window(int window_handle);
+void clear_window(int window_handle);
 
 void set_window_title(int window_handle, char *title);
 

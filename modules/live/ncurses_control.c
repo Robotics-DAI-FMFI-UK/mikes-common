@@ -20,6 +20,8 @@
 #define KEY_CTRL_PGUP    555
 #define KEY_CTRL_PGDN    550
 #define MAX_CONTEXTS_COUNT 10
+#define KEY_ALT_DELETE   517
+#define KEY_F2           266
 
 #define SCREEN_WIDTH 122
 #define SCREEN_HEIGHT 40
@@ -111,11 +113,18 @@ int initialize_curses()
     return 1;
 }
 
+void print_system_message(char *msg)
+{
+    mvprintw(2, 55, "                                    ");
+    mvprintw(2, 55, msg);
+}
+
 void draw_system_screen()
 {
     mvaddstr(0, 0, "Mikes");
     mvprintw(0, 10, "TAB switches context. Context: ");
     mvprintw(0, 63, "ALT-arrows switch active window, CTRL-UP/CTRL-DOWN scroll");
+    mvprintw(2, 0, "ALT-Delete clear window, F2 save all buffers to file");
     move(1, 0);
     hline(ACS_HLINE, SCREEN_WIDTH);
     print_current_context();
@@ -317,6 +326,49 @@ int scroll_active_window(int ch)
 }
  
 
+int save_buffers_request(int ch)
+{
+    char save_file_name[30];
+
+    if (ch != KEY_F2) return 0;
+    time_t tm;
+    time(&tm);
+    sprintf(save_file_name, "%ld_windows.txt", tm);
+    FILE *f = fopen(save_file_name, "w+");
+    if (f == 0)
+    {
+       print_system_message("could not save windows to file");
+       return 1;
+    }
+    for (int i = 0; i < MAX_WINDOWS_COUNT; i++)
+    {
+       if (window_in_use[i])
+       {
+          fprintf(f, "%d - %s\n\n", i, window_title[i]);
+          int ln = window_buffer_next_free_line[i];
+          ln -= lines_in_windows_buffer[i];
+          if (ln < 0) ln += MAX_LINES_IN_WINDOWS_BUFFERS;
+          while (ln != window_buffer_next_free_line[i])
+          {
+             fprintf(f, "%s\n", windows_buffers[i][ln]);
+             ln++;
+             if (ln == MAX_LINES_IN_WINDOWS_BUFFERS) ln = 0;
+          }
+          fprintf(f,  "\n");
+       }
+    }
+    fclose(f);
+    print_system_message("All buffers saved.");
+    return 1;
+}
+
+int clear_window_request(int ch)
+{
+    if (ch != KEY_ALT_DELETE) return 0;
+    clear_window(active_window); 
+    return 1;
+}
+
 void *ncurses_control_thread(void *arg)
 {
     if (!initialize_curses()) return 0;
@@ -333,6 +385,8 @@ void *ncurses_control_thread(void *arg)
           switch_context(ch);
         else if (!switch_active_window(ch))
         if (!scroll_active_window(ch))
+        if (!save_buffers_request(ch))
+        if (!clear_window_request(ch))
           callbacks[current_context](ch);
     }
             
@@ -399,6 +453,15 @@ void close_window(int window_handle)
   window_in_use[window_handle] = 0;
   if (active_window == window_handle) active_window = -1;
   draw_windows();
+}
+
+void clear_window(int window_handle)
+{
+  if (!window_in_use[window_handle]) return;
+  lines_in_windows_buffer[window_handle] = 0;
+  window_buffer_next_free_line[window_handle] = 0;
+  window_scroll_position[window_handle] = 0;
+  print_window_content(window_handle);
 }
 
 void set_window_title(int window_handle, char *title)
