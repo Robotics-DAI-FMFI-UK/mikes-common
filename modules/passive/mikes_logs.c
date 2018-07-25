@@ -34,6 +34,12 @@ void init_mikes_logs()
   sprintf(log_filename, filename_str, tm, filename_base);
 
   FILE *f = fopen(log_filename, "w+");
+  if (f == 0)
+  {
+    perror("mikes:logs");
+    printf("Could not open log file %s\n", log_filename);
+    exit(1);
+  }
   fclose(f);
 
   unlink(lastlog);
