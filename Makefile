@@ -19,10 +19,18 @@ TEST_BASE_SRCS=tests/test_base_module.c \
                bites/mikes.c \
                core/config_mikes.c \
                config/config.c
+TEST_NCURSES_SRCS=tests/test_ncurses_control.c \
+                 bites/mikes.c \
+                 bites/util.c \
+                 modules/passive/mikes_logs.c \
+                 modules/live/ncurses_control.c \
+                 core/config_mikes.c \
+                 config/config.c
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
 TEST_PQ_OBJS=${TEST_PQ_SRCS:.c=.o}
 TEST_BASE_OBJS=${TEST_BASE_SRCS:.c=.o}
+TEST_NCURSES_OBJS=${TEST_NCURSES_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -31,7 +39,7 @@ OPTIMIZE=-O0
 DEBUG_FLAGS=-g
 CFLAGS=${OPTIMIZE} -std=c11 -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I. -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -I/usr/include/librsvg-2.0/librsvg -I/usr/include/glib-2.0 -I/usr/lib/arm-linux-gnueabihf/glib-2.0/include -I/usr/include/libxml2 -I/usr/include/gdk-pixbuf-2.0 -Wall
 CPPFLAGS=${OPTIMIZE} ${DEBUG_FLAGS} -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -Wall -Wno-write-strings -I/usr/include/librsvg-2.0/librsvg -I/usr/include/glib-2.0 -I/usr/lib/arm-linux-gnueabihf/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 
-LDFLAGS=${DEBUG_FLAGS} -lpthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g
+LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g -lstdc++
 PREFIX=/usr/local
 
 all: test
@@ -41,7 +49,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base
+test:	test_pq test_astar test_pose test_base test_ncurses_control
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -51,9 +59,11 @@ test_pose: ${TEST_POSE_OBJS}
 	${CC} -o test_pose $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_base: ${TEST_BASE_OBJS}
 	${CC} -o test_base $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_ncurses_control: ${TEST_NCURSES_OBJS}
+	${CC} -o test_ncurses_control $^ ${LDFLAGS} ${DEBUG_FLAGS}
      
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control
 
