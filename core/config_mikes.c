@@ -17,6 +17,6 @@ void load_config()
                                                                mikes_config.print_all_logs_to_console);
     mikes_config.print_debug_logs = config_get_intval(cfg, "print_debug_logs", mikes_config.print_debug_logs);
 
-    mikes_config.use_ncurses_control_console = config_get_intval(cfg, "use_ncurses_control_console", mikes_config.use_ncurses_control_console);
+    mikes_config.use_ncurses_control = config_get_intval(cfg, "use_ncurses_control", mikes_config.use_ncurses_control);
     config_dispose(cfg);
 }

@@ -3,14 +3,14 @@
 
 #include "config/config.h"
 
-#define MIKES_CONFIG "/usr/local/etc/config_delivery.cfg"
+#define MIKES_CONFIG "mikes-common-tests.cfg"
 
 typedef struct {
     int autostart;
     int with_gui;
     int print_all_logs_to_console;
     int print_debug_logs;
-    int use_ncurses_control_console;
+    int use_ncurses_control;
     int start_x;
     int start_y;
 } mikes_config_t;
