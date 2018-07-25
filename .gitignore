@@ -1,1 +1,7 @@
 config
+bites/*.o
+core/*.o
+modules/live/*.o
+modules/passive/*.o
+tests/*.o
+test_*

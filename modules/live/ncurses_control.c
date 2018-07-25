@@ -17,6 +17,8 @@
 #define KEY_ALT_DOWN     523
 #define KEY_CTRL_UP      566
 #define KEY_CTRL_DOWN    525
+#define KEY_CTRL_PGUP    555
+#define KEY_CTRL_PGDN    550
 #define MAX_CONTEXTS_COUNT 10
 
 #define SCREEN_WIDTH 122
@@ -91,6 +93,7 @@ void set_current_context(char *context)
 
 void print_current_context()
 {
+    mvprintw(0, 43, "                    ");
     mvprintw(0, 43, context_names[current_context]);
     refresh();
 }
@@ -112,7 +115,7 @@ void draw_system_screen()
 {
     mvaddstr(0, 0, "Mikes");
     mvprintw(0, 10, "TAB switches context. Context: ");
-    mvprintw(0, 63, "ALT-arrows switch active window");
+    mvprintw(0, 63, "ALT-arrows switch active window, CTRL-UP/CTRL-DOWN scroll");
     move(1, 0);
     hline(ACS_HLINE, SCREEN_WIDTH);
     print_current_context();
@@ -231,38 +234,82 @@ int switch_active_window(int ch)
   return 1;
 }
 
+void print_window_content(int win)
+{
+    int row = win_top(win);
+    int col = win_left(win);
+    for (int r = row; r < row + window_height; r++)
+    {
+       move(r, col);
+       hline(' ', window_width);
+    }
+    int lines_to_print = window_height;
+    if (lines_to_print > lines_in_windows_buffer[win]) 
+      lines_to_print = lines_in_windows_buffer[win];
+    int buf_row = window_scroll_position[win] - lines_to_print;
+    if (buf_row < 0) buf_row += MAX_LINES_IN_WINDOWS_BUFFERS;
+    row = win_top(win);
+
+    while (lines_to_print)
+    {
+      mvprintw(row, col, windows_buffers[win][buf_row]);
+      lines_to_print--;
+      row++;
+      buf_row++;
+      if (buf_row == MAX_LINES_IN_WINDOWS_BUFFERS) buf_row = 0;
+    }
+    refresh();
+}
+
+void scroll_one_line_up()
+{
+    window_scroll_position[active_window]--;
+    if (window_scroll_position[active_window] < 0) 
+       window_scroll_position[active_window] += MAX_LINES_IN_WINDOWS_BUFFERS;
+}
+
+void scroll_one_line_down()
+{
+    window_scroll_position[active_window]++;
+    if (window_scroll_position[active_window] == MAX_LINES_IN_WINDOWS_BUFFERS)
+       window_scroll_position[active_window] = 0;
+}
+
 int scroll_active_window(int ch)
 {
-    if (ch == KEY_CTRL_UP)
+    int lines_to_scroll = 1;
+    if ((ch == KEY_CTRL_UP) || (ch == KEY_CTRL_PGUP))
     {
       if (active_window >= 0)
       {
         if (lines_in_windows_buffer[active_window] > window_height)
         {
-           int start = window_buffer_next_free_line[active_window] - lines_in_windows_buffer[active_window] + window_height;
-           if (start < 0) start += MAX_LINES_IN_WINDOWS_BUFFERS;
-           if (window_scroll_position[active_window] != start)
-           {
-             window_scroll_position[active_window]--;
-             if (window_scroll_position[active_window] < 0) 
-               window_scroll_position[active_window] += MAX_LINES_IN_WINDOWS_BUFFERS;
-             draw_windows();
-           }
+          int topmost_pos = window_buffer_next_free_line[active_window] - lines_in_windows_buffer[active_window] + window_height;
+          if (topmost_pos < 0) topmost_pos += MAX_LINES_IN_WINDOWS_BUFFERS;
+          if (ch == KEY_CTRL_PGUP) lines_to_scroll = window_height;
+          while (lines_to_scroll--)
+            if (window_scroll_position[active_window] != topmost_pos)
+            {
+              scroll_one_line_up(); 
+              print_window_content(active_window);
+            }
+            else break;
         }
       }
       return 1;
     }
-    else if (ch == KEY_CTRL_DOWN)
+    else if ((ch == KEY_CTRL_DOWN) || (ch == KEY_CTRL_PGDN))
     {
       if (active_window >= 0)
       {
-        if (window_scroll_position[active_window] != window_buffer_next_free_line[active_window])
-        {
-          window_scroll_position[active_window]++;
-          if (window_scroll_position[active_window] == MAX_LINES_IN_WINDOWS_BUFFERS - 1)
-            window_scroll_position[active_window] = 0;
-          draw_windows();
-        }
+        if (ch == KEY_CTRL_PGDN) lines_to_scroll = window_height;
+        while (lines_to_scroll--)
+          if (window_scroll_position[active_window] != window_buffer_next_free_line[active_window])
+          {
+            scroll_one_line_down();
+            print_window_content(active_window);
+          }
+          else break;
       }
       return 1;
     }
@@ -361,42 +408,8 @@ void set_window_title(int window_handle, char *title)
   draw_windows();
 }
 
-void print_window_content(int win)
+void scroll_window_up_if_needed(int window_handle)
 {
-    int row = win_top(win);
-    int col = win_left(win);
-    for (int r = row; r < window_height; r++)
-    {
-       move(r, col);
-       hline(' ', window_width);
-    }
-    int lines_to_print = window_height;
-    if (lines_to_print > lines_in_windows_buffer[win]) 
-      lines_to_print = lines_in_windows_buffer[win];
-    int buf_row = window_buffer_next_free_line[win] - lines_to_print;
-    if (window_buffer_next_free_line[win] != window_scroll_position[win])
-      buf_row = window_scroll_position[win] - lines_to_print;
-    if (buf_row < 0) buf_row += MAX_LINES_IN_WINDOWS_BUFFERS;
-    row = win_top(win);
-
-    while (lines_to_print)
-    {
-      mvprintw(row, col, windows_buffers[win][buf_row]);
-      lines_to_print--;
-      row++;
-      buf_row++;
-      if (buf_row == MAX_LINES_IN_WINDOWS_BUFFERS) buf_row = 0;
-    }
-}
-
-void println_to_window(int window_handle, char *message)
-{
-    if (!window_in_use[window_handle]) return;
-    char *mem = windows_buffers[window_handle][window_buffer_next_free_line[window_handle]];
-
-    strncpy(mem, message, window_width);
-    mem[window_width] = 0;
-
     if (lines_in_windows_buffer[window_handle] < MAX_LINES_IN_WINDOWS_BUFFERS)
       lines_in_windows_buffer[window_handle]++;
 
@@ -411,21 +424,77 @@ void println_to_window(int window_handle, char *message)
       window_buffer_next_free_line[window_handle] = 0;
 
     print_window_content(window_handle);
+    refresh();
+}
+
+void println_to_window(int window_handle, char *message)
+{
+    if (!window_in_use[window_handle]) return;
+    char *mem = windows_buffers[window_handle][window_buffer_next_free_line[window_handle]];
+
+    strncpy(mem, message, window_width);
+    mem[window_width] = 0;
+
+    scroll_window_up_if_needed(window_handle);
 }
 
 void print_int_to_window(int window_handle, int value)
 {
+    if (!window_in_use[window_handle]) return;
+    char *mem = windows_buffers[window_handle][window_buffer_next_free_line[window_handle]];
+
+    int width = 1;
+    int val = value / 10;
+    while (val > 0)
+    {
+        val /= 10;
+        width ++;
+    }
+
+    if (window_width < width) { *mem = '*'; *(mem + 1) = 0; }
+    else sprintf(mem, "%d", value);
+
+    scroll_window_up_if_needed(window_handle);
 }
 
 void print_double_to_window(int window_handle, double value)
 {
+    if (!window_in_use[window_handle]) return;
+    char *mem = windows_buffers[window_handle][window_buffer_next_free_line[window_handle]];
+
+    if (window_width < 10) { *mem = '*'; *(mem + 1) = 0; }
+    else sprintf(mem, "%10.5lf", value);
+
+    scroll_window_up_if_needed(window_handle);
 }
 
 void print_intmsg_to_window(int window_handle, char *message, int value)
 {
+    if (!window_in_use[window_handle]) return;
+    char *mem = windows_buffers[window_handle][window_buffer_next_free_line[window_handle]];
+
+    int width = 1;
+    int val = value / 10;
+    while (val > 0)
+    {
+        val /= 10;
+        width ++;
+    }
+
+    if (window_width < width + strlen(message)) { *mem = '*'; *(mem + 1) = 0; }
+    else sprintf(mem, "%s%d", message, value);
+
+    scroll_window_up_if_needed(window_handle);
 }
 
-void print_doublemsg_to_window(int window_handle, char *message, int value)
+void print_doublemsg_to_window(int window_handle, char *message, double value)
 {
+    if (!window_in_use[window_handle]) return;
+    char *mem = windows_buffers[window_handle][window_buffer_next_free_line[window_handle]];
+
+    if (window_width < 10 + strlen(message)) { *mem = '*'; *(mem + 1) = 0; }
+    else sprintf(mem, "%s%10.5lf", message, value);
+
+    scroll_window_up_if_needed(window_handle);
 }
 
