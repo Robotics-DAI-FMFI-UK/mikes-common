@@ -33,7 +33,7 @@ void counting(int key)
     }
     else if (key == 'd')
     {
-        double d = rand() / RAND_MAX;
+        double d = rand() / (double)RAND_MAX;
         int r = rand() % 6;
         print_double_to_window(win[r], d);
         r = rand() % 6;
