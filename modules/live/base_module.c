@@ -38,7 +38,7 @@ void connect_base_module()
         base_initialized = 0;
         return;
     }
-    if (!pipe(fdW) < 0)
+    if (pipe(fdW) < 0)
     {
         mikes_log(ML_ERR, "base: pipe2()");
         base_initialized = 0;
