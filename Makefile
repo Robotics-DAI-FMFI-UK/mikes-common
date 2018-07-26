@@ -26,11 +26,19 @@ TEST_NCURSES_SRCS=tests/test_ncurses_control.c \
                  modules/live/ncurses_control.c \
                  core/config_mikes.c \
                  config/config.c
+TEST_TIM571_SRCS=tests/test_tim571.c \
+                 modules/live/tim571.c \
+                 modules/passive/mikes_logs.c \
+                 bites/mikes.c \
+                 core/config_mikes.c \
+                 bites/util.c \
+                 config/config.c
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
 TEST_PQ_OBJS=${TEST_PQ_SRCS:.c=.o}
 TEST_BASE_OBJS=${TEST_BASE_SRCS:.c=.o}
 TEST_NCURSES_OBJS=${TEST_NCURSES_SRCS:.c=.o}
+TEST_TIM571_OBJS=${TEST_TIM571_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -49,7 +57,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -61,9 +69,11 @@ test_base: ${TEST_BASE_OBJS}
 	${CC} -o test_base $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_ncurses_control: ${TEST_NCURSES_OBJS}
 	${CC} -o test_ncurses_control $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_tim571: ${TEST_TIM571_OBJS}
+	${CC} -o test_tim571 $^ ${LDFLAGS} ${DEBUG_FLAGS}
      
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571
 

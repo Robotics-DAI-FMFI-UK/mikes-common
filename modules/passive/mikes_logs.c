@@ -25,7 +25,7 @@ void init_mikes_logs()
   log_filename = (char *)malloc(strlen(filename_str) + 20 + strlen(filename_base));
   if (log_filename == 0)
   {
-    perror("mikes:logs");
+    perror("mikes:logs malloc");
     exit(1);
   }
 
@@ -58,7 +58,7 @@ FILE *try_opening_log(unsigned int log_type)
 {
   FILE *f = fopen(log_filename, "a+");
   if (!f)
-      perror("mikes:logs");
+      perror("mikes:logs try_opening_log");
   else
   {
       if ((log_type < 0) || (log_type > ML_MAX_TYPE))
