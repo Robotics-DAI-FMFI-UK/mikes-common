@@ -49,7 +49,8 @@ void repaint_window(int window_handle)
     cairo_set_source_rgb(windows[window_handle], 1, 1, 1);
     
     pthread_mutex_unlock(&gui_lock);
-      draw_callbacks[window_handle](windows[window_handle]);
+      if (draw_callbacks[window_handle])
+          draw_callbacks[window_handle](windows[window_handle]);
     pthread_mutex_lock(&gui_lock);
     
     //cairo_pop_group_to_source(windows[window_handle]);

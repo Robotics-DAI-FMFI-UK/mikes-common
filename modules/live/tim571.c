@@ -24,12 +24,17 @@
 #define STX 2
 #define ETX 3
 
+#define MAX_TIM571_CALLBACKS 20
+
 pthread_mutex_t tim571_lock;
 
 static uint16_t *local_data;
 static uint8_t *local_rssi;
 
 static int sockfd;
+
+static tim571_receive_data_callback callbacks[MAX_TIM571_CALLBACKS];
+static int callbacks_count;
 
 void connect_tim571()
 {
@@ -325,6 +330,9 @@ void process_sentence()
 
 	if (status_data_requested) status_data_available = 1;
 	pthread_mutex_unlock(&tim571_lock);
+    
+        for (int i = 0; i < callbacks_count; i++)
+          callbacks[i](local_data, local_rssi);
 }
 
 void *tim571_thread(void *args)
@@ -354,6 +362,7 @@ void init_tim571()
 	tim571_telegram_counter = 0;
 	status_data_requested = 0;
 	status_data_available = 0;
+    callbacks_count = 0;
     if ((tim571_data == 0) || (local_data == 0) )
     {
       perror("mikes:tim571");
@@ -416,9 +425,9 @@ void pretty_print_status_data(char *buffer, tim571_status_data *sd)
 	                 sd->firmware_version, sd->sopas_device_id, sd->serial_number, sd->error, sd->scanning_frequency, sd->multiplier, sd->starting_angle, sd->angular_step, sd->data_count, sd->rssi_available);
 }
 
-int tim571_ray2azimuth(int ray)
+double tim571_ray2azimuth(int ray)
 {
-  return (360 + (TIM571_TOTAL_ANGLE_DEG / 2 - ray / TIM571_SIZE_OF_ONE_DEG)) % 360;
+  return 135 - (ray / ((double)TIM571_DATA_COUNT - 1)) * 270.0;
 }
 
 int tim571_azimuth2ray(int alpha)
@@ -427,5 +436,26 @@ int tim571_azimuth2ray(int alpha)
   if (alpha < -TIM571_TOTAL_ANGLE_DEG / 2) alpha = -TIM571_TOTAL_ANGLE_DEG / 2;
   else if (alpha > TIM571_TOTAL_ANGLE_DEG / 2) alpha = TIM571_TOTAL_ANGLE_DEG / 2;
   return TIM571_DATA_COUNT / 2 - alpha * TIM571_SIZE_OF_ONE_DEG;
+}
+
+void register_callback(tim571_receive_data_callback callback)
+{
+  if (callbacks_count == MAX_TIM571_CALLBACKS)
+  {
+     mikes_log(ML_ERR, "too many TIM571 callbacks");
+     return;
+  }
+  callbacks[callbacks_count] = callback;
+  callbacks_count++;
+}
+
+void unregister_callback(tim571_receive_data_callback callback)
+{
+  for (int i = 0; i < callbacks_count; i++)
+    if (callbacks[i] == callback)
+    {
+       callbacks[i] = callbacks[callbacks_count - 1];
+       callbacks_count--;
+    }
 }
 

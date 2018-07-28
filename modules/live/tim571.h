@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <math.h>
+#include <stdint.h>
 
 #define TIM571_DATA_COUNT 811
 #define TIM571_TOTAL_ANGLE (3 * M_PI / 2)
@@ -12,6 +13,10 @@
 #define TIM571_PORT 2111
 #define TIM571_ADDR "169.254.0.5"
 #define TIM571_MAX_DISTANCE 15000
+#define TIM571_FREQUENCY 15
+
+
+typedef void (*tim571_receive_data_callback)(uint16_t *, uint8_t *);
 
 
 // status information received from the sensor (typical values in comments)
@@ -39,10 +44,13 @@ void get_tim571_rssi_data(uint8_t *buffer);  // fills in data_count measured rss
 void get_tim571_status_data(tim571_status_data *status_data); // fills in status data
 void pretty_print_status_data(char *buffer, tim571_status_data *sd); // prints status data to string buffer (must have enough space!)
 
+void register_callback(tim571_receive_data_callback callback);    // register for getting fresh data after received from sensor (copy quick!)
+void unregister_callback(tim571_receive_data_callback callback);  // remove previously registered callback
+
 void test_tim571();
 
 /* ray: 0..TIM571_DATA_COUNT - 1, returns: 0-360 */
-int tim571_ray2azimuth(int ray);
+double tim571_ray2azimuth(int ray);
 
 /* alpha: -180..360, returns: ray 0..max, max = TIM571_DATA_COUNT - 1 (out of range clips to 0 or to max) */
 int tim571_azimuth2ray(int alpha);
