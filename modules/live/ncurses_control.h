@@ -24,7 +24,7 @@ void print_double_to_window(int window_handle, double value);
 void print_intmsg_to_window(int window_handle, char *message, int value);
 void print_doublemsg_to_window(int window_handle, char *message, double value);
 
-void add_key_listener(char *context, void (callback(int)));
+void add_key_listener(char *context, ncurses_control_callback callback);
 void remove_key_listener(char *context);
 
 char *get_current_context();

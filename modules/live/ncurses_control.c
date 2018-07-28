@@ -52,7 +52,7 @@ static int lines_in_windows_buffer[MAX_WINDOWS_COUNT];
 static int window_buffer_next_free_line[MAX_WINDOWS_COUNT];
 static int window_scroll_position[MAX_WINDOWS_COUNT];
 
-void add_key_listener(char *context, void (callback(int)))
+void add_key_listener(char *context, ncurses_control_callback callback)
 {
   if (contexts_count == MAX_CONTEXTS_COUNT)
   {
@@ -405,6 +405,7 @@ void system_context_callback(int key)
     switch(key) {
        case KEY_ESC: program_runs = 0;
                      mikes_log(ML_INFO, "quit by ESC");
+                     break;
     }
 }
 

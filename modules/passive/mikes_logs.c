@@ -8,19 +8,18 @@
 
 #include "mikes_logs.h"
 #include "core/config_mikes.h"
+#include "../../bites/util.h"
 
 static char *log_filename;
-static long start_time;
+static long long start_time;
 
 void init_mikes_logs()
 {
-  struct timeval tv;
   char *filename_str = "/usr/local/logs/delivery/%ld_%s";
   char *lastlog = "/usr/local/logs/delivery/last";
   char *filename_base = "mikes.log";
 
-  gettimeofday(&tv, 0);
-  start_time = 100 * tv.tv_sec + (tv.tv_usec / 10000L); 
+  start_time = usec() / 100;
 
   log_filename = (char *)malloc(strlen(filename_str) + 20 + strlen(filename_base));
   if (log_filename == 0)
@@ -72,9 +71,7 @@ FILE *try_opening_log(unsigned int log_type)
 
 long get_run_time()
 {
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  return (100 * tv.tv_sec + (tv.tv_usec / 10000L)) - start_time;
+  return (long)(usec() - start_time);
 }
 
 void mikes_log(unsigned int log_type, char *log_msg)

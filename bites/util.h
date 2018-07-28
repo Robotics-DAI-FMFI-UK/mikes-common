@@ -19,10 +19,10 @@ typedef struct {
 double distance(double x1, double y1, double x2, double y2);
 
 // return current time in milliseconds
-long msec();
+long long msec();
 
-// return current time in usec (up to 71 minutes)
-long usec();
+// return current time in usec 
+long long usec();
 
 // say the sentence
 void say(char *sentence);
