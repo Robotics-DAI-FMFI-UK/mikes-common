@@ -4,4 +4,10 @@ core/*.o
 modules/live/*.o
 modules/passive/*.o
 tests/*.o
-test_*
+test_astar  
+test_base  
+test_gui  
+test_ncurses_control  
+test_pose  
+test_pq  
+test_tim571

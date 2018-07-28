@@ -1,5 +1,13 @@
 CC=gcc
 CPP=g++
+SAN = -fsanitize=undefined               \
+      -fsanitize=address                 \
+      -fsanitize=leak                    \
+      -fsanitize=shift                   \
+      -fsanitize=integer-divide-by-zero  \
+      -fsanitize=unreachable             \
+      -fsanitize=vla-bound               \
+      -fsanitize=null                    
 TEST_PQ_SRCS=tests/test_pq.c \
              bites/pq.c
 TEST_ASTAR_SRCS=tests/test_astar.c \
@@ -33,21 +41,31 @@ TEST_TIM571_SRCS=tests/test_tim571.c \
                  core/config_mikes.c \
                  bites/util.c \
                  config/config.c
+TEST_GUI_SRCS=tests/test_gui.c \
+              modules/live/gui.c \
+              modules/passive/mikes_logs.c \
+              bites/util.c \
+              bites/mikes.c \
+              core/config_mikes.c \
+              config/config.c
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
 TEST_PQ_OBJS=${TEST_PQ_SRCS:.c=.o}
 TEST_BASE_OBJS=${TEST_BASE_SRCS:.c=.o}
 TEST_NCURSES_OBJS=${TEST_NCURSES_SRCS:.c=.o}
 TEST_TIM571_OBJS=${TEST_TIM571_SRCS:.c=.o}
+TEST_GUI_OBJS=${TEST_GUI_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
 
-OPTIMIZE=-O0
+#OPTIMIZE=-O0 ${SAN}
+OPTIMIZE=-O0 
 DEBUG_FLAGS=-g
 CFLAGS=${OPTIMIZE} -std=c11 -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I. -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -I/usr/include/librsvg-2.0/librsvg -I/usr/include/glib-2.0 -I/usr/lib/arm-linux-gnueabihf/glib-2.0/include -I/usr/include/libxml2 -I/usr/include/gdk-pixbuf-2.0 -Wall
 CPPFLAGS=${OPTIMIZE} ${DEBUG_FLAGS} -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -Wall -Wno-write-strings -I/usr/include/librsvg-2.0/librsvg -I/usr/include/glib-2.0 -I/usr/lib/arm-linux-gnueabihf/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 
-LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g -lstdc++
+#LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g -lstdc++ ${SAN} -lubsan
+LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g -lstdc++ -lubsan
 PREFIX=/usr/local
 
 all: test
@@ -57,7 +75,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -71,9 +89,11 @@ test_ncurses_control: ${TEST_NCURSES_OBJS}
 	${CC} -o test_ncurses_control $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_tim571: ${TEST_TIM571_OBJS}
 	${CC} -o test_tim571 $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_gui: ${TEST_GUI_OBJS}
+	${CC} -o test_gui $^ ${LDFLAGS} ${DEBUG_FLAGS}
      
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui
 
