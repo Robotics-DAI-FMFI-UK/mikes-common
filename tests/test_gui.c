@@ -27,6 +27,9 @@ void mouse1(int x, int y, int button)
     if (strcmp(get_current_gui_context(), "drawing") != 0) return;
 
     cairo_t *win = get_cairo_t(win1);
+
+    cairo_push_group(win);
+
     cairo_set_source_rgba(win, 0, 0, 1, 0.4);
     cairo_set_line_width(win, 1);
 
@@ -34,6 +37,9 @@ void mouse1(int x, int y, int button)
     cairo_line_to(win, x, y);
     cairo_stroke(win);
  
+    cairo_pop_group_to_source(win);
+    cairo_paint(win);
+
     x1 = x;
     yy1 = y;
 }
@@ -42,6 +48,9 @@ void mouse2(int x, int y, int button)
 {
     if (strcmp(get_current_gui_context(), "drawing") != 0) return;
     cairo_t *win = get_cairo_t(win2);
+
+    cairo_push_group(win);
+
     cairo_set_source_rgba(win, 0, 1, 0, 0.4);
     cairo_set_line_width(win, 3);
 
@@ -50,6 +59,9 @@ void mouse2(int x, int y, int button)
     y = rand() % WIN2_HEIGHT;
     cairo_line_to(win, x, y);
     cairo_stroke(win);
+
+    cairo_pop_group_to_source(win);
+    cairo_paint(win);
 
     x2 = x;
     y2 = y;
@@ -64,11 +76,12 @@ void line3_from(int x, int y)
     cairo_move_to(win, x, y);
     cairo_line_to(win, x3, y3);
     cairo_stroke(win);
-    gui_flush_window(win3);
 }
 
 void paint1(cairo_t *win)
 {
+    cairo_push_group(win);
+
     cairo_set_source_rgba(win, 0.7, 0.7, 0, 0.4);
     cairo_set_line_width(win, 1);
     int x = rand() % (WIN1_WIDTH - 30);
@@ -77,12 +90,15 @@ void paint1(cairo_t *win)
     int h = rand() % 20;
     cairo_rectangle(win, x, y, w, h);
     cairo_fill(win);
-    cairo_rectangle(win, x, y, w, h);
-    cairo_stroke(win);
+ 
+    cairo_pop_group_to_source(win);
+    cairo_paint(win);
 }
 
 void paint2(cairo_t *win)
 {
+    cairo_push_group(win);
+
     cairo_select_font_face(win, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_source_rgba(win, 0.1, 0.5, 0.5, 0.5);
     cairo_set_font_size(win, 12);
@@ -90,16 +106,24 @@ void paint2(cairo_t *win)
     int y = rand() % (WIN2_HEIGHT - 12);
     cairo_move_to(win, x, y);
     cairo_show_text(win, "hi!");
+ 
+    cairo_pop_group_to_source(win);
+    cairo_paint(win);
 }
 
 void paint3(cairo_t *win)
 {
+    cairo_push_group(win);
+
     cairo_set_source_rgba(win, 0.5, 0.5, 0.9, 0.4);
     int x = rand() % (WIN3_WIDTH - 30);
     int y = rand() % (WIN3_HEIGHT - 20);
     int r = rand() % 30;
     cairo_arc(win, x, y, r, 0, 2 * M_PI);
     cairo_fill(win);
+ 
+    cairo_pop_group_to_source(win);
+    cairo_paint(win);
 }
 
 void key_listener(int win, int key)

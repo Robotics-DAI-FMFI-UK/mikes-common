@@ -52,7 +52,6 @@ void draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
    cairo_set_source_rgb(w, 1, 0.3, 0.3);
    cairo_arc(w, x, X_TIM571_HEIGHT - y, 2, 0, 2 * M_PI);
    cairo_stroke(w);
-   gui_flush_window(win);
 }
 
 void x_tim571_paint(cairo_t *w)
@@ -65,13 +64,6 @@ void x_tim571_paint(cairo_t *w)
     
    for (int i = 0; i < TIM571_DATA_COUNT; i++)
    {
-           /* if (lidar_data.distance[i] == 0)
-            {
-               draw_ray(i, RAY_ZERO_TYPE);
-               continue;
-            }
-            */
-            
       uint16_t d = dist_local_copy[i];
       uint8_t  r = rssi_local_copy[i];
 
@@ -86,7 +78,7 @@ void x_tim571_paint(cairo_t *w)
 void x_tim571_update(uint16_t *dist, uint8_t *rssi)
 {
    memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
-   memcpy(rssi_local_copy, dist, sizeof(uint8_t) * TIM571_DATA_COUNT);
+   memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
 }
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)

@@ -37,6 +37,8 @@ static cairo_t *windows[MAX_GUI_WINDOWS_COUNT];
 static cairo_surface_t *surfaces[MAX_GUI_WINDOWS_COUNT];
 static Window x11windows[MAX_GUI_WINDOWS_COUNT];
 static char *window_names[MAX_GUI_WINDOWS_COUNT];
+static int window_fixed_width[MAX_GUI_WINDOWS_COUNT];
+static int window_fixed_height[MAX_GUI_WINDOWS_COUNT];
 
 static int window_update_periods[MAX_GUI_WINDOWS_COUNT];
 static long long next_window_update[MAX_GUI_WINDOWS_COUNT];
@@ -45,17 +47,10 @@ static pthread_mutex_t gui_lock;
 
 void repaint_window(int window_handle)
 {
-	//cairo_push_group(windows[window_handle]);
-    cairo_set_source_rgb(windows[window_handle], 1, 1, 1);
-    
     pthread_mutex_unlock(&gui_lock);
       if (draw_callbacks[window_handle])
           draw_callbacks[window_handle](windows[window_handle]);
     pthread_mutex_lock(&gui_lock);
-    
-    //cairo_pop_group_to_source(windows[window_handle]);
-    //cairo_paint(windows[window_handle]);
-    cairo_surface_flush(surfaces[window_handle]);     
 }
 
 void gui_fullscreen(Display* dpy, Window win)
@@ -63,6 +58,19 @@ void gui_fullscreen(Display* dpy, Window win)
   Atom atoms[2] = { XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False), None };
   XChangeProperty(dpy, win, XInternAtom(dpy, "_NET_WM_STATE", False),
                   XA_ATOM, 32, PropModeReplace, (unsigned char*) atoms, 1);
+}
+
+void clear_window(cairo_surface_t *surf)
+{
+    cairo_t *win = cairo_create(surf);
+    cairo_push_group(win);
+
+    cairo_set_source_rgb(win, 1, 1, 1);
+    cairo_paint(win);
+
+    cairo_pop_group_to_source(win);
+    cairo_paint(win);
+    cairo_destroy(win);
 }
 
 int gui_cairo_check_event(int *xclick, int *yclick, int *win)
@@ -94,16 +102,22 @@ int gui_cairo_check_event(int *xclick, int *yclick, int *win)
             return key;
          case Expose:
             for (int i = 0; i < MAX_GUI_WINDOWS_COUNT; i++)
-               if (x11windows[i] == e.xexpose.window) *win = i;
-            if (*win < 0) break; 
-            if (window_exposed[*win]) break;
-            cairo_set_source_rgb(windows[*win], 1, 1, 1);
-            cairo_paint(windows[*win]);
-            cairo_surface_flush(surfaces[*win]);
-            if (window_update_periods[*win] > 0)
-                next_window_update[*win] = usec() + window_update_periods[*win] * 1000;
-            else next_window_update[*win] = 0;
-            window_exposed[*win] = 1;
+               if (x11windows[i] == e.xexpose.window) 
+               {
+                 clear_window(surfaces[i]);
+                 if (window_update_periods[i] > 0)
+                    next_window_update[i] = usec() + window_update_periods[i] * 1000;
+                 else next_window_update[i] = 0;
+                 window_exposed[i] = 1;
+               }
+            break;
+         case ResizeRequest:
+            for (int i = 0; i < MAX_GUI_WINDOWS_COUNT; i++)
+               if (x11windows[i] == e.xresizerequest.window) *win = i;
+            if (*win < 0) break;
+            if ((e.xresizerequest.width != window_fixed_width[*win]) || (e.xresizerequest.height != window_fixed_height[*win]))
+               XResizeWindow(dsp, x11windows[*win], window_fixed_width[*win], window_fixed_height[*win]);
+            break;
             
          //default:
          //   printf("Dropping unhandled XEevent.type = %d.\n", e.type);
@@ -134,8 +148,10 @@ cairo_surface_t *gui_cairo_create_x11_surface(int *x, int *y, int win)
     }
    else
       da = XCreateSimpleWindow(dsp, DefaultRootWindow(dsp), 0, 0, *x, *y, 0, 0, 0);
-   XSelectInput(dsp, da, ButtonPressMask | KeyPressMask | ExposureMask);
+   XSelectInput(dsp, da, ButtonPressMask | KeyPressMask | ExposureMask | ResizeRedirectMask);
    XMapWindow(dsp, da);
+   window_fixed_width[win] = *x;
+   window_fixed_height[win] = *y;
 
    sfc = cairo_xlib_surface_create(dsp, da, DefaultVisual(dsp, screen), *x, *y);
    cairo_xlib_surface_set_size(sfc, *x, *y);       
@@ -153,7 +169,6 @@ void draw_windows_title(int window_handle)
 	   sprintf(fullname, "Mikes - %d - [%s]", window_handle, context_names[current_context]);	
 	else 
 	   sprintf(fullname, "Mikes - %s - [%s]", window_names[window_handle], context_names[current_context]);
-	cairo_surface_flush(surfaces[window_handle]);  
 	XStoreName(dsp, x11windows[window_handle], fullname);
 }
 
@@ -246,12 +261,6 @@ cairo_t *get_cairo_t(int window_handle)
 {
 	if (!window_in_use[window_handle]) return 0;
 	return windows[window_handle];
-}
-
-void gui_flush_window(int window_handle)
-{
-	if (window_in_use[window_handle])
-	     cairo_surface_flush(surfaces[window_handle]);
 }
 
 void gui_add_key_listener(char *context, gui_key_callback callback)
@@ -428,8 +437,6 @@ void *gui_thread(void *arg)
 
 void init_gui()
 {
-	//XInitThreads();
-	
     if (!mikes_config.with_gui)
     {
         mikes_log(ML_INFO, "gui supressed by config.");

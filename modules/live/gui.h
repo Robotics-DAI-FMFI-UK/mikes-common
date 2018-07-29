@@ -30,7 +30,6 @@ int gui_open_window(gui_draw_callback paint, int width, int height, int update_p
 void gui_close_window(int window_handle);
 void gui_set_window_title(int window_handle, char *title);
 cairo_t *get_cairo_t(int window_handle);
-void gui_flush_window(int window_handle);
 
 void gui_add_key_listener(char *context, gui_key_callback callback);
 void remove_key_listener(char *context);
