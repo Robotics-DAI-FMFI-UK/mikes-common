@@ -29,7 +29,7 @@ void draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
       y = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
       center_x = (int)(ENLARGE_CENTER / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha) + X_TIM571_WIDTH / 2);
       center_y = (int)(ENLARGE_CENTER / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
-      cairo_set_source_rgb(w, 0.1, 0.1, 0.3 + 0.7 * q / 255.0);
+      cairo_set_source_rgb(w, 0.7 * (255 - q) / 255, 0.7 * (255 - q) / 255, 0.3 + 0.7 * q / 255.0);
    } else if (ray_type == RAY_AZIMUTH_TYPE)
    {
       x = (int)((ENLARGE_CENTER + range) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(M_PI * i / 64.0 / 180.0) + X_TIM571_WIDTH / 2);
@@ -49,7 +49,14 @@ void draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
    cairo_move_to(w, x, X_TIM571_HEIGHT - y);
    cairo_line_to(w, center_x, X_TIM571_HEIGHT - center_y);
    cairo_stroke(w);
-   cairo_set_source_rgb(w, 1, 0.3, 0.3);
+   if (ray_type == RAY_USUAL_TYPE)
+      cairo_set_source_rgb(w, q / 255.0, 0.7 * (255 - q) / 255, 0.3);
+   else if (ray_type == RAY_AZIMUTH_TYPE)
+      cairo_set_source_rgb(w, 0.8, 0.8, 0.3);
+   else if (ray_type == RAY_ZERO_TYPE)
+      cairo_set_source_rgb(w, 0.8, 0.8, 0.8);
+   else cairo_set_source_rgb(w, 1, 0.3, 0.3);
+
    cairo_arc(w, x, X_TIM571_HEIGHT - y, 2, 0, 2 * M_PI);
    cairo_stroke(w);
 }
