@@ -18,6 +18,11 @@
 
 #define MAX_PACKET_LENGTH 200
 
+#define MAX_BASE_CALLBACKS 20
+
+static base_receive_data_callback callbacks[MAX_BASE_CALLBACKS];
+static int callbacks_count;
+
 static int current_azimuth;
 
 static pthread_mutex_t base_module_lock;
@@ -165,6 +170,9 @@ void read_base_packet()
     //printf("CA: %ld,  CB: %ld\n", local_data.counterA, local_data.counterB);
     pthread_mutex_unlock(&base_module_lock);
     //mikes_log(ML_INFO, line);
+
+    for (int i = 0; i < callbacks_count; i++)
+      callbacks[i](&local_data);
 }
 
 void wait_for_new_base_data()
@@ -359,3 +367,25 @@ void set_laziness(unsigned char laziness)
       mikes_log(ML_ERR, "base: could not set laziness");
     }
 }
+
+void register_base_callback(base_receive_data_callback callback)
+{
+  if (callbacks_count == MAX_BASE_CALLBACKS)
+  {
+     mikes_log(ML_ERR, "too many base callbacks");
+     return;
+  }
+  callbacks[callbacks_count] = callback;
+  callbacks_count++;
+}
+
+void unregister_base_callback(base_receive_data_callback callback)
+{
+  for (int i = 0; i < callbacks_count; i++)
+    if (callbacks[i] == callback)
+    {
+       callbacks[i] = callbacks[callbacks_count - 1];
+       callbacks_count--;
+    }
+}
+

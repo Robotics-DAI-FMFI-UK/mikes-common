@@ -44,8 +44,8 @@ void get_tim571_rssi_data(uint8_t *buffer);  // fills in data_count measured rss
 void get_tim571_status_data(tim571_status_data *status_data); // fills in status data
 void pretty_print_status_data(char *buffer, tim571_status_data *sd); // prints status data to string buffer (must have enough space!)
 
-void register_callback(tim571_receive_data_callback callback);    // register for getting fresh data after received from sensor (copy quick!)
-void unregister_callback(tim571_receive_data_callback callback);  // remove previously registered callback
+void register_tim571_callback(tim571_receive_data_callback callback);    // register for getting fresh data after received from sensor (copy quick!)
+void unregister_tim571_callback(tim571_receive_data_callback callback);  // remove previously registered callback
 
 void test_tim571();
 

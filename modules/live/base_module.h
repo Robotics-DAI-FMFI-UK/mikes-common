@@ -36,6 +36,8 @@ typedef struct astruct {
   short gx, gy, gz;
 } base_data_type;
 
+typedef void (*base_receive_data_callback)(base_data_type *);
+
 // open serial communication with arduino base board
 void init_base_module();
 
@@ -86,5 +88,11 @@ short counter2mm(short counter);
 
 // utility function to return the current followed azimuth or NO_AZIMUTH, if none
 int get_current_azimuth();
+
+// register for getting fresh data after received from base (copy quick!)
+void register_base_callback(base_receive_data_callback callback);    
+
+// remove previously registered callback
+void unregister_base_callback(base_receive_data_callback callback);  
 
 #endif

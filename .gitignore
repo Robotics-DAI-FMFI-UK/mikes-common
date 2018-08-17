@@ -11,3 +11,5 @@ test_ncurses_control
 test_pose  
 test_pq  
 test_tim571
+test_x_base
+test_x_tim571

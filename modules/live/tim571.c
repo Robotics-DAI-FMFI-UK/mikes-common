@@ -438,7 +438,7 @@ int tim571_azimuth2ray(int alpha)
   return TIM571_DATA_COUNT / 2 - alpha * TIM571_SIZE_OF_ONE_DEG;
 }
 
-void register_callback(tim571_receive_data_callback callback)
+void register_tim571_callback(tim571_receive_data_callback callback)
 {
   if (callbacks_count == MAX_TIM571_CALLBACKS)
   {
@@ -449,7 +449,7 @@ void register_callback(tim571_receive_data_callback callback)
   callbacks_count++;
 }
 
-void unregister_callback(tim571_receive_data_callback callback)
+void unregister_tim571_callback(tim571_receive_data_callback callback)
 {
   for (int i = 0; i < callbacks_count; i++)
     if (callbacks[i] == callback)
