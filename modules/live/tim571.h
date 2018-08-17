@@ -35,8 +35,6 @@ typedef struct tim571_status_struct {
 } tim571_status_data;
 
 
-extern pthread_mutex_t tim571_lock;
-
 void init_tim571();
 
 void get_tim571_dist_data(uint16_t *buffer); // fills in data_count measured data values

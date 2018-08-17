@@ -74,6 +74,22 @@ TEST_RFID_SRCS=tests/test_rfid.c \
                    bites/mikes.c \
                    core/config_mikes.c \
                    config/config.c
+TEST_UST10LX_SRCS=tests/test_ust10lx.c \
+                 modules/live/ust10lx.c \
+                 modules/passive/mikes_logs.c \
+                 bites/mikes.c \
+                 core/config_mikes.c \
+                 bites/util.c \
+                 config/config.c
+TEST_X_UST10LX_SRCS=tests/test_x_ust10lx.c \
+                   modules/live/ust10lx.c \
+                   modules/passive/x_ust10lx.c \
+                   modules/live/gui.c \
+                   modules/passive/mikes_logs.c \
+                   bites/util.c \
+                   bites/mikes.c \
+                   core/config_mikes.c \
+                   config/config.c
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
 TEST_PQ_OBJS=${TEST_PQ_SRCS:.c=.o}
@@ -84,6 +100,8 @@ TEST_GUI_OBJS=${TEST_GUI_SRCS:.c=.o}
 TEST_X_TIM571_OBJS=${TEST_X_TIM571_SRCS:.c=.o}
 TEST_X_BASE_OBJS=${TEST_X_BASE_SRCS:.c=.o}
 TEST_RFID_OBJS=${TEST_RFID_SRCS:.c=.o}
+TEST_UST10LX_OBJS=${TEST_UST10LX_SRCS:.c=.o}
+TEST_X_UST10LX_OBJS=${TEST_X_UST10LX_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -104,7 +122,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -126,9 +144,13 @@ test_x_base: ${TEST_X_BASE_OBJS}
 	${CC} -o test_x_base $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_rfid: ${TEST_RFID_OBJS}
 	${CC} -o test_rfid $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_ust10lx: ${TEST_UST10LX_OBJS}
+	${CC} -o test_ust10lx $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_x_ust10lx: ${TEST_X_UST10LX_OBJS}
+	${CC} -o test_x_ust10lx $^ ${LDFLAGS} ${DEBUG_FLAGS}
      
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx
 

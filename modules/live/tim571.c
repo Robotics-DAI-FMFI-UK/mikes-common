@@ -26,7 +26,7 @@
 
 #define MAX_TIM571_CALLBACKS 20
 
-pthread_mutex_t tim571_lock;
+static pthread_mutex_t tim571_lock;
 
 static uint16_t *local_data;
 static uint8_t *local_rssi;
