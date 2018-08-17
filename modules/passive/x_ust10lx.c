@@ -62,9 +62,9 @@ void x_ust10lx_paint(cairo_t *w)
    for (int i = 0; i < UST10LX_DATA_COUNT; i++)
    {
       uint16_t d = dist_local_copy[i];
-
-      if (d > range) d = range;
-      draw_ray(w, i, d, (d == 65533) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
+      uint16_t d2 = d;
+      if (d > range) d2 = range;
+      draw_ray(w, i, d2, (d == 65533) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
    }
   
    cairo_pop_group_to_source(w);
