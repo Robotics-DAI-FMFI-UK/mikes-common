@@ -15,6 +15,7 @@ int main(int argc, char **argv)
     init_gui();
     init_base_module();
     init_x_base(400);
+    x_base_enable_mouse_click_set_azimuth();
 
     while (program_runs)
     {

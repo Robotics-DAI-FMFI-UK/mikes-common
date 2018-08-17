@@ -11,5 +11,8 @@ void shutdown_x_base();
 
 void x_base_set_azimuth(double new_azimuth);
 
+void x_base_enable_mouse_click_set_azimuth();
+void x_base_disable_mouse_click_set_azimuth();
+
 
 #endif

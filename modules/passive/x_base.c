@@ -14,6 +14,7 @@
 static int win;
 static base_data_type base_local_copy;
 static double azimuth;
+static int enabled_mouse_set_azimuth;
 
 void draw_compass_cross(cairo_t *w)
 {
@@ -133,13 +134,34 @@ void x_base_set_azimuth(double new_azimuth)
   azimuth = new_azimuth;
 }
 
+void x_base_enable_mouse_click_set_azimuth()
+{
+   enabled_mouse_set_azimuth = 1;
+}
+
+void x_base_disable_mouse_click_set_azimuth()
+{
+   enabled_mouse_set_azimuth = 0;
+}
+
+void x_base_mouse_listener(int x, int y, int button)
+{
+   if (!enabled_mouse_set_azimuth) return;
+   
+   x -= X_BASE_WIDTH / 2;
+   y = -(y - X_BASE_HEIGHT / 2);
+   azimuth = atan2(x, y) * 180.0 / M_PI;
+}
+
 void init_x_base(int window_update_period_in_ms)
 {
    azimuth = AZIMUTH_NOT_SET;
+   enabled_mouse_set_azimuth = 0;
    get_base_data(&base_local_copy);
    win = gui_open_window(x_base_paint, X_BASE_WIDTH, X_BASE_HEIGHT, window_update_period_in_ms);
    gui_set_window_title(win, "BASE");
    register_base_callback(x_base_update); 
+   gui_add_mouse_listener(win, x_base_mouse_listener);
 }
 
 void shutdown_x_base()
