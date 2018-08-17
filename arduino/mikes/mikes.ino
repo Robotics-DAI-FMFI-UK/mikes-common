@@ -208,7 +208,7 @@ void setup_mpu(void)
   compass.setSamples(HMC5883L_SAMPLES_8);
   
   // Set calibration offset. See HMC5883L_calibration.ino
-  compass.setOffset(-271, 66);
+  compass.setOffset(-283, -64);
 
   mpu_initialized = 1;
 }
@@ -527,9 +527,11 @@ void loop()
     // Set declination angle on your location and fix heading
     // You can find your declination on: http://magnetic-declination.com/
     // (+) Positive or (-) for negative
-    // For Bratislava declination angle is 4'15E (positive)
+    // For Bratislava declination angle is 4'28E (positive)
+    // For SICK declination angle is 2 deg 17 min E (positive)
     // Formula: (deg + (min / 60.0)) / (180 / M_PI);
-    float declinationAngle = (4.0 + (15.0 / 60.0)) / (180 / M_PI);
+    float declinationAngle = (4.0 + (28.0 / 60.0)) / (180 / M_PI);
+    //float declinationAngle = (2.0 + (17.0 / 60.0)) / (180 / M_PI);
     heading += declinationAngle;
 
     // Correct for heading < 0deg and heading > 360deg
@@ -547,6 +549,7 @@ void loop()
     if (sending_status)
     {
       Serial.print("$");
+      Serial.print(tm); Serial.print(" ");
       Serial.print(counterA); Serial.print(" ");
       Serial.print(counterB); Serial.print("\t");
       Serial.print(velocityA); Serial.print(" ");
