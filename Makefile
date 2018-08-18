@@ -106,6 +106,8 @@ TEST_X_LIDAR_SRCS=tests/test_x_rplidar.c \
                    core/config_mikes.c \
                    config/config.c
 TEST_X_LIDAR_CPPSRCS=modules/live/lidar.cpp
+TEST_PNGWRITER_SRCS=tests/test_pngwriter.c \
+                    bites/pngwriter.c
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
@@ -121,6 +123,7 @@ TEST_UST10LX_OBJS=${TEST_UST10LX_SRCS:.c=.o}
 TEST_X_UST10LX_OBJS=${TEST_X_UST10LX_SRCS:.c=.o}
 TEST_LIDAR_OBJS=${TEST_LIDAR_SRCS:.c=.o} ${TEST_LIDAR_CPPSRCS:.cpp=.o}
 TEST_X_LIDAR_OBJS=${TEST_X_LIDAR_SRCS:.c=.o} ${TEST_X_LIDAR_CPPSRCS:.cpp=.o}
+TEST_PNGWRITER_OBJS=${TEST_PNGWRITER_SRCS:.c=.o} ${TEST_PNGWRITER_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -131,7 +134,7 @@ DEBUG_FLAGS=-g
 CFLAGS=${OPTIMIZE} -std=c11 -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I. -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -I/usr/include/librsvg-2.0/librsvg -I/usr/include/glib-2.0 -I/usr/lib/arm-linux-gnueabihf/glib-2.0/include -I/usr/include/libxml2 -I/usr/include/gdk-pixbuf-2.0 -Wall
 CPPFLAGS=${OPTIMIZE} ${DEBUG_FLAGS} -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -Wall -Wno-write-strings -I/usr/include/librsvg-2.0/librsvg -I/usr/include/glib-2.0 -I/usr/lib/arm-linux-gnueabihf/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 
 #LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g -lstdc++ ${SAN} -lubsan
-LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g -lstdc++ 
+LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -lpng -g -lstdc++ 
 PREFIX=/usr/local
 
 all: test
@@ -141,7 +144,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -171,9 +174,11 @@ test_rplidar: ${TEST_LIDAR_OBJS}
 	${CPP} -o test_rplidar $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_x_rplidar: ${TEST_X_LIDAR_OBJS}
 	${CPP} -o test_x_rplidar $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_pngwriter: ${TEST_PNGWRITER_OBJS}
+	${CC} -o test_pngwriter $^ ${LDFLAGS} ${DEBUG_FLAGS}
      
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter
 
