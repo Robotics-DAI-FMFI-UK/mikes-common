@@ -22,3 +22,4 @@ test_pngwriter
 test_xtion
 test_x_xtion
 test_x_line_map
+test_line_map
