@@ -45,4 +45,6 @@ void gui_add_mouse_listener(int window_handle, gui_mouse_callback callback);
 char *get_current_gui_context();
 void set_current_gui_context(char *context);
 
+void draw_svg_to_win(int win, int x, int y, char *filename, int max_width, int max_height);
+
 #endif

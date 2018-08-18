@@ -4,6 +4,8 @@
 #include <cairo.h>
 #include <cairo-xlib.h>
 
+#include <rsvg.h>
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -223,6 +225,7 @@ int gui_open_window(gui_draw_callback paint, int width, int height, int update_p
     
     pthread_mutex_unlock(&gui_lock);
 
+    if ((update_period_in_ms == 0) && (paint != 0)) paint(windows[window_handle]);
     return window_handle;
 }
 
@@ -484,3 +487,25 @@ void set_current_gui_context(char *context)
 	
 	pthread_mutex_unlock(&gui_lock);
 }
+
+void draw_svg_to_win(int win, int x, int y, char *filename, int max_width, int max_height)
+{
+    GError *gerror;
+    if (!window_in_use[win]) return;
+    RsvgHandle *rsvg_handle = rsvg_handle_new_from_file(filename, &gerror);
+    if (rsvg_handle == 0)
+    {
+      mikes_log_str(ML_ERR, "could not load svg file: ", filename);
+      return;
+    }
+    RsvgDimensionData dimensions;
+    rsvg_handle_get_dimensions(rsvg_handle, &dimensions);
+    double scale_x = max_width / (double)dimensions.width;
+    double scale_y = max_height / (double)dimensions.height;
+    double scale = scale_x;
+    if (scale_y < scale_x) scale = scale_y;
+    cairo_translate(windows[win], x, y);
+    cairo_scale(windows[win], scale, scale);
+    rsvg_handle_render_cairo(rsvg_handle, windows[win]);
+}
+

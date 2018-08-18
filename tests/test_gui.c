@@ -17,7 +17,10 @@
 #define WIN3_WIDTH  400
 #define WIN3_HEIGHT 200
 
-int win1, win2, win3;
+#define WIN4_WIDTH  240
+#define WIN4_HEIGHT 240 
+
+int win1, win2, win3, win4;
 int x1, yy1;
 int x2, y2;
 int x3, y3;
@@ -126,6 +129,17 @@ void paint3(cairo_t *win)
     cairo_paint(win);
 }
 
+void paint4(cairo_t *win)
+{
+    cairo_push_group(win);
+
+    draw_svg_to_win(win4, 20, 20, "images/toy-robot.svg", 200, 200); 
+    cairo_stroke(win);
+
+    cairo_pop_group_to_source(win);
+    cairo_paint(win);
+}
+
 void key_listener(int win, int key)
 {
     int x = x3;
@@ -159,6 +173,7 @@ void test_gui()
     win1 = gui_open_window(paint1, WIN1_WIDTH, WIN1_HEIGHT, 300);
     win2 = gui_open_window(paint2, WIN2_WIDTH, WIN2_HEIGHT, 100);
     win3 = gui_open_window(paint3, WIN3_WIDTH, WIN3_HEIGHT, 100);
+    win4 = gui_open_window(paint4, WIN4_WIDTH, WIN4_HEIGHT, 200);
 
     x1 = WIN1_WIDTH / 2;
     yy1 = WIN1_HEIGHT / 2;
@@ -169,6 +184,7 @@ void test_gui()
 
     gui_set_window_title(win1, "click to draw");
     gui_set_window_title(win3, "use arrows to draw");
+    gui_set_window_title(win4, "shows svg file");
 
     gui_add_mouse_listener(win1, mouse1);
     gui_add_mouse_listener(win2, mouse2);
