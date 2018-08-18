@@ -86,6 +86,12 @@ void write_png_file(char* file_name)
 
 void write_greyscale_png_image(const short* pixels, char *filename, int w, int h, double color_divider)
 {
+    write_greyscale_png_image_with_min(pixels, filename, w, h, color_divider, 0);
+}
+
+void write_greyscale_png_image_with_min(const short* pixels, char *filename, int w, int h, 
+                                        double color_divider, uint8_t color_offset)
+{
     width = w;
     height = h; 
     
@@ -96,7 +102,7 @@ void write_greyscale_png_image(const short* pixels, char *filename, int w, int h
     for (int row = 0; row < h; row++)
       for (int col = 0; col < w; col++)
         for (int ch = 0; ch < 3; ch++)
-          row_pointers[row][col * 3 + ch] = (png_byte)(pixels[row * w + col] / color_divider);
+          row_pointers[row][col * 3 + ch] = color_offset + (png_byte)(pixels[row * w + col] / color_divider);
 
     write_png_file(filename);
 }

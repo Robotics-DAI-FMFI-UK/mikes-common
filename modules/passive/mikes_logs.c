@@ -90,7 +90,7 @@ void mikes_log(unsigned int log_type, char *log_msg)
     printf("%s: %s\n", log_type_str[log_type], log_msg);
 }
 
-void mikes_log_str(unsigned int log_type, char *log_msg, char *log_msg2)
+void mikes_log_str(unsigned int log_type, char *log_msg, const char *log_msg2)
 {
   if ((log_type == ML_DEBUG) && !mikes_config.print_debug_logs) return;
   long run_time = get_run_time();

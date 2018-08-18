@@ -13,6 +13,7 @@
 #define GUI_ESC_KEY         0xff1b
 #define GUI_TAB_KEY         65289
 #define GUI_SHIFT_TAB_KEY   65056
+#define GUI_ENTER_KEY       65293
 
 #define GUI_RIGHT_ARROW_KEY 0xff53
 #define GUI_LEFT_ARROW_KEY  0xff51
