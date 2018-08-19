@@ -16,7 +16,7 @@ In order for the arduino base module, rplidar and asus xtion to be recognized
 and assigned the expected symbolic links in the /dev/ file system,
 you may add the following files to your system at /etc/udev/rules.d/
 
-
+<pre>
 file /etc/udev/rules.d/10-base.rules
 
 # recognize base module (Arduino) and put it at /dev/base
@@ -41,3 +41,4 @@ SUBSYSTEM=="usb", ATTR{idProduct}=="1280", ATTR{idVendor}=="1d27", MODE:="0666",
 SUBSYSTEM=="usb", ATTR{idProduct}=="2100", ATTR{idVendor}=="1d27", MODE:="0666", OWNER:="root", GROUP:="video"
 SUBSYSTEM=="usb", ATTR{idProduct}=="2200", ATTR{idVendor}=="1d27", MODE:="0666", OWNER:="root", GROUP:="video"
 SUBSYSTEM=="usb", ATTR{idProduct}=="f9db", ATTR{idVendor}=="1d27", MODE:="0666", OWNER:="root", GROUP:="video"
+</pre>
