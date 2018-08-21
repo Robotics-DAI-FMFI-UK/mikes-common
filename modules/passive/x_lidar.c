@@ -4,6 +4,8 @@
 
 #include "x_lidar.h"
 #include "../live/gui.h"
+#include "mikes_logs.h"
+#include "core/config_mikes.h"
 
 #define ENLARGE_CENTER 50
 
@@ -16,7 +18,7 @@ static lidar_data_type data;
 static int range;
 static double scale_factor;
 
-void draw_ray(cairo_t *w, int i, uint16_t d, double alpha, int ray_type)
+void lidar_draw_ray(cairo_t *w, int i, uint16_t d, double alpha, int ray_type)
 {
    int x = 0, y=0, center_x=0, center_y=0;
    alpha = M_PI * alpha / 180.0;
@@ -68,7 +70,7 @@ void x_lidar_paint(cairo_t *w)
 
       if (d > range) d = range;
 
-      draw_ray(w, i, d, alpha, (q == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
+      lidar_draw_ray(w, i, d, alpha, (q == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
    }
   
    cairo_pop_group_to_source(w);
@@ -82,6 +84,13 @@ void x_lidar_update(lidar_data_type *newdata)
 
 void init_x_lidar(int max_range_in_mm, int window_update_period_in_ms)
 {
+    if (!mikes_config.with_gui) return;
+    if (!mikes_config.use_rplidar)
+    {
+        mikes_log(ML_INFO, "rplidar gui supressed by config.");
+        return;
+    }
+
    range = max_range_in_mm;
    scale_factor = range;
 
@@ -92,6 +101,8 @@ void init_x_lidar(int max_range_in_mm, int window_update_period_in_ms)
 
 void shutdown_x_lidar()
 {
-   gui_close_window(win);
+    if (!mikes_config.with_gui) return;
+    if (!mikes_config.use_rplidar) return;
+    gui_close_window(win);
 }
 

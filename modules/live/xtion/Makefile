@@ -6,7 +6,9 @@ include ${OPENNI_BUILD_PREFIX}/Common/CommonDefs.mak
 
 BIN_DIR = ${OPENNI_BUILD_PREFIX}/../Bin
 
-INC_DIRS = ${OPENNI_BUILD_PREFIX}/../../../Include
+$(info $$MIKES_CORE is [$(MIKES_CORE)])
+
+INC_DIRS = ${OPENNI_BUILD_PREFIX}/../../../Include $(MIKES_CORE)
 
 SRC_FILES = *.cpp
 

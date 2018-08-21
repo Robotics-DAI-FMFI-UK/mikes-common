@@ -36,7 +36,7 @@ void test_line_map()
 int main(int argc, char **argv)
 {
     mikes_init(argc, argv);
-    init_line_map("images/pavilon_I.svg");
+    init_line_map(mikes_config.line_map_file);
     test_line_map();
     mikes_shutdown();
 }

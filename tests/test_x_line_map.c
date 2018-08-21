@@ -7,6 +7,8 @@
 #include "modules/passive/x_line_map.h"
 #include "modules/live/gui.h"
 #include "bites/mikes.h"
+#include "modules/passive/mikes_logs.h"
+#include "core/config_mikes.h"
 
 static pose_type p;
 
@@ -46,7 +48,7 @@ int main(int argc, char **argv)
     mikes_init(argc, argv);
 
     init_gui();
-    init_x_line_map("images/pavilon_I.svg", 600, 600);
+    init_x_line_map(mikes_config.line_map_file, 600, 600);
 
     p.x = 4400;
     p.y = 36500;

@@ -12,16 +12,17 @@ extern "C" {
 
 #include "../../../bites/mikes.h"
 #include "../../passive/mikes_logs.h"
+#include "core/config_mikes.h"
 
 }
-
-#define SAMPLE_XML_PATH "xtion-config/SamplesConfig.xml"
 
 static pthread_mutex_t xtion_lock;
 static xtion_pixel *scaled;
 static int width, height;
 static int resolution_x, resolution_y;
 static double qx, qy;
+
+static int online;
 
 void *xtion_thread(void *args)
 {
@@ -35,19 +36,21 @@ void *xtion_thread(void *args)
         xn::ScriptNode scriptNode;
         xn::EnumerationErrors errors;
 
-        mikes_log_str(ML_INFO, "xtion reading config from:", SAMPLE_XML_PATH);
-        nRetVal = context.InitFromXmlFile(SAMPLE_XML_PATH, scriptNode, &errors);
+        mikes_log_str(ML_INFO, "xtion reading config from:", mikes_config.xtion_samples_config);
+        nRetVal = context.InitFromXmlFile(mikes_config.xtion_samples_config, scriptNode, &errors);
 
         if (nRetVal == XN_STATUS_NO_NODE_PRESENT)
         {
                 XnChar strError[1024];
                 errors.ToString(strError, 1024);
                 mikes_log_str(ML_ERR, "xtion reading config: ", strError);
+                threads_running_add(-1);
                 return 0;
         }
         else if (nRetVal != XN_STATUS_OK)
         {
                 mikes_log_str(ML_ERR, "xtion open config failed: ", xnGetStatusString(nRetVal));
+                threads_running_add(-1);
                 return 0;
         }
 
@@ -86,6 +89,7 @@ void *xtion_thread(void *args)
     if (nRetVal != XN_STATUS_OK)
     {
         mikes_log(ML_ERR, "xtion start generating failed");
+        threads_running_add(-1);
         return 0;
     }
 
@@ -135,6 +139,8 @@ void *xtion_thread(void *args)
 
 void get_xtion_data(xtion_pixel* buffer)
 {
+    if (!online) return;
+
     pthread_mutex_lock(&xtion_lock);
     memcpy(buffer, scaled, sizeof(xtion_pixel) * width * height);
     pthread_mutex_unlock(&xtion_lock);
@@ -142,6 +148,14 @@ void get_xtion_data(xtion_pixel* buffer)
 
 void init_xtion(int data_width, int data_height)
 {
+    if (!mikes_config.use_xtion)
+    {
+        mikes_log(ML_INFO, "Asus xtion supressed by config.");
+        online = 0;
+        return;
+    }
+    online = 1;
+
     pthread_t t;
     pthread_mutex_init(&xtion_lock, 0);
     width = data_width;

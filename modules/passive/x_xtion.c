@@ -9,6 +9,8 @@
 #include "../live/gui.h"
 #include "../../bites/pngwriter.h"
 #include "../../bites/mikes.h"
+#include "mikes_logs.h"
+#include "core/config_mikes.h"
 
 static int win;
 
@@ -109,6 +111,13 @@ void xtion_key_listener(int win, int key)
 
 void init_x_xtion(int width, int height, double zoom, int window_update_period_in_ms)
 {
+   if (!mikes_config.with_gui) return;
+   if (!mikes_config.use_xtion)
+   {
+        mikes_log(ML_INFO, "asus xtion gui supressed by config.");
+        return;
+   }
+
    data_width = width;
    data_height = height;
    data_zoom = zoom;
@@ -130,6 +139,8 @@ void init_x_xtion(int width, int height, double zoom, int window_update_period_i
 
 void shutdown_x_xtion()
 {
+   if (!mikes_config.with_gui) return;
+   if (!mikes_config.use_xtion) return;
    gui_close_window(win);
 }
 

@@ -18,6 +18,7 @@
 #include "../../bites/mikes.h"
 #include "tim571.h"
 #include "../passive/mikes_logs.h"
+#include "core/config_mikes.h"
 
 #define MAX_SENTENCE_LENGTH 10000
 
@@ -35,6 +36,8 @@ static int sockfd;
 
 static tim571_receive_data_callback callbacks[MAX_TIM571_CALLBACKS];
 static int callbacks_count;
+
+static int online;
 
 void connect_tim571()
 {
@@ -163,6 +166,8 @@ static char tim571_name[18];
 
 static uint8_t status_data_requested;
 static uint8_t status_data_available;
+
+static int online;
 
 void process_sentence()
 {
@@ -353,6 +358,14 @@ void *tim571_thread(void *args)
 
 void init_tim571()
 {
+    if (!mikes_config.use_tim571)
+    {
+        mikes_log(ML_INFO, "tim571 supressed by config.");
+        online = 0;
+        return;
+    }
+    online = 1;
+
     pthread_t t;
     tim571_data = (uint16_t *) malloc(sizeof(uint16_t) * TIM571_DATA_COUNT);
     tim571_rssi_data = (uint8_t *) malloc(sizeof(uint8_t) * TIM571_DATA_COUNT);
@@ -381,6 +394,8 @@ void init_tim571()
 
 void get_tim571_dist_data(uint16_t *buffer)
 {
+    if (!online) return;
+
     pthread_mutex_lock(&tim571_lock);
     memcpy(buffer, local_data, sizeof(uint16_t) * TIM571_DATA_COUNT);
     pthread_mutex_unlock(&tim571_lock);
@@ -388,6 +403,8 @@ void get_tim571_dist_data(uint16_t *buffer)
 
 void get_tim571_rssi_data(uint8_t *buffer)
 {
+    if (!online) return;
+
     pthread_mutex_lock(&tim571_lock);
     memcpy(buffer, local_rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     pthread_mutex_unlock(&tim571_lock);
@@ -395,6 +412,8 @@ void get_tim571_rssi_data(uint8_t *buffer)
 
 void get_tim571_status_data(tim571_status_data *status_data)
 {
+    if (!online) return;
+
     pthread_mutex_lock(&tim571_lock);
 	status_data_available = 0;
 	status_data_requested = 1;
@@ -440,6 +459,8 @@ int tim571_azimuth2ray(int alpha)
 
 void register_tim571_callback(tim571_receive_data_callback callback)
 {
+  if (!online) return;
+
   if (callbacks_count == MAX_TIM571_CALLBACKS)
   {
      mikes_log(ML_ERR, "too many TIM571 callbacks");
@@ -451,6 +472,8 @@ void register_tim571_callback(tim571_receive_data_callback callback)
 
 void unregister_tim571_callback(tim571_receive_data_callback callback)
 {
+  if (!online) return;
+
   for (int i = 0; i < callbacks_count; i++)
     if (callbacks[i] == callback)
     {

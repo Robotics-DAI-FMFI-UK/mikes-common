@@ -3,6 +3,8 @@
 
 #include "x_tim571.h"
 #include "../live/gui.h"
+#include "mikes_logs.h"
+#include "core/config_mikes.h"
 
 #define ENLARGE_CENTER 50
 
@@ -17,7 +19,7 @@ static tim571_status_data  status_local_copy;
 static int range;
 static double scale_factor;
 
-void draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
+void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
 {
    int x = 0, y=0, center_x=0, center_y=0;
    double alpha = M_PI * tim571_ray2azimuth(i) / 180.0;
@@ -75,7 +77,7 @@ void x_tim571_paint(cairo_t *w)
       uint8_t  r = rssi_local_copy[i];
 
       if (d > range) d = range;
-      draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
+      tim571_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
    }
   
    cairo_pop_group_to_source(w);
@@ -90,6 +92,13 @@ void x_tim571_update(uint16_t *dist, uint8_t *rssi)
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
 {
+   if (!mikes_config.with_gui) return;
+   if (!mikes_config.use_tim571)
+   {
+        mikes_log(ML_INFO, "tim571 gui supressed by config.");
+        return;
+   }
+
    range = max_range_in_mm;
    scale_factor = range;
 
@@ -101,6 +110,8 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
 
 void shutdown_x_tim571()
 {
+   if (!mikes_config.with_gui) return;
+   if (!mikes_config.use_tim571)
    gui_close_window(win);
 }
 

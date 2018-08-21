@@ -52,6 +52,8 @@ static int lines_in_windows_buffer[MAX_WINDOWS_COUNT];
 static int window_buffer_next_free_line[MAX_WINDOWS_COUNT];
 static int window_scroll_position[MAX_WINDOWS_COUNT];
 
+static volatile int ncurses_thread_started;
+
 void add_key_listener(char *context, ncurses_control_callback callback)
 {
   if (contexts_count == MAX_CONTEXTS_COUNT)
@@ -371,10 +373,16 @@ int clear_window_request(int ch)
 
 void *ncurses_control_thread(void *arg)
 {
-    if (!initialize_curses()) return 0;
+    if (!initialize_curses()) 
+    {
+       ncurses_thread_started = 1;
+       return 0;
+    }
     
     draw_system_screen();
     draw_windows();
+
+    ncurses_thread_started = 1;
 
 //Control Kocur Mikes with arrow keys, space to backup, 'a' to toggle autopilot, ESC to quit");
 
@@ -421,11 +429,13 @@ void init_ncurses_control()
 
     if (!mikes_config.use_ncurses_control) return;
 
+    ncurses_thread_started = 0;
     pthread_t t;
     if (pthread_create(&t, 0, ncurses_control_thread, 0) != 0)
     {
         perror("mikes:ncurses");
         mikes_log(ML_ERR, "creating ncurses thread");
+        while (ncurses_thread_started == 0) usleep(10000);
     }
     else threads_running_add(1);
 }

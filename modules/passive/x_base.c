@@ -5,6 +5,8 @@
 #include "../live/gui.h"
 #include "x_base.h"
 #include "../live/base_module.h"
+#include "mikes_logs.h"
+#include "core/config_mikes.h"
 
 #define COMPASS_RADIUS ((X_BASE_HEIGHT<X_BASE_WIDTH)?(X_BASE_HEIGHT*0.39):(X_BASE_WIDTH*0.39))
 
@@ -155,6 +157,8 @@ void x_base_mouse_listener(int x, int y, int button)
 
 void init_x_base(int window_update_period_in_ms)
 {
+   if (!mikes_config.with_gui) return;
+
    azimuth = AZIMUTH_NOT_SET;
    enabled_mouse_set_azimuth = 0;
    get_base_data(&base_local_copy);
@@ -166,6 +170,7 @@ void init_x_base(int window_update_period_in_ms)
 
 void shutdown_x_base()
 {
+   if (!mikes_config.with_gui) return;
    gui_close_window(win);
 }
 

@@ -39,7 +39,7 @@ void gui_set_window_title(int window_handle, char *title);
 cairo_t *get_cairo_t(int window_handle);
 
 void gui_add_key_listener(char *context, gui_key_callback callback);
-void remove_key_listener(char *context);
+void gui_remove_key_listener(char *context);
 void gui_add_mouse_listener(int window_handle, gui_mouse_callback callback);
 
 char *get_current_gui_context();

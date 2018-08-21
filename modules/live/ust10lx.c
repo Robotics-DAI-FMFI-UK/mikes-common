@@ -1,7 +1,3 @@
-#include "../../bites/mikes.h"
-#include "ust10lx.h"
-#include "../passive/mikes_logs.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +12,11 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include "../../bites/mikes.h"
+#include "ust10lx.h"
+#include "../passive/mikes_logs.h"
+#include "core/config_mikes.h"
 
 #define BUFFER_SIZE 5000
 #define MAX_ERROR_RAYS 5
@@ -32,6 +33,8 @@ static int sockfd;
 
 static ust10lx_receive_data_callback callbacks[MAX_UST10LX_CALLBACKS];
 static int callbacks_count;
+
+static int online;
 
 void connect_ust10lx()
 {
@@ -167,6 +170,14 @@ void *ust10lx_thread(void *args)
 
 void init_ust10lx()
 {
+    if (!mikes_config.use_ust10lx)
+    {
+        mikes_log(ML_INFO, "ust10lx supressed by config.");
+        online = 0;
+        return;
+    }
+    online = 1;
+
     pthread_t t;
     ust10lx_data = (uint16_t *) malloc(sizeof(uint16_t) * UST10LX_DATA_COUNT);
     local_data = (uint16_t *) malloc(sizeof(uint16_t) * UST10LX_DATA_COUNT);
@@ -188,6 +199,7 @@ void init_ust10lx()
 
 void get_ust10lx_data(uint16_t* buffer)
 {
+    if (!online) return;
     pthread_mutex_lock(&ust10lx_lock);
     memcpy(buffer, ust10lx_data, sizeof(uint16_t) * UST10LX_DATA_COUNT);
     pthread_mutex_unlock(&ust10lx_lock);
@@ -208,6 +220,7 @@ uint16_t ust10lx_azimuth2ray(int alpha)
 
 void register_ust10lx_callback(ust10lx_receive_data_callback callback)
 {
+  if (!online) return;
   if (callbacks_count == MAX_UST10LX_CALLBACKS)
   {
      mikes_log(ML_ERR, "too many UST10LX callbacks");
@@ -219,6 +232,7 @@ void register_ust10lx_callback(ust10lx_receive_data_callback callback)
 
 void unregister_ust10lx_callback(ust10lx_receive_data_callback callback)
 {
+  if (!online) return;
   for (int i = 0; i < callbacks_count; i++)
     if (callbacks[i] == callback)
     {

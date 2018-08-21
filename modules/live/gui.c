@@ -14,7 +14,7 @@
 #include "../../bites/mikes.h"
 #include "../../bites/util.h"
 #include "../passive/mikes_logs.h"
-#include "../../core/config_mikes.h"
+#include "core/config_mikes.h"
 #include "gui.h"
 
 #define MAX_GUI_CONTEXTS_COUNT 10
@@ -63,7 +63,7 @@ void gui_fullscreen(Display* dpy, Window win)
                   XA_ATOM, 32, PropModeReplace, (unsigned char*) atoms, 1);
 }
 
-void clear_window(cairo_surface_t *surf)
+void gui_clear_window(cairo_surface_t *surf)
 {
     cairo_t *win = cairo_create(surf);
     cairo_push_group(win);
@@ -107,7 +107,7 @@ int gui_cairo_check_event(int *xclick, int *yclick, int *win)
             for (int i = 0; i < MAX_GUI_WINDOWS_COUNT; i++)
                if (x11windows[i] == e.xexpose.window) 
                {
-                 clear_window(surfaces[i]);
+                 gui_clear_window(surfaces[i]);
                  if (window_update_periods[i] > 0)
                     next_window_update[i] = usec() + window_update_periods[i] * 1000;
                  else 
@@ -295,7 +295,7 @@ void gui_add_key_listener(char *context, gui_key_callback callback)
     pthread_mutex_unlock(&gui_lock);
 }
 
-void remove_key_listener(char *context)
+void gui_remove_key_listener(char *context)
 {
     pthread_mutex_lock(&gui_lock);
     

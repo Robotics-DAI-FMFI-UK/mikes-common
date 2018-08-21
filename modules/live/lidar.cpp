@@ -12,6 +12,7 @@ extern "C" {
 #include "../../bites/mikes.h"
 #include "lidar.h"
 #include "../passive/mikes_logs.h"
+#include "core/config_mikes.h"
 
 }
 
@@ -35,6 +36,8 @@ static lidar_receive_data_callback callbacks[MAX_LIDAR_CALLBACKS];
 static int callbacks_count;
 
 static lidar_data_type lidar_data_for_callbacks;
+
+static int online;
 
 int connect_lidar()
 {
@@ -125,6 +128,8 @@ void get_lidar_data_without_lock(lidar_data_type *buffer)
 
 void get_lidar_data(lidar_data_type *buffer)
 {
+    if (!online) return;
+
     pthread_mutex_lock(&lidar_lock);
     get_lidar_data_without_lock(buffer);
     pthread_mutex_unlock(&lidar_lock);
@@ -190,6 +195,14 @@ void *lidar_thread(void *args)
 
 void init_lidar()
 {
+    if (!mikes_config.use_rplidar)
+    {
+        mikes_log(ML_INFO, "rplidar supressed by config.");
+        online = 0;
+        return;
+    }
+    online = 1;
+
     pthread_t t;
     lidar_data = (rplidar_response_measurement_node_t *) malloc(sizeof(rplidar_response_measurement_node_t) * MAX_LIDAR_DATA_COUNT);
     local_data = (rplidar_response_measurement_node_t *) malloc(sizeof(rplidar_response_measurement_node_t) * MAX_LIDAR_DATA_COUNT);
@@ -216,6 +229,8 @@ void init_lidar()
 // register for getting fresh data after received from sensor (copy quick!)
 void register_lidar_callback(lidar_receive_data_callback callback)
 {
+  if (!online) return;
+
   if (callbacks_count == MAX_LIDAR_CALLBACKS)
   {
      mikes_log(ML_ERR, "too many lidar callbacks");
@@ -228,6 +243,8 @@ void register_lidar_callback(lidar_receive_data_callback callback)
 // remove previously registered callback
 void unregister_lidar_callback(lidar_receive_data_callback callback)
 {
+  if (!online) return;
+
   for (int i = 0; i < callbacks_count; i++)
     if (callbacks[i] == callback)
     {

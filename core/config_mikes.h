@@ -13,6 +13,13 @@ typedef struct {
     int use_ncurses_control;
     int start_x;
     int start_y;
+    int use_rplidar;
+    int use_ust10lx;
+    int use_tim571;
+    int use_xtion;
+    int use_rfid;
+    char *line_map_file;
+    char *xtion_samples_config;
 } mikes_config_t;
 
 extern mikes_config_t mikes_config;

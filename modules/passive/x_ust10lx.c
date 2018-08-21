@@ -3,6 +3,8 @@
 
 #include "x_ust10lx.h"
 #include "../live/gui.h"
+#include "mikes_logs.h"
+#include "core/config_mikes.h"
 
 #define ENLARGE_CENTER 50
 
@@ -15,7 +17,7 @@ static uint16_t            dist_local_copy[UST10LX_DATA_COUNT];
 static int range;
 static double scale_factor;
 
-void draw_ray(cairo_t *w, int i, uint16_t d, int ray_type)
+void ust10lx_draw_ray(cairo_t *w, int i, uint16_t d, int ray_type)
 {
    int x = 0, y=0, center_x=0, center_y=0;
    double alpha = M_PI * ust10lx_ray2azimuth(i) / 180.0;
@@ -64,7 +66,7 @@ void x_ust10lx_paint(cairo_t *w)
       uint16_t d = dist_local_copy[i];
       uint16_t d2 = d;
       if (d > range) d2 = range;
-      draw_ray(w, i, d2, (d == 65533) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
+      ust10lx_draw_ray(w, i, d2, (d == 65533) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
    }
   
    cairo_pop_group_to_source(w);
@@ -78,6 +80,13 @@ void x_ust10lx_update(uint16_t *dist)
 
 void init_x_ust10lx(int max_range_in_mm, int window_update_period_in_ms)
 {
+   if (!mikes_config.with_gui) return;
+   if (!mikes_config.use_ust10lx)
+   {
+        mikes_log(ML_INFO, "ust-10lx gui supressed by config.");
+        return;
+   }
+
    range = max_range_in_mm;
    scale_factor = range;
 
@@ -88,6 +97,8 @@ void init_x_ust10lx(int max_range_in_mm, int window_update_period_in_ms)
 
 void shutdown_x_ust10lx()
 {
+   if (!mikes_config.with_gui) return;
+   if (!mikes_config.use_ust10lx) return;
    gui_close_window(win);
 }
 

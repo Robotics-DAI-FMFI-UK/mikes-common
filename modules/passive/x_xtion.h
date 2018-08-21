@@ -1,5 +1,5 @@
-#ifndef _X_LIDAR_H_
-#define _X_LIDAR_H_
+#ifndef _X_XTION_H_
+#define _X_XTION_H_
 
 #include "../live/xtion/xtion.h"
 

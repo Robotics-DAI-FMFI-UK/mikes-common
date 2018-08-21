@@ -1,7 +1,3 @@
-#include "../../bites/mikes.h"
-#include "rfid_sensor.h"
-#include "../passive/mikes_logs.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +14,11 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#include "../../bites/mikes.h"
+#include "rfid_sensor.h"
+#include "../passive/mikes_logs.h"
+#include "core/config_mikes.h"
+
 #define MAX_PACKET_LENGTH 200
 
 #define STX 2
@@ -28,6 +29,8 @@ static int rfid_sockfd;
 static char rfid_connected;
 
 static char input_packet[MAX_PACKET_LENGTH];
+
+static int online;
 
 void read_input_packet()
 {
@@ -223,6 +226,14 @@ void *rfid_sensor_thread(void *args)
 
 void init_rfid_sensor()
 {
+    if (!mikes_config.use_rfid)
+    {
+        mikes_log(ML_INFO, "rfid supressed by config.");
+        online = 0;
+        return;
+    }
+    online = 1;
+
     pthread_t t;
     connect_rfid_sensor();
     pthread_mutex_init(&rfid_sensor_lock, 0);
@@ -237,6 +248,8 @@ void init_rfid_sensor()
 
 void get_rfid_data(rfid_data_type* buffer)
 {
+    if (!online) return;
+
     pthread_mutex_lock(&rfid_sensor_lock);
     memcpy(buffer, &rfid_data, sizeof(rfid_data_type));
     pthread_mutex_unlock(&rfid_sensor_lock);

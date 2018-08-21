@@ -3,6 +3,8 @@
 
 #include "../live/gui.h"
 #include "../passive/pose.h"
+#include "mikes_logs.h"
+#include "core/config_mikes.h"
 
 #define BORDER_LEFT 20
 #define BORDER_RIGHT 20
@@ -91,6 +93,7 @@ void line_map_mouse_listener(int x, int y, int button)
 
 void init_x_line_map(char *svg_filename, int win_width, int win_height)
 {
+   if (!mikes_config.with_gui) return;
    filename = svg_filename;
    pose_visible = 0;
    svg_drawn = 0;
@@ -103,6 +106,7 @@ void init_x_line_map(char *svg_filename, int win_width, int win_height)
 
 void shutdown_x_line_map()
 {
+   if (!mikes_config.with_gui) return;
    gui_close_window(win);
 }
 
