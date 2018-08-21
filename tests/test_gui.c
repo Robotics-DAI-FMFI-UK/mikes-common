@@ -131,10 +131,21 @@ void paint3(cairo_t *win)
 
 void paint4(cairo_t *win)
 {
+    static cairo_surface_t *svg_drawn = 0;
+
     cairo_push_group(win);
 
-    draw_svg_to_win(win4, 20, 20, "images/toy-robot.svg", 200, 200); 
-    cairo_stroke(win);
+    if (svg_drawn == 0)
+    {
+     svg_drawn = cairo_surface_create_similar (cairo_get_target(win), CAIRO_CONTENT_COLOR, WIN4_WIDTH - 40, WIN4_HEIGHT - 40);
+     cairo_t *svg_context = cairo_create(svg_drawn);
+     cairo_set_source_rgb(svg_context, 1, 1, 1);
+     cairo_paint(svg_context);
+     draw_svg_to_cairo(svg_context, 0, 0, "images/toy-robot.svg", WIN4_WIDTH - 40, WIN4_HEIGHT - 40);
+    }
+
+    cairo_set_source_surface (win, svg_drawn, 20, 20);
+    cairo_paint(win);
 
     cairo_pop_group_to_source(win);
     cairo_paint(win);
@@ -170,17 +181,17 @@ void key_listener(int win, int key)
 
 void test_gui()
 {
-    win1 = gui_open_window(paint1, WIN1_WIDTH, WIN1_HEIGHT, 300);
-    win2 = gui_open_window(paint2, WIN2_WIDTH, WIN2_HEIGHT, 100);
-    win3 = gui_open_window(paint3, WIN3_WIDTH, WIN3_HEIGHT, 100);
-    win4 = gui_open_window(paint4, WIN4_WIDTH, WIN4_HEIGHT, 200);
-
     x1 = WIN1_WIDTH / 2;
     yy1 = WIN1_HEIGHT / 2;
     x2 = WIN2_WIDTH / 2;
     y2 = WIN2_HEIGHT / 2;
     x3 = WIN3_WIDTH / 2;
     y3 = WIN3_HEIGHT / 2;
+
+    win1 = gui_open_window(paint1, WIN1_WIDTH, WIN1_HEIGHT, 300);
+    win2 = gui_open_window(paint2, WIN2_WIDTH, WIN2_HEIGHT, 100);
+    win3 = gui_open_window(paint3, WIN3_WIDTH, WIN3_HEIGHT, 100);
+    win4 = gui_open_window(paint4, WIN4_WIDTH, WIN4_HEIGHT, 0);
 
     gui_set_window_title(win1, "click to draw");
     gui_set_window_title(win3, "use arrows to draw");
@@ -209,6 +220,7 @@ int main(int argc, char **argv)
     init_gui();
     test_gui();
 
+    shutdown_gui();
     mikes_shutdown();
 
     return 0;
