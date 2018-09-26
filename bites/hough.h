@@ -1,13 +1,13 @@
 #ifndef _HOUGH_H_
 #define _HOUGH_H_
 
-#include "../live/tim571.h"
+#include "../modules/live/tim571.h"
 
 #define LINE_MAX_DATA_COUNT 10
 
 typedef struct line_struct {
   int distance;
-  int angle;
+  int angle;     // 0 angle is on the right side of the robot, increasing counter-clockwise
   int votes;
 } line_data;
 
@@ -20,7 +20,6 @@ typedef struct hough_config_struct {
   int distance_max; // 15000
   int distance_step; // 15
 
-  int angle_max; // 360
   int angle_step; // 5
 
   int votes_min; // 10

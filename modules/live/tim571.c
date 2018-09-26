@@ -31,7 +31,7 @@ static pthread_mutex_t tim571_lock;
 
 static uint16_t *local_data;
 static uint8_t *local_rssi;
-static tim571_status_data *local_status_data;
+static tim571_status_data local_status_data;
 
 static int sockfd;
 
@@ -348,13 +348,13 @@ void process_sentence()
 
   memcpy(local_data, tim571_data, sizeof(uint16_t) * TIM571_DATA_COUNT);
   memcpy(local_rssi, tim571_rssi_data, sizeof(uint8_t) * TIM571_DATA_COUNT);
-  copy_status_data(local_status_data);
+  copy_status_data(&local_status_data);
 
 	if (status_data_requested) status_data_available = 1;
 	pthread_mutex_unlock(&tim571_lock);
 
   for (int i = 0; i < callbacks_count; i++)
-    callbacks[i](local_data, local_rssi, local_status_data);
+    callbacks[i](local_data, local_rssi, &local_status_data);
 }
 
 void *tim571_thread(void *args)

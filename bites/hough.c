@@ -33,7 +33,7 @@ int get_distance_step_count(hough_config *config)
 
 int get_angle_step_count(hough_config *config)
 {
-  return config->angle_max / config->angle_step;
+  return 360 / config->angle_step;
 }
 
 int get_votes_array_size(hough_config *config)
@@ -269,14 +269,14 @@ void test_get_distance_step_count(hough_config *config)
 void test_get_angle_step_count(hough_config *config)
 {
   printf("Test get angle step count:\n");
-  printf("For angle_max %d angle_step %d => %d\n", config->angle_max, config->angle_step, get_angle_step_count(config));
+  printf("For angle_step %d => %d\n", config->angle_step, get_angle_step_count(config));
   printf("\n");
 }
 
 void test_get_votes_array_size(hough_config *config)
 {
   printf("Test get angle step count:\n");
-  printf("For distance_max %d distance_step %d angle_max %d angle_step %d => %d\n", config->distance_max, config->distance_step, config->angle_max, config->angle_step, get_votes_array_size(config));
+  printf("For distance_max %d distance_step %d angle_step %d => %d\n", config->distance_max, config->distance_step, config->angle_step, get_votes_array_size(config));
   printf("\n");
 }
 

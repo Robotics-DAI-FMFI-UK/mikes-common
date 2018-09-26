@@ -1,7 +1,7 @@
 #ifndef _HOUGH_TRANSFORM_H_
 #define _HOUGH_TRANSFORM_H_
 
-#include "../lib/hough.h"
+#include "../../bites/hough.h"
 
 typedef void (*hough_transform_receive_data_callback)(lines_data *lines);
 

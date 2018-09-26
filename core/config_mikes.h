@@ -18,6 +18,7 @@ typedef struct {
     int use_tim571;
     int use_xtion;
     int use_rfid;
+    int use_hough_transform;
     char *line_map_file;
     char *xtion_samples_config;
 } mikes_config_t;

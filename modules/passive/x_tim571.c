@@ -64,6 +64,21 @@ void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
    cairo_stroke(w);
 }
 
+void tim571_draw_line(cairo_t *w, line_data *ln)
+{
+   uint16_t d = ln->distance;
+   double alpha = (90 - ln->angle) / 180.0 * M_PI;
+
+   int x = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha) + X_TIM571_WIDTH / 2);
+   int y = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
+
+   printf("line at %d,%d\n", x, y);
+
+   cairo_set_source_rgb(w, 0.8, 0.1, 0.3);
+   cairo_arc(w, x, X_TIM571_HEIGHT - y, 10, 0, 2 * M_PI);
+   cairo_stroke(w);
+}
+
 void x_tim571_paint(cairo_t *w)
 {
    cairo_push_group(w);
@@ -81,6 +96,9 @@ void x_tim571_paint(cairo_t *w)
       tim571_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
    }
 
+   for (int i = 0; i < lines_local.line_count; i++)
+      tim571_draw_line(w, lines_local.lines + i);
+
    cairo_pop_group_to_source(w);
    cairo_paint(w);
 }
@@ -93,7 +111,7 @@ void x_tim571_laser_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *st
 
 void x_tim571_lines_update(lines_data *lines)
 {
-  memcpy(lines_local, lines, sizeof(lines));
+  lines_local = *lines;
 }
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
