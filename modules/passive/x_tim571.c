@@ -13,9 +13,10 @@
 #define RAY_ZERO_TYPE 3
 
 static int win;
-static uint16_t            dist_local_copy[TIM571_DATA_COUNT];
-static uint8_t             rssi_local_copy[TIM571_DATA_COUNT];
-static tim571_status_data  status_local_copy;
+static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
+static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
+static tim571_status_data   status_local_copy;
+static lines_data           lines_local;
 static int range;
 static double scale_factor;
 
@@ -84,10 +85,15 @@ void x_tim571_paint(cairo_t *w)
    cairo_paint(w);
 }
 
-void x_tim571_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
+void x_tim571_laser_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
    memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
    memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
+}
+
+void x_tim571_lines_update(lines_data *lines)
+{
+  memcpy(lines_local, lines, sizeof(lines));
 }
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
@@ -104,7 +110,8 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
 
    win = gui_open_window(x_tim571_paint, X_TIM571_WIDTH, X_TIM571_HEIGHT, window_update_period_in_ms);
    gui_set_window_title(win, "TIM571");
-   register_tim571_callback(x_tim571_update);
+   register_tim571_callback(x_tim571_laser_update);
+   register_hough_transform_callback(x_tim571_lines_update);
    get_tim571_status_data(&status_local_copy);
 }
 

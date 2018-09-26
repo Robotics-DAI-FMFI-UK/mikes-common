@@ -3,7 +3,7 @@
 
 #include "../lib/hough.h"
 
-typedef void (*hough_transform_receive_data_callback)(*lines_data);
+typedef void (*hough_transform_receive_data_callback)(lines_data *lines);
 
 void init_hough_transform();
 
