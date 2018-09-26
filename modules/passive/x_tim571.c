@@ -47,7 +47,7 @@ void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
       center_y = (int)(ENLARGE_CENTER / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
       cairo_set_source_rgb(w, 0.8, 0.8, 0.8);
    }
-   
+
    cairo_move_to(w, x, X_TIM571_HEIGHT - y);
    cairo_line_to(w, center_x, X_TIM571_HEIGHT - center_y);
    cairo_stroke(w);
@@ -70,7 +70,7 @@ void x_tim571_paint(cairo_t *w)
    cairo_set_source_rgb(w, 1, 1, 1);
    cairo_paint(w);
    cairo_set_line_width(w, 1);
-    
+
    for (int i = 0; i < TIM571_DATA_COUNT; i++)
    {
       uint16_t d = dist_local_copy[i];
@@ -79,12 +79,12 @@ void x_tim571_paint(cairo_t *w)
       if (d > range) d = range;
       tim571_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
    }
-  
+
    cairo_pop_group_to_source(w);
    cairo_paint(w);
 }
 
-void x_tim571_update(uint16_t *dist, uint8_t *rssi)
+void x_tim571_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
    memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
    memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
@@ -104,7 +104,7 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
 
    win = gui_open_window(x_tim571_paint, X_TIM571_WIDTH, X_TIM571_HEIGHT, window_update_period_in_ms);
    gui_set_window_title(win, "TIM571");
-   register_tim571_callback(x_tim571_update); 
+   register_tim571_callback(x_tim571_update);
    get_tim571_status_data(&status_local_copy);
 }
 
@@ -114,4 +114,3 @@ void shutdown_x_tim571()
    if (!mikes_config.use_tim571)
    gui_close_window(win);
 }
-
