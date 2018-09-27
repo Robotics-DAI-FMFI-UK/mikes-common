@@ -3,17 +3,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "../../bites/mikes.h"
 #include "tim_hough_transform.h"
 #include "../passive/mikes_logs.h"
 #include "core/config_mikes.h"
 
-#define MAX_HOUGH_TRANSFORM_CALLBACKS 20
+#define MAX_TIM_HOUGH_TRANSFORM_CALLBACKS 20
 
-static pthread_mutex_t      tim571_new_data_lock;
-static pthread_mutexattr_t mutex_error_check_attr;
-static pthread_mutex_t      hough_transform_lock;
+static pthread_mutex_t      tim_hough_transform_lock;
+static int                  fd[2];
+static char                 readbuffer[10];
+static char                 sendbuffer[1] = {'G'};
 
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
@@ -21,12 +23,12 @@ static tim571_status_data   status_data_local_copy;
 
 static lines_data           lines_data_local;
 
-static hough_transform_receive_data_callback  callbacks[MAX_HOUGH_TRANSFORM_CALLBACKS];
-static int                                    callbacks_count;
+static tim_hough_transform_receive_data_callback  callbacks[MAX_TIM_HOUGH_TRANSFORM_CALLBACKS];
+static int                                        callbacks_count;
 
 static int online;
 
-static hough_config default_config = {
+static hough_config tim_hough_default_config = {
   .distance_max = TIM571_MAX_DISTANCE,
   .distance_step = 15,
   .angle_step = 5,
@@ -37,63 +39,75 @@ static hough_config default_config = {
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
+// ----------------------------PIPES-------------------------------
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+
+int wait_for_new_data()
+{
+  return read(fd[0], readbuffer, sizeof(readbuffer));
+}
+
+int alert_new_data()
+{
+  return write(fd[1], sendbuffer, sizeof(sendbuffer));
+}
+
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
 // --------------------------LIFECYCLE-----------------------------
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 
-void change_default_config(hough_config *config)
+void tim_hough_transform_change_default_config(hough_config *config)
 {
-  pthread_mutex_lock(&hough_transform_lock);
-  memcpy(config, &default_config, sizeof(hough_config));
-  pthread_mutex_unlock(&hough_transform_lock);
+  pthread_mutex_lock(&tim_hough_transform_lock);
+  memcpy(config, &tim_hough_default_config, sizeof(hough_config));
+  pthread_mutex_unlock(&tim_hough_transform_lock);
 }
 
 void process_tim571_data()
 {
-  printf("lines\n");
-  hough_get_lines_data(&default_config, &status_data_local_copy, dist_local_copy, rssi_local_copy, &lines_data_local);
-  printf("found\n");
+  hough_get_lines_data(&tim_hough_default_config, &status_data_local_copy, dist_local_copy, rssi_local_copy, &lines_data_local);
   for (int i = 0; i < callbacks_count; i++)
     callbacks[i](&lines_data_local);
 }
 
-void *hough_transform_thread(void *args)
+void *tim_hough_transform_thread(void *args)
 {
-  pthread_mutex_lock(&tim571_new_data_lock); // Wait for first data
-  printf("lala\n");
-  int err = 0;
-
-  while (program_runs && ((err = pthread_mutex_lock(&tim571_new_data_lock)) == 0))
+  while (program_runs)
   {
-    printf("lalala\n");
-    pthread_mutex_lock(&hough_transform_lock);
+    if (wait_for_new_data() < 0) {
+      perror("mikes:tim_hough_transform");
+      mikes_log(ML_ERR, "tim_hough_transform error during waiting on new Data.");
+      continue;
+    }
+    pthread_mutex_lock(&tim_hough_transform_lock);
     process_tim571_data();
-    pthread_mutex_unlock(&hough_transform_lock);
+    pthread_mutex_unlock(&tim_hough_transform_lock);
   }
 
-  printf("papa err=%d\n", err);
-  mikes_log(ML_INFO, "hough_transform quits.");
+  mikes_log(ML_INFO, "tim_hough_transform quits.");
   threads_running_add(-1);
   return 0;
 }
 
 void tim571_new_data(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
-  if (pthread_mutex_trylock(&hough_transform_lock) == 0) {
-
+  if (pthread_mutex_trylock(&tim_hough_transform_lock) == 0) {
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     memcpy(status_data, &status_data_local_copy, sizeof(tim571_status_data));
-    pthread_mutex_unlock(&hough_transform_lock);
-    pthread_mutex_unlock(&tim571_new_data_lock);
+    alert_new_data();
+    pthread_mutex_unlock(&tim_hough_transform_lock);
   }
 }
 
-void init_hough_transform()
+void init_tim_hough_transform()
 {
-  if (!mikes_config.use_hough_transform)
+  if (!mikes_config.use_tim_hough_transform)
   {
-    mikes_log(ML_INFO, "hough_transform supressed by config.");
+    mikes_log(ML_INFO, "tim_hough_transform supressed by config.");
     online = 0;
     return;
   }
@@ -101,14 +115,11 @@ void init_hough_transform()
 
   pthread_t t;
   register_tim571_callback(tim571_new_data);
-  pthread_mutexattr_init(&mutex_error_check_attr);
-  pthread_mutexattr_settype(&mutex_error_check_attr, PTHREAD_MUTEX_ERRORCHECK);
-  pthread_mutex_init(&tim571_new_data_lock, &mutex_error_check_attr);
-  pthread_mutex_init(&hough_transform_lock, 0);
-  if (pthread_create(&t, 0, hough_transform_thread, 0) != 0)
+  pthread_mutex_init(&tim_hough_transform_lock, 0);
+  if (pthread_create(&t, 0, tim_hough_transform_thread, 0) != 0)
   {
-    perror("mikes:hough_transform");
-    mikes_log(ML_ERR, "creating thread for hough transform");
+    perror("mikes:tim_hough_transform");
+    mikes_log(ML_ERR, "creating thread for tim hough transform");
   }
   else threads_running_add(1);
 }
@@ -119,19 +130,19 @@ void init_hough_transform()
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 
-void register_hough_transform_callback(hough_transform_receive_data_callback callback)
+void register_tim_hough_transform_callback(tim_hough_transform_receive_data_callback callback)
 {
   if (!online) return;
 
-  if (callbacks_count >= MAX_HOUGH_TRANSFORM_CALLBACKS)
+  if (callbacks_count >= MAX_TIM_HOUGH_TRANSFORM_CALLBACKS)
   {
-     mikes_log(ML_ERR, "too many hough_transform callbacks");
+     mikes_log(ML_ERR, "too many tim_hough_transform callbacks");
      return;
   }
   callbacks[callbacks_count++] = callback;
 }
 
-void unregister_hough_transform_callback(hough_transform_receive_data_callback callback)
+void unregister_tim_hough_transform_callback(tim_hough_transform_receive_data_callback callback)
 {
   if (!online) return;
 

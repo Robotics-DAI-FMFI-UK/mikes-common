@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     init_gui();
     init_tim571();
     sleep(1);
-    init_hough_transform();
+    init_tim_hough_transform();
     init_x_tim571(7000, 400);
 
     while (program_runs)

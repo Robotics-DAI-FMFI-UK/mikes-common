@@ -129,7 +129,7 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
    win = gui_open_window(x_tim571_paint, X_TIM571_WIDTH, X_TIM571_HEIGHT, window_update_period_in_ms);
    gui_set_window_title(win, "TIM571");
    register_tim571_callback(x_tim571_laser_update);
-   register_hough_transform_callback(x_tim571_lines_update);
+   register_tim_hough_transform_callback(x_tim571_lines_update);
    get_tim571_status_data(&status_local_copy);
 }
 

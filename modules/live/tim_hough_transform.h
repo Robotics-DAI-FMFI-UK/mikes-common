@@ -3,13 +3,13 @@
 
 #include "../../bites/hough.h"
 
-typedef void (*hough_transform_receive_data_callback)(lines_data *lines);
+typedef void (*tim_hough_transform_receive_data_callback)(lines_data *lines);
 
-void init_hough_transform();
+void init_tim_hough_transform();
 
-void change_default_config(hough_config *config);
+void tim_hough_transform_change_default_config(hough_config *config);
 
-void register_hough_transform_callback(hough_transform_receive_data_callback callback);
-void unregister_hough_transform_callback(hough_transform_receive_data_callback callback);
+void register_tim_hough_transform_callback(tim_hough_transform_receive_data_callback callback);
+void unregister_tim_hough_transform_callback(tim_hough_transform_receive_data_callback callback);
 
 #endif
