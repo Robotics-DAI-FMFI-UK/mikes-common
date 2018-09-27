@@ -113,9 +113,16 @@ void init_tim_hough_transform()
   }
   online = 1;
 
+  if (pipe(fd) != 0)
+  {
+    perror("mikes:tim_hough_transform");
+    mikes_log(ML_ERR, "creating pipe for tim hough transform");
+    return;
+  }
+
   pthread_t t;
-  register_tim571_callback(tim571_new_data);
   pthread_mutex_init(&tim_hough_transform_lock, 0);
+  register_tim571_callback(tim571_new_data);
   if (pthread_create(&t, 0, tim_hough_transform_thread, 0) != 0)
   {
     perror("mikes:tim_hough_transform");
