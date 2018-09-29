@@ -6,6 +6,7 @@
 typedef void (*tim_hough_transform_receive_data_callback)(lines_data *lines);
 
 void init_tim_hough_transform();
+void shutdown_tim_hough_transform();
 
 void tim_hough_transform_change_default_config(hough_config *config);
 

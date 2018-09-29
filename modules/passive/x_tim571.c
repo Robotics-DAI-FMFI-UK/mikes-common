@@ -72,10 +72,22 @@ void tim571_draw_line(cairo_t *w, line_data *ln)
    int x = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha) + X_TIM571_WIDTH / 2);
    int y = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
 
-   printf("line at %d,%d\n", x, y);
+   cairo_set_source_rgb(w, 0.8, 0.8, 0.3);
 
-   cairo_set_source_rgb(w, 0.8, 0.1, 0.3);
-   cairo_arc(w, x, X_TIM571_HEIGHT - y, 10, 0, 2 * M_PI);
+   double slen = sqrt((x - X_TIM571_WIDTH / 2) * (x - X_TIM571_WIDTH / 2) + (y - X_TIM571_HEIGHT / 2) * (y - X_TIM571_HEIGHT / 2));
+   if (slen < 0.000001) return;
+
+   double sx = (x - X_TIM571_WIDTH / 2) / slen;
+   double sy = (y - X_TIM571_HEIGHT / 2) / slen;
+
+   int x1 = (int)(x - (-sy) * (X_TIM571_WIDTH + X_TIM571_HEIGHT) + 0.5);
+   int y1 = (int)(y - sx * (X_TIM571_WIDTH + X_TIM571_HEIGHT) + 0.5);
+   int x2 = (int)(x + (-sy) * (X_TIM571_WIDTH + X_TIM571_HEIGHT) + 0.5);
+   int y2 = (int)(y + sx * (X_TIM571_WIDTH + X_TIM571_HEIGHT) + 0.5);
+
+   cairo_move_to(w, x1, X_TIM571_HEIGHT - y1);
+   cairo_line_to(w, x2, X_TIM571_HEIGHT - y2);
+
    cairo_stroke(w);
 }
 
@@ -112,6 +124,7 @@ void x_tim571_laser_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *st
 void x_tim571_lines_update(lines_data *lines)
 {
   lines_local = *lines;
+  printf("%d lines taken\n", lines_local.line_count);
 }
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)

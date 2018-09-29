@@ -22,6 +22,7 @@ int main(int argc, char **argv)
     }
 
     shutdown_x_tim571();
+    shutdown_tim_hough_transform();
     shutdown_gui();
 
     mikes_shutdown();

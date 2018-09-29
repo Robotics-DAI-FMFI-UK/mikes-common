@@ -30,9 +30,9 @@ static int online;
 
 static hough_config tim_hough_default_config = {
   .distance_max = TIM571_MAX_DISTANCE,
-  .distance_step = 15,
-  .angle_step = 5,
-  .votes_min = 10,
+  .distance_step = 20,
+  .angle_step = 1,
+  .votes_min = 50,
   .bad_distance = 0,
   .bad_rssi = 0
 };
@@ -97,7 +97,7 @@ void tim571_new_data(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_d
   if (pthread_mutex_trylock(&tim_hough_transform_lock) == 0) {
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
-    memcpy(status_data, &status_data_local_copy, sizeof(tim571_status_data));
+    status_data_local_copy = *status_data;
     alert_new_data();
     pthread_mutex_unlock(&tim_hough_transform_lock);
   }
@@ -129,6 +129,12 @@ void init_tim_hough_transform()
     mikes_log(ML_ERR, "creating thread for tim hough transform");
   }
   else threads_running_add(1);
+}
+
+void shutdown_tim_hough_transform()
+{
+  close(fd[0]);
+  close(fd[1]);
 }
 
 // ----------------------------------------------------------------

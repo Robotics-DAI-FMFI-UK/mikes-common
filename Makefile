@@ -84,6 +84,9 @@ TEST_X_LINE_MAP_SRCS=tests/test_x_line_map.c \
 TEST_LINE_MAP_SRCS=tests/test_line_map.c \
                    modules/passive/line_map.c \
                    ${MIKES_BASIC}
+TEST_HOUGH_SRCS=tests/test_hough.c \
+                tests/hough_tests.c \
+                bites/hough.c
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
@@ -104,6 +107,7 @@ TEST_XTION_OBJS=${TEST_XTION_SRCS:.c=.o} ${XTION_OBJS}
 TEST_X_XTION_OBJS=${TEST_X_XTION_SRCS:.c=.o} ${XTION_OBJS}
 TEST_X_LINE_MAP_OBJS=${TEST_X_LINE_MAP_SRCS:.c=.o}
 TEST_LINE_MAP_OBJS=${TEST_LINE_MAP_SRCS:.c=.o}
+TEST_HOUGH_OBJS=${TEST_HOUGH_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -126,7 +130,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -168,6 +172,8 @@ test_x_line_map: ${TEST_X_LINE_MAP_OBJS}
 	${CC} -o test_x_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS} 
 test_line_map: ${TEST_LINE_MAP_OBJS}
 	${CC} -o test_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_hough: ${TEST_HOUGH_OBJS}
+	${CC} -o test_hough $^ ${LDFLAGS} ${DEBUG_FLAGS}
      
 uninstall:
 
