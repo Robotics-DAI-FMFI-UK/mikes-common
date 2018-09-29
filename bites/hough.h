@@ -2,9 +2,9 @@
 #define _HOUGH_H_
 
 #include "../modules/live/tim571.h"
+#include "math_2d.h"
 
 #define LINE_MAX_DATA_COUNT 50
-#define FULL_ANGLE 360
 
 typedef struct line_struct {
   int distance;
@@ -29,17 +29,7 @@ typedef struct hough_config_struct {
   int bad_rssi; // 0
 } hough_config;
 
-typedef struct vector_struct {
-  double x;
-  double y;
-} vector;
-
-typedef struct point_struct {
-  double x;
-  double y;
-} point;
-
 void hough_get_lines_data(hough_config *config, tim571_status_data *status_data, uint16_t *distance, uint8_t *rssi, lines_data *data);
-void printf_lines_data(lines_data *data);
+void hough_print_lines_data(lines_data *data);
 
 #endif

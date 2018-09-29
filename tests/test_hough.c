@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "hough_tests.h"
-
 
 void create_test_status_data(tim571_status_data *data)
 {
@@ -231,6 +229,6 @@ int main(int argc,char **argv)
   test_hough_methods(&config, &test_data, distance, rssi);
 
   hough_get_lines_data(&config, &test_data, distance, rssi, &result);
-  printf_lines_data(&result);
+  hough_print_lines_data(&result);
   exit(0);
 }
