@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <math.h>
 #include <string.h>
 #include <pthread.h>
@@ -61,5 +62,42 @@ double rad_normAlpha(double alpha){
       while(alpha >= 2.0 * M_PI)
          alpha -= 2.0 * M_PI;
    return alpha;
+}
+
+short angle_difference(short alpha, short beta)
+{
+  short diff = beta - alpha;
+  if (diff > 180) return diff - 360;
+  else if (diff < -180) return diff + 360;
+  return diff;
+}
+
+double angle_rad_difference(double alpha, double beta)
+{
+  beta = rad_normAlpha(beta);
+  alpha = rad_normAlpha(alpha);
+  double diff = beta - alpha;
+  if (diff > M_PI) return diff - 2.0 * M_PI;
+  else if (diff < -M_PI) return diff + 2.0 * M_PI;
+  return diff;
+}
+
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// ----------------------------PIPES-------------------------------
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+
+static char sendbuffer[1] = {'G'};
+static char readbuffer[10];
+
+int wait_for_new_data(int *fd)
+{
+  return read(fd[0], readbuffer, sizeof(readbuffer));
+}
+
+int alert_new_data(int *fd)
+{
+  return write(fd[1], sendbuffer, sizeof(sendbuffer));
 }
 

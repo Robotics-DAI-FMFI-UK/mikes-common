@@ -1,7 +1,7 @@
 #include "../config/config.h"
 #include "config_mikes.h"
 
-mikes_config_t default_mikes_config = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+mikes_config_t default_mikes_config = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 mikes_config_t mikes_config;
 
 void load_config()
@@ -25,6 +25,7 @@ void load_config()
     mikes_config.use_xtion = config_get_intval(cfg, "use_rplidar", mikes_config.use_xtion);
     mikes_config.use_rfid = config_get_intval(cfg, "use_rfid", mikes_config.use_rfid);
     mikes_config.use_tim_hough_transform = config_get_intval(cfg, "use_tim_hough_transform", mikes_config.use_tim_hough_transform);
+    mikes_config.use_line_filter = config_get_intval(cfg, "use_line_filter", mikes_config.use_line_filter);
 
     mikes_config.line_map_file = config_get_strval(cfg, "line_map_file", "file_missing_in_config");
     mikes_config.xtion_samples_config = config_get_strval(cfg, "xtion_samples_config", "file_missing_in_config");

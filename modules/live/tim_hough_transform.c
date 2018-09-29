@@ -9,13 +9,12 @@
 #include "tim_hough_transform.h"
 #include "../passive/mikes_logs.h"
 #include "core/config_mikes.h"
+#include "../../bites/util.h"
 
 #define MAX_TIM_HOUGH_TRANSFORM_CALLBACKS 20
 
 static pthread_mutex_t      tim_hough_transform_lock;
 static int                  fd[2];
-static char                 readbuffer[10];
-static char                 sendbuffer[1] = {'G'};
 
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
@@ -36,22 +35,6 @@ static hough_config tim_hough_default_config = {
   .bad_distance = 0,
   .bad_rssi = 0
 };
-
-// ----------------------------------------------------------------
-// ----------------------------------------------------------------
-// ----------------------------PIPES-------------------------------
-// ----------------------------------------------------------------
-// ----------------------------------------------------------------
-
-int wait_for_new_data()
-{
-  return read(fd[0], readbuffer, sizeof(readbuffer));
-}
-
-int alert_new_data()
-{
-  return write(fd[1], sendbuffer, sizeof(sendbuffer));
-}
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -77,7 +60,7 @@ void *tim_hough_transform_thread(void *args)
 {
   while (program_runs)
   {
-    if (wait_for_new_data() < 0) {
+    if (wait_for_new_data(fd) < 0) {
       perror("mikes:tim_hough_transform");
       mikes_log(ML_ERR, "tim_hough_transform error during waiting on new Data.");
       continue;
@@ -98,7 +81,7 @@ void tim571_new_data(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_d
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     status_data_local_copy = *status_data;
-    alert_new_data();
+    alert_new_data(fd);
     pthread_mutex_unlock(&tim_hough_transform_lock);
   }
 }

@@ -39,6 +39,7 @@ TEST_X_TIM571_SRCS=tests/test_x_tim571.c \
                    modules/passive/x_tim571.c \
                    modules/live/gui.c \
 		   modules/live/tim_hough_transform.c \
+		   modules/live/line_filter.c \
                    bites/hough.c \
                    ${MIKES_BASIC}
 TEST_X_BASE_SRCS=tests/test_x_base.c \

@@ -311,24 +311,6 @@ void get_base_data(base_data_type* buffer)
     pthread_mutex_unlock(&base_module_lock);
 }
 
-short angle_difference(short alpha, short beta)
-{
-  short diff = beta - alpha;
-  if (diff > 180) return diff - 360;
-  else if (diff < -180) return diff + 360;
-  return diff;
-}
-
-double angle_rad_difference(double alpha, double beta)
-{
-  beta = rad_normAlpha(beta);
-  alpha = rad_normAlpha(alpha);
-  double diff = beta - alpha;
-  if (diff > M_PI) return diff - 2.0 * M_PI;
-  else if (diff < -M_PI) return diff + 2.0 * M_PI;
-  return diff;
-}
-
 void cancel_azimuth_mode()
 {
     if (write(fdR[1], "@X", 2) < 2)

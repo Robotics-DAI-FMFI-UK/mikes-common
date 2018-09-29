@@ -12,11 +12,17 @@
 #define RAY_AZIMUTH_TYPE 2
 #define RAY_ZERO_TYPE 3
 
+#define BASIC_LINE 1
+#define FILTERED_LINE 2
+
+int show_raw_lines;
+
 static int win;
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static tim571_status_data   status_local_copy;
 static lines_data           lines_local;
+static lines_data           lines_filtered_local;
 static int range;
 static double scale_factor;
 
@@ -64,7 +70,7 @@ void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
    cairo_stroke(w);
 }
 
-void tim571_draw_line(cairo_t *w, line_data *ln)
+void tim571_draw_line(cairo_t *w, line_data *ln, int line_type)
 {
    uint16_t d = ln->distance;
    double alpha = (90 - ln->angle) / 180.0 * M_PI;
@@ -72,7 +78,10 @@ void tim571_draw_line(cairo_t *w, line_data *ln)
    int x = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha) + X_TIM571_WIDTH / 2);
    int y = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
 
-   cairo_set_source_rgb(w, 0.8, 0.8, 0.3);
+   if (line_type == BASIC_LINE)
+     cairo_set_source_rgb(w, 0.8, 0.8, 0.3);
+   else
+     cairo_set_source_rgb(w, 0.3, 0.5, 0.5);
 
    double slen = sqrt((x - X_TIM571_WIDTH / 2) * (x - X_TIM571_WIDTH / 2) + (y - X_TIM571_HEIGHT / 2) * (y - X_TIM571_HEIGHT / 2));
    if (slen < 0.000001) return;
@@ -108,8 +117,12 @@ void x_tim571_paint(cairo_t *w)
       tim571_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
    }
 
-   for (int i = 0; i < lines_local.line_count; i++)
-      tim571_draw_line(w, lines_local.lines + i);
+   if (show_raw_lines)
+     for (int i = 0; i < lines_local.line_count; i++)
+        tim571_draw_line(w, lines_local.lines + i, BASIC_LINE);
+
+   for (int i = 0; i < lines_filtered_local.line_count; i++)
+      tim571_draw_line(w, lines_filtered_local.lines + i, FILTERED_LINE);
 
    cairo_pop_group_to_source(w);
    cairo_paint(w);
@@ -124,11 +137,17 @@ void x_tim571_laser_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *st
 void x_tim571_lines_update(lines_data *lines)
 {
   lines_local = *lines;
-  printf("%d lines taken\n", lines_local.line_count);
+}
+
+void filtered_lines_update(lines_data *lines)
+{
+  lines_filtered_local = *lines;
 }
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
 {
+   show_raw_lines = 1;
+
    if (!mikes_config.with_gui) return;
    if (!mikes_config.use_tim571)
    {
@@ -143,6 +162,7 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
    gui_set_window_title(win, "TIM571");
    register_tim571_callback(x_tim571_laser_update);
    register_tim_hough_transform_callback(x_tim571_lines_update);
+   register_line_filter_callback(filtered_lines_update);
    get_tim571_status_data(&status_local_copy);
 }
 

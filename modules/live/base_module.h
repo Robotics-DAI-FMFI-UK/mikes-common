@@ -77,12 +77,6 @@ void resume_status_reporting();
 // configure laziness for velocity regulation mode
 void set_laziness(unsigned char laziness);
 
-// utility function to compute directional angle from alpha to beta (+/- 180), all values in deg.
-short angle_difference(short alpha, short beta);
-
-// utility function to compute directional angle from alpha to beta (+/- 180), all values in deg.
-double angle_rad_difference(double alpha, double beta);
-
 // utility function to convert the angular counter to travelled distance in mm
 short counter2mm(short counter);
 
