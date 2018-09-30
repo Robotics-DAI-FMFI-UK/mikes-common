@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.IO;
 using MonoBrick.NXT;//use this to run the example on the NXT
 
 namespace Application
@@ -8,6 +9,7 @@ namespace Application
     {
       public static void Main(string[] args)
       {
+            Console.SetIn(new StreamReader(Console.OpenStandardInput()));
             var brick = new Brick<Sensor,Sensor,Sensor,Sensor>("usb");
             brick.Connection.Open();
             bool we_run = true;
@@ -22,6 +24,12 @@ namespace Application
                   brick.MotorB.On(arg);
                   brick.MotorC.On(arg);
                 }
+              }
+              else if (cmd.Equals("Sleep"))
+              {
+                sbyte arg;
+                if (sbyte.TryParse(Console.ReadLine(), out arg))
+                  Thread.Sleep(arg);
               }
               else if (cmd.Equals("Off"))
               {
