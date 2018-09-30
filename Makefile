@@ -185,7 +185,7 @@ test_hough: ${TEST_HOUGH_OBJS}
 	${CC} -o test_hough $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_math_2d: ${TEST_MATH_OBJS}
 	${CC} -o test_math_2d $^ ${LDFLAGS} ${DEBUG_FLAGS}
-test_nxt: ${TEST_NXT_OBJS} nxt/NXTOperator.cs
+test_nxt: ${TEST_NXT_OBJS} nxt/NXTOperator.cs nxt/tests/TestMonoBrick.cs
 	$(MAKE) -C nxt
 	${CC} -o test_nxt ${TEST_NXT_OBJS} ${LDFLAGS} ${DEBUG_FLAGS}
 
