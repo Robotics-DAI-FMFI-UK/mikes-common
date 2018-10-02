@@ -165,13 +165,13 @@ void hough_get_lines_data(hough_config *config, tim571_status_data *status_data,
   for (int index = 0; index < LINE_MAX_DATA_COUNT && index < result_count; index++) {
     data->lines[index] = vote_results[index];
   }
-  data->line_count = result_count < LINE_MAX_DATA_COUNT ? result_count : LINE_MAX_DATA_COUNT;
+  data->count = result_count < LINE_MAX_DATA_COUNT ? result_count : LINE_MAX_DATA_COUNT;
 }
 
 void hough_print_lines_data(lines_data *data)
 {
   printf("LinesData:\n");
-  for (int index = 0; index < data->line_count; index++) {
+  for (int index = 0; index < data->count; index++) {
     printf("%d: Distance: %10d, Angle: %3d, Votes: %10d\n", index, data->lines[index].distance, data->lines[index].angle, data->lines[index].votes);
   }
 }

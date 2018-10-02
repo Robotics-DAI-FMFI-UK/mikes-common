@@ -14,7 +14,7 @@ typedef struct line_struct {
 
 typedef struct lines_struct {
   line_data lines[LINE_MAX_DATA_COUNT];
-  int line_count;
+  int count;
 } lines_data;
 
 typedef struct hough_config_struct {

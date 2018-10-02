@@ -152,11 +152,11 @@ void x_tim571_paint(cairo_t *w)
   }
 
   if (show_raw_lines)
-    for (int i = 0; i < lines_local.line_count; i++)
+    for (int i = 0; i < lines_local.count; i++)
       tim571_draw_line(w, lines_local.lines + i, BASIC_LINE);
 
   if (show_filtered_lines)
-    for (int i = 0; i < lines_filtered_local.line_count; i++)
+    for (int i = 0; i < lines_filtered_local.count; i++)
       tim571_draw_line(w, lines_filtered_local.lines + i, FILTERED_LINE);
 
   if (show_segments)

@@ -41,7 +41,7 @@ void filter_lines()
 {
   // input: lines_data_local
   // output: filtered_lines
-  int n = lines_data_local.line_count;
+  int n = lines_data_local.count;
   int cluster[n];
 
   for (int i = 0; i < n; i++)
@@ -112,7 +112,7 @@ void filter_lines()
     cluster_angle[cluster[i]] += line_weight * omega;
   }
 
-  filtered_lines.line_count = cluster_count;
+  filtered_lines.count = cluster_count;
   int m = 0;
   for (int i = 0; i < n; i++)
   {
@@ -135,7 +135,7 @@ void filter_lines()
 void process_new_lines()
 {
   filter_lines();
-  printf("filtered %d lines to %d\n", lines_data_local.line_count, filtered_lines.line_count);
+  printf("filtered %d lines to %d\n", lines_data_local.count, filtered_lines.count);
   for (int i = 0; i < callbacks_count; i++)
     callbacks[i](&status_data_local_copy, dist_local_copy, rssi_local_copy, &filtered_lines);
 }

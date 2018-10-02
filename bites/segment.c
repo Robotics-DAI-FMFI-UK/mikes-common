@@ -13,7 +13,7 @@ void segment_transform_points_and_lines_to_segments(segment_config *config, tim5
   point_2d start_point, end_point;
 
   segments->count = 0;
-  for (int line_i = 0; line_i < lines->line_count; line_i++) {
+  for (int line_i = 0; line_i < lines->count; line_i++) {
     line = &lines->lines[line_i];
     distance = line->distance;
     angle = line->angle;
