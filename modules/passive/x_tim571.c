@@ -18,6 +18,7 @@
 int show_raw_lines;
 int show_filtered_lines;
 int show_segments;
+int show_corners;
 
 static int win;
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
@@ -135,6 +136,23 @@ void tim571_draw_segment(cairo_t *w, segment_data *segment)
   cairo_stroke(w);
 }
 
+void tim571_draw_corner(cairo_t *w, point_2d *corner)
+{
+  vector_2d v;
+  vector_from_two_points(&entry, corner, &v);
+
+  double d = get_vector_length(&v);
+
+  double alpha = (90 - angle_from_axis_x(&v)) / 180.0 * M_PI;
+
+  int x = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha) + X_TIM571_WIDTH / 2);
+  int y = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
+  cairo_set_source_rgb(w, 0.0, 0.0, 0.0);
+
+  cairo_arc(w, x, X_TIM571_HEIGHT - y, 4, 0, 4 * M_PI);
+  cairo_stroke(w);
+}
+
 void x_tim571_paint(cairo_t *w)
 {
   cairo_push_group(w);
@@ -163,6 +181,10 @@ void x_tim571_paint(cairo_t *w)
   if (show_segments)
     for (int i = 0; i < segments_local.count; i++)
       tim571_draw_segment(w, segments_local.segments + i);
+
+  if (show_corners)
+    for (int i = 0; i < corners_local.count; i++)
+      tim571_draw_corner(w, corners_local.corners + i);
 
   cairo_pop_group_to_source(w);
   cairo_paint(w);
@@ -196,6 +218,7 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
    show_raw_lines = 1;
    show_filtered_lines = 1;
    show_segments = 1;
+   show_corners = 1;
 
    if (!mikes_config.with_gui) return;
    if (!mikes_config.use_tim571)

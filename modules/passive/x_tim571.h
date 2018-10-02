@@ -13,6 +13,7 @@
 extern int show_raw_lines;
 extern int show_filtered_lines;
 extern int show_segments;
+extern int show_corners;
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms);
 void shutdown_x_tim571();
