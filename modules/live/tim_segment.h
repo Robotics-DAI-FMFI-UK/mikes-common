@@ -3,7 +3,7 @@
 
 #include "../../bites/segment.h"
 
-typedef void (*tim_segment_receive_data_callback)(lines_data *segments_data);
+typedef void (*tim_segment_receive_data_callback)(segments_data *segments);
 
 void init_tim_segment();
 void shutdown_tim_segment();

@@ -22,7 +22,7 @@ static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static tim571_status_data   status_data_local_copy;
 static lines_data           lines_data_local_copy;
 
-static lines_data           segments_data;
+static segments_data        segments_result;
 
 static tim_segment_receive_data_callback  callbacks[MAX_TIM_SEGMENT_CALLBACKS];
 static int                                callbacks_count;
@@ -44,9 +44,9 @@ static segment_config tim_segment_default_config = {
 
 void process_new_data()
 {
-  segment_transform_points_and_lines_to_segments(&tim_segment_default_config, &status_data_local_copy, dist_local_copy, rssi_local_copy, &lines_data_local_copy, &segments_data);
+  segment_transform_points_and_lines_to_segments(&tim_segment_default_config, &status_data_local_copy, dist_local_copy, rssi_local_copy, &lines_data_local_copy, &segments_result);
   for (int i = 0; i < callbacks_count; i++)
-    callbacks[i](&segments_data);
+    callbacks[i](&segments_result);
 }
 
 void line_filter_new_data(tim571_status_data *status_data, uint16_t *distance, uint8_t *rssi, lines_data *lines)
