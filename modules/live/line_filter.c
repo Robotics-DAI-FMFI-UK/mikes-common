@@ -137,7 +137,7 @@ void process_new_lines()
   filter_lines();
   printf("filtered %d lines to %d\n", lines_data_local.line_count, filtered_lines.line_count);
   for (int i = 0; i < callbacks_count; i++)
-    callbacks[i](&status_data_local_copy, &dist_local_copy, &rssi_local_copy, &filtered_lines);
+    callbacks[i](&status_data_local_copy, dist_local_copy, rssi_local_copy, &filtered_lines);
 }
 
 void *line_filter_thread(void *args)
