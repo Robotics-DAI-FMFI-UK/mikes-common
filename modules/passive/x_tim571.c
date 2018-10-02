@@ -26,6 +26,7 @@ static tim571_status_data   status_local_copy;
 static lines_data           lines_local;
 static lines_data           lines_filtered_local;
 static segments_data        segments_local;
+static corners_data         corners_local;
 static int range;
 static double scale_factor;
 
@@ -186,6 +187,8 @@ void filtered_lines_update(tim571_status_data *status_data, uint16_t *distance, 
 void tim_segments_update(segments_data *segments)
 {
   segments_local = *segments;
+  corner_find_from_segments(&segments_local, &corners_local);
+  corner_print_data(&corners_local);
 }
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)

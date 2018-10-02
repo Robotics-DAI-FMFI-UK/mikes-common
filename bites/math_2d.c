@@ -40,9 +40,23 @@ double get_vector_length(vector_2d *v)
   return sqrt(v->x * v->x + v->y * v->y);
 }
 
+void normalize_vector(vector_2d *v)
+{
+  double length = get_vector_length(v);
+  v->x = v->x / length;
+  v->y = v->y / length;
+}
+
 double get_offset_from_vector_and_point(vector_2d *normal_v, point_2d *p)
 {
   return -(normal_v->x * p->x + normal_v->y *p->y);
+}
+
+double angle_between_vectors(vector_2d *v1, vector_2d *v2)
+{
+  double dot = v1->x * v2->x + v1->y * v2->y;
+  double det = v1->x * v2->y - v1->y * v2->x;
+  return atan2(det, dot) / RADIAN;
 }
 
 double angle_from_axis_x(vector_2d *v)

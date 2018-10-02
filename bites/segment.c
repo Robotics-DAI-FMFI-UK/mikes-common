@@ -59,7 +59,7 @@ void segment_transform_points_and_lines_to_segments(segment_config *config, tim5
               vector_from_two_points(&segment->start, &segment->end, &segment_vector);
               segment->length = get_vector_length(&segment_vector);
             } else {
-              printf("Too much segments ending\n");
+              printf("Too much segments\n");
             }
           }
         }

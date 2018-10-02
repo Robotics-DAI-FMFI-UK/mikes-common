@@ -101,6 +101,27 @@ void test_get_vector_length()
   printf("\n");
 }
 
+void test_normalize_vector_unit(double dx, double dy)
+{
+  vector_2d v;
+  v.x = dx;
+  v.y = dy;
+  normalize_vector(&v);
+
+  printf("For vector (%f; %f) => (%f; %f)\n", dx, dy, v.x, v.y);
+}
+
+void test_normalize_vector()
+{
+  printf("Test normalize vector:\n");
+
+  test_normalize_vector_unit(1, 0);
+  test_normalize_vector_unit(10, 0);
+  test_normalize_vector_unit(5, 5);
+
+  printf("\n");
+}
+
 void test_angle_from_axis_x_unit(double vx, double vy)
 {
   vector_2d v;
@@ -119,6 +140,29 @@ void test_angle_from_axis_x()
   test_angle_from_axis_x_unit(0, 3);
   test_angle_from_axis_x_unit(0, -3);
   test_angle_from_axis_x_unit(-0, 3);
+
+  printf("\n");
+}
+
+void test_angle_between_vectors_unit(double x1, double y1, double x2, double y2)
+{
+  vector_2d v1, v2;
+  v1.x = x1;
+  v1.y = y1;
+  v2.x = x2;
+  v2.y = y2;
+
+  printf("Angle between vector (%f; %f) and (%f; %f) => %f\n", v1.x, v1.y, v2.x, v2.y, angle_between_vectors(&v1, &v2));
+}
+
+void test_angle_between_vectors()
+{
+  printf("Test angle between vectors x:\n");
+
+  test_angle_between_vectors_unit(1, 0, 0, 1);
+  test_angle_between_vectors_unit(1, 0, 1, 0);
+  test_angle_between_vectors_unit(1, 0, -1, 0);
+  test_angle_between_vectors_unit(1, 0, 0, -1);
 
   printf("\n");
 }
@@ -193,6 +237,8 @@ int main(int argc,char **argv)
   test_vector_and_distance_to_point();
   test_rotate_vector_by_angle();
   test_get_vector_length();
+  test_normalize_vector();
+  test_angle_between_vectors();
   test_angle_from_axis_x();
   test_find_cross_of_two_lines();
   test_find_distance_and_angle_between_point_and_line();

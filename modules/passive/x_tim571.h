@@ -1,6 +1,7 @@
 #ifndef _X_TIM571_H_
 #define _X_TIM571_H_
 
+#include "../../bites/corner.h"
 #include "../live/tim571.h"
 #include "../live/tim_hough_transform.h"
 #include "../live/line_filter.h"
