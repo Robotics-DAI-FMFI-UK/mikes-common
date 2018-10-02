@@ -3,7 +3,7 @@
 
 #include "tim_hough_transform.h"
 
-typedef void (*line_filter_callback)(lines_data *lines);
+typedef void (*line_filter_callback)(tim571_status_data *status_data, uint16_t *distance, uint8_t *rssi, lines_data *lines);
 
 void init_line_filter();
 

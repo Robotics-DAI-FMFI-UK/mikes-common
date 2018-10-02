@@ -134,12 +134,12 @@ void x_tim571_laser_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *st
    memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
 }
 
-void x_tim571_lines_update(lines_data *lines)
+void x_tim571_lines_update(tim571_status_data *status_data, uint16_t *distance, uint8_t *rssi, lines_data *lines)
 {
   lines_local = *lines;
 }
 
-void filtered_lines_update(lines_data *lines)
+void filtered_lines_update(tim571_status_data *status_data, uint16_t *distance, uint8_t *rssi, lines_data *lines)
 {
   lines_filtered_local = *lines;
 }

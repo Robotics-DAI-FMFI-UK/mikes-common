@@ -53,7 +53,7 @@ void process_tim571_data()
 {
   hough_get_lines_data(&tim_hough_default_config, &status_data_local_copy, dist_local_copy, rssi_local_copy, &lines_data_local);
   for (int i = 0; i < callbacks_count; i++)
-    callbacks[i](&lines_data_local);
+    callbacks[i](&status_data_local_copy, &dist_local_copy, &rssi_local_copy, &lines_data_local);
 }
 
 void *tim_hough_transform_thread(void *args)

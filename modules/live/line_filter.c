@@ -18,7 +18,11 @@
 static pthread_mutex_t      line_filter_lock;
 static int                  fd[2];
 
+static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
+static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
+static tim571_status_data   status_data_local_copy;
 static lines_data           lines_data_local;
+
 static lines_data           filtered_lines;
 
 static line_filter_callback  callbacks[MAX_LINE_FILTER_CALLBACKS];
@@ -40,7 +44,7 @@ void filter_lines()
   int n = lines_data_local.line_count;
   int cluster[n];
 
-  for (int i = 0; i < n; i++) 
+  for (int i = 0; i < n; i++)
     cluster[i] = i;
   qsort(lines_data_local.lines, n, sizeof(line_data), compare_lines_dist);
   for (int i = 0; i < n; i++)
@@ -53,14 +57,14 @@ void filter_lines()
     {
       short beta = lines_data_local.lines[j].angle;
       if (angle_difference(alpha, beta) < LINES_SAME_CLUSTER_MAX_ANGLE_DIFFERENCE)
-        if (cluster[i] != cluster[j]) 
+        if (cluster[i] != cluster[j])
         {
           if (i < j)
           {
             for (int k = 0; k < n; k++)
               if (cluster[k] == j) cluster[k] = i;
           }
-          else 
+          else
           {
             for (int k = 0; k < n; k++)
               if (cluster[k] == i) cluster[k] = j;
@@ -99,7 +103,7 @@ void filter_lines()
       cluster_australia[cluster[i]] = (lines_data_local.lines[i].angle + 180) % 360;
       cluster_count ++;
     }
-   
+
     cluster_size[cluster[i]]++;
     double line_weight = (lines_data_local.lines[i].votes / (double) cluster_total_votes[cluster[i]]);
     cluster_distance[cluster[i]] += line_weight * lines_data_local.lines[i].distance;
@@ -133,7 +137,7 @@ void process_new_lines()
   filter_lines();
   printf("filtered %d lines to %d\n", lines_data_local.line_count, filtered_lines.line_count);
   for (int i = 0; i < callbacks_count; i++)
-    callbacks[i](&filtered_lines);
+    callbacks[i](&status_data_local_copy, &dist_local_copy, &rssi_local_copy, &filtered_lines);
 }
 
 void *line_filter_thread(void *args)
@@ -155,9 +159,12 @@ void *line_filter_thread(void *args)
   return 0;
 }
 
-void new_lines_arrived(lines_data *new_lines)
+void new_tim_hough_data_arrived(tim571_status_data *status_data, uint16_t *distance, uint8_t *rssi, lines_data *new_lines)
 {
   if (pthread_mutex_trylock(&line_filter_lock) == 0) {
+    status_data_local_copy = *status_data;
+    memcpy(dist_local_copy, distance, sizeof(uint16_t) * TIM571_DATA_COUNT);
+    memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     lines_data_local = *new_lines;
     alert_new_data(fd);
     pthread_mutex_unlock(&line_filter_lock);
@@ -183,7 +190,7 @@ void init_line_filter()
 
   pthread_t t;
   pthread_mutex_init(&line_filter_lock, 0);
-  register_tim_hough_transform_callback(new_lines_arrived);
+  register_tim_hough_transform_callback(new_tim_hough_data_arrived);
 
   if (pthread_create(&t, 0, line_filter_thread, 0) != 0)
   {
@@ -201,7 +208,7 @@ void shutdown_line_filter()
 
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
-// --------------------------CALLBACK-----------------------------
+// --------------------------CALLBACK------------------------------
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 
