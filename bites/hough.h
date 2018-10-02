@@ -29,6 +29,7 @@ typedef struct hough_config_struct {
   int bad_rssi; // 0
 } hough_config;
 
+int get_angle(tim571_status_data *status_data, int index);
 void hough_get_lines_data(hough_config *config, tim571_status_data *status_data, uint16_t *distance, uint8_t *rssi, lines_data *data);
 void hough_print_lines_data(lines_data *data);
 

@@ -125,9 +125,7 @@ void hough_get_lines_data(hough_config *config, tim571_status_data *status_data,
       vector_2d v, line_vector;
       point_2d line_point;
 
-      angle_to_vector(&ang, &v);
-      get_normal_vector(&v, &line_vector);
-      vector_and_distance_to_point(&v, &dist, &line_point);
+      get_line_data_from_distance_and_angle(&dist, &ang, &v, &line_vector, &line_point);
 
       double distRes;
       double angRes;

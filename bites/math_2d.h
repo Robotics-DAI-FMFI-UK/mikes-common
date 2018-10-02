@@ -23,6 +23,8 @@ void get_normal_vector(vector_2d *v, vector_2d *normal);
 
 void vector_and_distance_to_point(vector_2d *v, double *distance, point_2d *p);
 
+void get_line_data_from_distance_and_angle(double *dist, double *ang, vector_2d *v, vector_2d *line_vector, point_2d *line_point);
+
 void rotate_vector_by_angle(vector_2d *line, int *angle, vector_2d *result);
 
 double get_vector_length(vector_2d *v);

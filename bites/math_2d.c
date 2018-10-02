@@ -19,6 +19,13 @@ void vector_and_distance_to_point(vector_2d *v, double *distance, point_2d *p)
   p->y = v->y * *distance;
 }
 
+void get_line_data_from_distance_and_angle(double *dist, double *ang, vector_2d *v, vector_2d *line_vector, point_2d *line_point)
+{
+  angle_to_vector(ang, v);
+  get_normal_vector(v, line_vector);
+  vector_and_distance_to_point(v, dist, line_point);
+}
+
 void rotate_vector_by_angle(vector_2d *line, int *angle, vector_2d *result)
 {
   double rad = RADIAN * *angle;
