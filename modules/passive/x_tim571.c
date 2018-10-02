@@ -16,6 +16,8 @@
 #define FILTERED_LINE 2
 
 int show_raw_lines;
+int show_filtered_lines;
+int show_segments;
 
 static int win;
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
@@ -23,7 +25,7 @@ static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static tim571_status_data   status_local_copy;
 static lines_data           lines_local;
 static lines_data           lines_filtered_local;
-static segments             segments_local;
+static segments_data        segments_local;
 static int range;
 static double scale_factor;
 

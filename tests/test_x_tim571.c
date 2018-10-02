@@ -6,6 +6,7 @@
 #include "modules/live/gui.h"
 #include "modules/live/tim_hough_transform.h"
 #include "modules/live/line_filter.h"
+#include "modules/live/tim_segment.h"
 #include "bites/mikes.h"
 
 void key_listener(int win, int key)
@@ -24,6 +25,7 @@ int main(int argc, char **argv)
     sleep(1);
     init_tim_hough_transform();
     init_line_filter();
+    init_tim_segment();
     init_x_tim571(7000, 400);
     gui_add_key_listener("showing", key_listener);
 
