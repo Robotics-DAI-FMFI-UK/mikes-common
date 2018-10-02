@@ -30,8 +30,8 @@ static int                                callbacks_count;
 static int online;
 
 static segment_config tim_segment_default_config = {
-  .max_distance_error = 10.0,
-  .min_points_segment = 5,
+  .max_distance_error = 100.0,
+  .min_points_segment = 20,
   .max_points_skip = 5,
   .bad_rssi = 0
 };
@@ -131,7 +131,7 @@ void register_tim_segment_callback(tim_segment_receive_data_callback callback)
 {
   if (!online) return;
 
-  if (callbacks_count >= MAX_LINE_FILTER_CALLBACKS)
+  if (callbacks_count >= MAX_TIM_SEGMENT_CALLBACKS)
   {
      mikes_log(ML_ERR, "too many time segment callbacks");
      return;
