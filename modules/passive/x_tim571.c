@@ -23,8 +23,14 @@ static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static tim571_status_data   status_local_copy;
 static lines_data           lines_local;
 static lines_data           lines_filtered_local;
+static segments             segments_local;
 static int range;
 static double scale_factor;
+
+static point_2d entry = {
+  .x = 0,
+  .y = 0
+};
 
 void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
 {
@@ -100,32 +106,63 @@ void tim571_draw_line(cairo_t *w, line_data *ln, int line_type)
    cairo_stroke(w);
 }
 
+void tim571_draw_segment(cairo_t *w, segment_data *segment)
+{
+  vector_2d v1, v2;
+  vector_from_two_points(&entry, &segment->start, &v1);
+  vector_from_two_points(&entry, &segment->end, &v2);
+
+  double d1 = get_vector_length(&v1);
+  double d2 = get_vector_length(&v2);
+
+  double alpha1 = (90 - angle_from_axis_x(&v1)) / 180.0 * M_PI;
+  double alpha2 = (90 - angle_from_axis_x(&v2)) / 180.0 * M_PI;
+
+  int x1 = (int)((ENLARGE_CENTER + d1) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha1) + X_TIM571_WIDTH / 2);
+  int y1 = (int)((ENLARGE_CENTER + d1) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha1) + X_TIM571_HEIGHT / 2);
+
+  int x2 = (int)((ENLARGE_CENTER + d2) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha2) + X_TIM571_WIDTH / 2);
+  int y2 = (int)((ENLARGE_CENTER + d2) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha2) + X_TIM571_HEIGHT / 2);
+
+  cairo_set_source_rgb(w, 0.0, 0.0, 0.0);
+
+  cairo_move_to(w, x1, X_TIM571_HEIGHT - y1);
+  cairo_line_to(w, x2, X_TIM571_HEIGHT - y2);
+
+  cairo_stroke(w);
+}
+
 void x_tim571_paint(cairo_t *w)
 {
-   cairo_push_group(w);
+  cairo_push_group(w);
 
-   cairo_set_source_rgb(w, 1, 1, 1);
-   cairo_paint(w);
-   cairo_set_line_width(w, 1);
+  cairo_set_source_rgb(w, 1, 1, 1);
+  cairo_paint(w);
+  cairo_set_line_width(w, 1);
 
-   for (int i = 0; i < TIM571_DATA_COUNT; i++)
-   {
-      uint16_t d = dist_local_copy[i];
-      uint8_t  r = rssi_local_copy[i];
+  for (int i = 0; i < TIM571_DATA_COUNT; i++)
+  {
+    uint16_t d = dist_local_copy[i];
+    uint8_t  r = rssi_local_copy[i];
 
-      if (d > range) d = range;
-      tim571_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
-   }
+    if (d > range) d = range;
+    tim571_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
+  }
 
-   if (show_raw_lines)
-     for (int i = 0; i < lines_local.line_count; i++)
-        tim571_draw_line(w, lines_local.lines + i, BASIC_LINE);
+  if (show_raw_lines)
+    for (int i = 0; i < lines_local.line_count; i++)
+      tim571_draw_line(w, lines_local.lines + i, BASIC_LINE);
 
-   for (int i = 0; i < lines_filtered_local.line_count; i++)
+  if (show_filtered_lines)
+    for (int i = 0; i < lines_filtered_local.line_count; i++)
       tim571_draw_line(w, lines_filtered_local.lines + i, FILTERED_LINE);
 
-   cairo_pop_group_to_source(w);
-   cairo_paint(w);
+  if (show_segments)
+    for (int i = 0; i < segments_local.count; i++)
+      tim571_draw_segment(w, segments_local.segments + i);
+
+  cairo_pop_group_to_source(w);
+  cairo_paint(w);
 }
 
 void x_tim571_laser_update(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
@@ -144,9 +181,16 @@ void filtered_lines_update(tim571_status_data *status_data, uint16_t *distance, 
   lines_filtered_local = *lines;
 }
 
+void tim_segments_update(segments_data *segments)
+{
+  segments_local = *segments;
+}
+
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
 {
    show_raw_lines = 1;
+   show_filtered_lines = 1;
+   show_segments = 1;
 
    if (!mikes_config.with_gui) return;
    if (!mikes_config.use_tim571)
@@ -163,6 +207,7 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
    register_tim571_callback(x_tim571_laser_update);
    register_tim_hough_transform_callback(x_tim571_lines_update);
    register_line_filter_callback(filtered_lines_update);
+   register_tim_segment_callback(tim_segments_update);
    get_tim571_status_data(&status_local_copy);
 }
 

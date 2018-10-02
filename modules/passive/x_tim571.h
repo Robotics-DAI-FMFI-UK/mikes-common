@@ -4,11 +4,14 @@
 #include "../live/tim571.h"
 #include "../live/tim_hough_transform.h"
 #include "../live/line_filter.h"
+#include "../live/tim_segment.h"
 
 #define X_TIM571_WIDTH 600
 #define X_TIM571_HEIGHT 600
 
 extern int show_raw_lines;
+extern int show_filtered_lines;
+extern int show_segments;
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms);
 void shutdown_x_tim571();

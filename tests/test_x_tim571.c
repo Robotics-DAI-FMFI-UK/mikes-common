@@ -10,9 +10,10 @@
 
 void key_listener(int win, int key)
 {
-    if (key == ' ') show_raw_lines ^= 1;
+    if (key == 'r') show_raw_lines ^= 1;
+    if (key == 'f') show_filtered_lines ^= 1;
+    if (key == 's') show_segments ^= 1;
 }
-
 
 int main(int argc, char **argv)
 {
