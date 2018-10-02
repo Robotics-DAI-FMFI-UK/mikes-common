@@ -1,5 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "segment.h"
+
+int segment_comparator(const void *a, const void *b) {
+   return ((*(segment_data*)b).length - (*(segment_data*)a).length);
+}
 
 void segment_transform_points_and_lines_to_segments(segment_config *config, tim571_status_data *status_data, uint16_t *distances, uint8_t *rssi, lines_data *lines, segments_data *segments)
 {
@@ -54,13 +60,14 @@ void segment_transform_points_and_lines_to_segments(segment_config *config, tim5
               segment->length = get_vector_length(&segment_vector);
             } else {
               printf("Too much segments ending\n");
-              return;
             }
           }
         }
       }
     }
   }
+
+  qsort(segments->segments, segments->count, sizeof(segment_data), segment_comparator);
 }
 
 void segment_print_segments_data(segments_data *data)
