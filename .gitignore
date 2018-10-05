@@ -25,3 +25,6 @@ test_x_line_map
 test_line_map
 test_hough
 test_math_2d
+nxt/lib
+nxt/tmp-tests
+retired_to_be_deleted
