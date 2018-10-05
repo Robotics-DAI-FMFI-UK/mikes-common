@@ -20,7 +20,7 @@ reboot
 Run (both PC and Raspberry Pi):
 
 export MONO_PATH=/home/pi/src/mikes-generic/mikes-common/nxt/lib:$MONO_PATH
-export LD_LIBRARY_PATH=/home/pi/src/mikes-generic/mikes-common/nxt/lib:$MONO_PATH
+export LD_LIBRARY_PATH=/home/pi/src/mikes-generic/mikes-common/nxt/lib:$LD_LIBRARY_PATH
 make
 ./TestMonoBrick
 
