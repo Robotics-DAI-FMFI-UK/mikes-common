@@ -85,6 +85,8 @@ TEST_X_XTION_SRCS=tests/test_x_xtion.c \
 TEST_X_LINE_MAP_SRCS=tests/test_x_line_map.c \
                      modules/passive/x_line_map.c \
                      modules/live/gui.c \
+                     modules/live/base_module.c \
+                     modules/passive/pose.c \
                      ${MIKES_BASIC}
 TEST_LINE_MAP_SRCS=tests/test_line_map.c \
                    modules/passive/line_map.c \
