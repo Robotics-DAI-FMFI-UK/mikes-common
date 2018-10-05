@@ -17,6 +17,7 @@ typedef struct pose_str {
 void init_pose(int init_reverse_y, int init_max_y);
 void update_pose(base_data_type *base_data);
 void get_pose(pose_type *pose);
+void log_pose(pose_type *pose);
 void set_pose(double newx, double newy, double newheading);
 
 #endif

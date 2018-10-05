@@ -104,6 +104,18 @@ void update_pose(base_data_type *base_data)
     fclose(f);
 }
 
+#define POSE_LOGSTR_LEN 1024
+
+void log_pose(pose_type *pose)
+{
+    char str[POSE_LOGSTR_LEN];
+
+    sprintf(str, "[main] pose::log_pose(): x=%.2f, y=%.2f, heading=%.2f, heading_deg=%.2f, row=%d, col=%d",
+        pose->x, pose->y, pose->heading, pose->heading / M_PI * 180.0, pose->row, pose->col);
+
+    mikes_log(ML_DEBUG, str);
+}
+
 void get_pose(pose_type *pose)
 {
     pthread_mutex_lock(&pose_module_lock);

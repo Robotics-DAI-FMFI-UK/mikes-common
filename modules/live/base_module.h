@@ -44,6 +44,9 @@ void init_base_module();
 // retrieve the latest sensor data from base board
 void get_base_data(base_data_type *buffer);
 
+// write base data to log file
+void log_base_data(base_data_type* buffer);
+
 // waits until the next sensor data from the base board have not been received
 // since the serial line is full duplex, one packet could have been already on the way,
 // therefore you need to call this twice, to be sure the next status reflects the last

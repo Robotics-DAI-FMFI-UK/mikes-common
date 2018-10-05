@@ -10,11 +10,16 @@
 #include "../bites/mikes.h"
 #include "../core/config_mikes.h"
 
-#define TEST_LENGTH 6
+#define TEST_LENGTH 18
 
-int times[TEST_LENGTH] = { 3000, 5000, 7000, 12000, 15000, 16000 };
-int lspeed[TEST_LENGTH] = { 8, 0, -8, 8, 0, 100};
-int rspeed[TEST_LENGTH] = { 8, 0, -8, 0, 0, 100};
+int times[TEST_LENGTH] = {  1000,  3000,
+                            8000,  9000, 11800, 12800,
+                           17800, 18800, 21600, 22600,
+                           27600, 28600, 31400, 32400,
+                           37400, 38400, 41200, 42200
+                         };
+int lspeed[TEST_LENGTH] = { 0, 12, 0, 12,  0, 12, 0, 12, 0, 12, 0, 12, 0, 12, 0, 12, 0, 100 };
+int rspeed[TEST_LENGTH] = { 0, 12, 0,  0,  0, 12, 0,  0, 0, 12, 0,  0, 0, 12, 0,  0, 0, 100 };
 
 void test_base_module()
 {
@@ -26,8 +31,15 @@ void test_base_module()
     	get_base_data(&base_data);
         printf("%lu: LCNT:%ld RCNT:%ld LVEL:%d RVEL:%d IR:(%d,%d,%d,%d) HEAD:%d ACC:(%d,%d,%d) GYR:(%d,%d,%d)\n",
                base_data.timestamp, base_data.counterA, base_data.counterB, base_data.velocityA, base_data.velocityB,
-               base_data.dist1, base_data.dist2, base_data.dist3, base_data.cube, base_data.heading, 
+               base_data.dist1, base_data.dist2, base_data.dist3, base_data.cube, base_data.heading,
                base_data.ax, base_data.ay, base_data.az, base_data.gx, base_data.gy, base_data.gz);
+
+    	log_base_data(&base_data);
+
+	pose_type apose;
+	get_pose(&apose);
+    	log_pose(&apose);
+
         if ((tmptr < TEST_LENGTH) && (tm > times[tmptr]))
         {
             if (lspeed[tmptr] == 100) break;

@@ -451,6 +451,41 @@ void pretty_print_status_data(char *buffer, tim571_status_data *sd)
 	                 sd->firmware_version, sd->sopas_device_id, sd->serial_number, sd->error, sd->scanning_frequency, sd->multiplier, sd->starting_angle, sd->angular_step, sd->data_count, sd->rssi_available);
 }
 
+#define TIM571_LOGSTR_LEN 1024
+
+void log_tim571_data(tim571_status_data *sd, uint16_t *dist, uint8_t *rssi)
+{
+    char str[TIM571_LOGSTR_LEN];
+
+    sprintf(str, "[main] tim571::log_tim571_data(): firmware_version=%d, sopas_device_id=%d, serial_number=%d, error=%d, scanning_frequency=%u, multiplier=%.3f, starting_angle=%d, angular_step=%u, data_count=%d, rssi_available=%d",
+        sd->firmware_version, sd->sopas_device_id, sd->serial_number, sd->error, sd->scanning_frequency, sd->multiplier, sd->starting_angle, sd->angular_step, sd->data_count, sd->rssi_available);
+
+    mikes_log(ML_DEBUG, str);
+
+    str[0] = 0;
+    for (int i = 0; i < sd->data_count; i++)
+    {
+        if (str[0] == 0) {
+            sprintf(str, "[main] tim571::log_tim571_data(): ");
+        } else {
+            char *str2 = &str[strlen(str)];
+            sprintf(str2, ", ");
+        }
+
+        char *str2 = &str[strlen(str)];
+        sprintf(str2, "dist[%d]=%u, rssi[%d]=%u", i, dist[i], i, rssi[i]);
+
+        if (((i + 1) % 10) == 0) {
+            mikes_log(ML_DEBUG, str);
+            str[0] = 0;
+        }
+    }
+
+    if (str[0] != 0) {
+        mikes_log(ML_DEBUG, str);
+    }
+}
+
 double tim571_ray2azimuth(int ray)
 {
   return 135 - (ray / ((double)TIM571_DATA_COUNT - 1)) * 270.0;
