@@ -7,7 +7,7 @@
 // return current time in milliseconds
 long long msec();
 
-// return current time in usec 
+// return current time in usec
 long long usec();
 
 // say the sentence
@@ -26,5 +26,8 @@ short angle_difference(short alpha, short beta);
 
 // utility function to compute directional angle from alpha to beta (+/- 180), all values in deg.
 double angle_rad_difference(double alpha, double beta);
+
+// change robot angle to map angle
+double robot_alpha_to_map_azimuth(double alpha);
 
 #endif
