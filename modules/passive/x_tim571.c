@@ -5,7 +5,7 @@
 #include "../live/gui.h"
 #include "mikes_logs.h"
 #include "core/config_mikes.h"
-#include "bites/mikes.h"
+#include "../../bites/mikes.h"
 
 #define ENLARGE_CENTER 50
 
