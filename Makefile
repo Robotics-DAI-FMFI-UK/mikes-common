@@ -100,6 +100,9 @@ TEST_MATH_SRCS=tests/test_math_2d.c \
 TEST_NXT_SRCS=tests/test_nxt.c \
               modules/live/nxt.c \
               ${MIKES_BASIC}
+TEST_WHEELS_SRCS=tests/test_wheels.c \
+                 modules/passive/wheels.c \
+                 ${MIKES_BASIC}
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
@@ -123,6 +126,7 @@ TEST_LINE_MAP_OBJS=${TEST_LINE_MAP_SRCS:.c=.o}
 TEST_HOUGH_OBJS=${TEST_HOUGH_SRCS:.c=.o}
 TEST_MATH_OBJS=${TEST_MATH_SRCS:.c=.o}
 TEST_NXT_OBJS=${TEST_NXT_SRCS:.c=.o}
+TEST_WHEELS_OBJS=${TEST_WHEELS_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -145,7 +149,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -194,11 +198,13 @@ test_math_2d: ${TEST_MATH_OBJS}
 test_nxt: ${TEST_NXT_OBJS} nxt/NXTOperator.cs nxt/tests/TestMonoBrick.cs
 	$(MAKE) -C nxt
 	${CC} -o test_nxt ${TEST_NXT_OBJS} ${LDFLAGS} ${DEBUG_FLAGS}
+test_wheels: ${TEST_WHEELS_OBJS} 
+	${CC} -o test_wheels $^ ${LDFLAGS} ${DEBUG_FLAGS}
 
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels
 	rm -rf modules/live/xtion/Arm-Release
 	make -C nxt clean
 	rm -f grey_gradient.png rgb_gradient.png
