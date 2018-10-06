@@ -98,7 +98,8 @@ TEST_HOUGH_SRCS=tests/test_hough.c \
 TEST_MATH_SRCS=tests/test_math_2d.c \
                bites/math_2d.c
 TEST_NXT_SRCS=tests/test_nxt.c \
-              modules/passive/nxt/nxt.c
+              modules/live/nxt.c \
+              ${MIKES_BASIC}
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}

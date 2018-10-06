@@ -187,6 +187,7 @@ namespace Application
            return false;
          }
          brick.Mailbox.Send("O", Box.Box0);
+         Thread.Sleep(100);
          Console.WriteLine("Done");
          return true;
       }
@@ -197,6 +198,7 @@ namespace Application
          {
             String cmd = Console.ReadLine();
             if (cmd.Equals("Quit")) quit();
+            else if (!connected) Console.WriteLine("Off");
             else if ((state == WAITING) || (state == EXECUTING))
             {
               if (light2.ReadLightLevel() == 0)
