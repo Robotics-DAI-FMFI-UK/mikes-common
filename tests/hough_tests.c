@@ -44,7 +44,7 @@ void test_get_index_from_distance_and_angle(hough_config *config)
 void test_get_line_data_from_index_unit(hough_config *config, int index, line_data *line)
 {
   get_line_data_from_index(config, index, line);
-  printf("For index %d => distance %d angle %d\n", index, line->distance, line->angle);
+  printf("For index %d => distance %f angle %f\n", index, line->line.distance, line->line.angle);
 }
 
 void test_get_line_data_from_index(hough_config *config)

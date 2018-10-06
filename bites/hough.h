@@ -7,8 +7,7 @@
 #define LINE_MAX_DATA_COUNT 50
 
 typedef struct line_struct {
-  int distance;
-  int angle;     // 0 angle is on the right side of the robot, increasing counter-clockwise
+  angle_line_2d line; // 0 angle is on the right side of the robot, increasing counter-clockwise
   int votes;
 } line_data;
 

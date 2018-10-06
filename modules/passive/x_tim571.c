@@ -83,8 +83,8 @@ void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
 
 void tim571_draw_line(cairo_t *w, line_data *ln, int line_type)
 {
-   uint16_t d = ln->distance;
-   double alpha = (90 - ln->angle) / 180.0 * M_PI;
+   uint16_t d = ln->line.distance;
+   double alpha = (90 - ln->line.angle) / 180.0 * M_PI;
 
    int x = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_WIDTH * 0.45 * sin(alpha) + X_TIM571_WIDTH / 2);
    int y = (int)((ENLARGE_CENTER + d) / scale_factor * X_TIM571_HEIGHT * 0.45 * cos(alpha) + X_TIM571_HEIGHT / 2);
@@ -185,7 +185,7 @@ void x_tim571_paint(cairo_t *w)
 
   if (show_corners)
     for (int i = 0; i < corners_local.count; i++)
-      tim571_draw_corner(w, corners_local.corners + i);
+      tim571_draw_corner(w, &corners_local.corners[i].corner);
 
   cairo_pop_group_to_source(w);
   cairo_paint(w);

@@ -4,10 +4,17 @@
 #include "math_2d.h"
 #include "segment.h"
 
+#define CORNER_ANGLE_LINE_COUNT 2
 #define CORNERS_MAX_DATA_COUNT 5
 
+typedef struct corner_struct {
+  point_2d corner;
+  segment_data segment1;
+  segment_data segment2;
+} corner_data;
+
 typedef struct corners_struct {
-  point_2d corners[CORNERS_MAX_DATA_COUNT];
+  corner_data corners[CORNERS_MAX_DATA_COUNT];
   int count;
 } corners_data;
 

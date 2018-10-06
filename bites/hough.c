@@ -73,8 +73,8 @@ void get_line_data_from_index(hough_config *config, int index, line_data *line)
   int angle_count = get_angle_step_count(config);
   int distance = (index / angle_count) * config->distance_step;
   int angle = (index % angle_count) * config->angle_step;
-  line->distance = distance;
-  line->angle = angle;
+  line->line.distance = distance;
+  line->line.angle = angle;
 }
 
 // ----------------------------------------------------------------
@@ -172,6 +172,6 @@ void hough_print_lines_data(lines_data *data)
 {
   printf("LinesData:\n");
   for (int index = 0; index < data->count; index++) {
-    printf("%d: Distance: %10d, Angle: %3d, Votes: %10d\n", index, data->lines[index].distance, data->lines[index].angle, data->lines[index].votes);
+    printf("%d: Distance: %10.4f, Angle: %10.4f, Votes: %10d\n", index, data->lines[index].line.distance, data->lines[index].line.angle, data->lines[index].votes);
   }
 }

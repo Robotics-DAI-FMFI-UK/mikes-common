@@ -8,8 +8,9 @@
 typedef struct segment_struct {
   point_2d start;
   point_2d end;
-  double length;
+  angle_line_2d line;
   int votes;
+  double length;
 } segment_data;
 
 typedef struct segments_struct {

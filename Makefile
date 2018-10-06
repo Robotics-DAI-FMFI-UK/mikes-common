@@ -42,6 +42,7 @@ TEST_X_TIM571_SRCS=tests/test_x_tim571.c \
                    modules/live/line_filter.c \
                    modules/live/tim_segment.c \
                    bites/hough.c \
+                   bites/filter.c \
                    bites/math_2d.c \
                    bites/segment.c \
                    bites/corner.c \
@@ -98,7 +99,7 @@ TEST_LINE_MAP_SRCS=tests/test_line_map.c \
 TEST_HOUGH_SRCS=tests/test_hough.c \
                 tests/hough_tests.c \
                 bites/hough.c \
-		bites/math_2d.c
+		            bites/math_2d.c
 TEST_MATH_SRCS=tests/test_math_2d.c \
                bites/math_2d.c
 TEST_NXT_SRCS=tests/test_nxt.c \
@@ -205,7 +206,7 @@ test_math_2d: ${TEST_MATH_OBJS}
 test_nxt: ${TEST_NXT_OBJS} nxt/NXTOperator.cs nxt/tests/TestMonoBrick.cs
 	$(MAKE) -C nxt
 	${CC} -o test_nxt ${TEST_NXT_OBJS} ${LDFLAGS} ${DEBUG_FLAGS}
-test_wheels: ${TEST_WHEELS_OBJS} 
+test_wheels: ${TEST_WHEELS_OBJS}
 	${CC} -o test_wheels $^ ${LDFLAGS} ${DEBUG_FLAGS}
 
 uninstall:

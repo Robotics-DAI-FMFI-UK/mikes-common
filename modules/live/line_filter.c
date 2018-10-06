@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "../../bites/mikes.h"
-#include "../../bites/util.h"
+#include "../../bites/filter.h"
 #include "line_filter.h"
 #include "../passive/mikes_logs.h"
 #include "core/config_mikes.h"
@@ -30,98 +30,6 @@ static int                   callbacks_count;
 
 static int online;
 
-int compare_lines_dist(const void *ln1, const void *ln2)
-{
-  line_data *ld1 = (line_data *)ln1;
-  line_data *ld2 = (line_data *)ln2;
-  return (ld1->distance - ld2->distance);
-}
-
-void filter_lines()
-{
-  // input: lines_data_local
-  // output: filtered_lines
-  int n = lines_data_local.count;
-  int cluster[n];
-
-  for (int i = 0; i < n; i++)
-    cluster[i] = i;
-  qsort(lines_data_local.lines, n, sizeof(line_data), compare_lines_dist);
-  for (int i = 0; i < n; i++)
-  {
-    int maxdist = lines_data_local.lines[i].distance + LINES_SAME_CLUSTER_MAX_DISTANCE_DIFFERENCE;
-    int j = i + 1;
-    short alpha = lines_data_local.lines[i].angle;
-
-    while ((j < n) && (lines_data_local.lines[j].distance <= maxdist))
-    {
-      short beta = lines_data_local.lines[j].angle;
-      if (abs(angle_difference(alpha, beta)) < LINES_SAME_CLUSTER_MAX_ANGLE_DIFFERENCE)
-        if (cluster[i] != cluster[j])
-        {
-          if (cluster[i] < cluster[j])
-          {
-            for (int k = 0; k < n; k++)
-              if (cluster[k] == cluster[j]) cluster[k] = cluster[i];
-          }
-          else
-          {
-            for (int k = 0; k < n; k++)
-              if (cluster[k] == cluster[i]) cluster[k] = cluster[j];
-          }
-        }
-      j++;
-    }
-  }
-
-  uint8_t cluster_used[n];
-  int cluster_size[n];
-  double cluster_distance[n];
-  double cluster_angle[n];
-  int cluster_total_votes[n];
-  int cluster_australia[n];
-
-  memset(cluster_used, 0, n);
-  memset(cluster_size, 0, sizeof(int) * n);
-  memset(cluster_total_votes, 0, sizeof(int) * n);
-  int cluster_count = 0;
-
-  for (int i = 0; i < n; i++)
-    cluster_total_votes[cluster[i]] += lines_data_local.lines[i].votes;
-
-  for (int i = 0; i < n; i++)
-  {
-    if (!cluster_used[cluster[i]])
-    {
-      cluster_used[cluster[i]] = 1;
-      cluster_distance[cluster[i]] = 0.0;
-      cluster_angle[cluster[i]] = 0.0;
-      cluster_australia[cluster[i]] = (lines_data_local.lines[i].angle + 180) % 360;
-      cluster_count ++;
-    }
-
-    cluster_size[cluster[i]]++;
-    double line_weight = (lines_data_local.lines[i].votes / (double) cluster_total_votes[cluster[i]]);
-    cluster_distance[cluster[i]] += line_weight * lines_data_local.lines[i].distance;
-    int omega = lines_data_local.lines[i].angle;
-    if (omega < cluster_australia[cluster[i]]) omega += 360;
-    cluster_angle[cluster[i]] += line_weight * omega;
-  }
-
-  filtered_lines.count = cluster_count;
-  int m = 0;
-  for (int i = 0; i < n; i++)
-  {
-    if (cluster_used[i])
-    {
-      filtered_lines.lines[m].distance = cluster_distance[i];
-      if (cluster_angle[i] > 360) cluster_angle[i] -= 360;
-      filtered_lines.lines[m].angle = cluster_angle[i];
-      m++;
-    }
-  }
-}
-
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 // --------------------------LIFECYCLE-----------------------------
@@ -130,7 +38,7 @@ void filter_lines()
 
 void process_new_lines()
 {
-  filter_lines();
+  filter_lines(&lines_data_local, &filtered_lines);
   for (int i = 0; i < callbacks_count; i++)
     callbacks[i](&status_data_local_copy, dist_local_copy, rssi_local_copy, &filtered_lines);
 }

@@ -8,6 +8,11 @@
 #define PERPENDICULAR_ANGLE 90
 #define RADIAN (M_PI / HALF_ANGLE)
 
+typedef struct angle_line_struct_2d {
+  double angle;
+  double distance;
+} angle_line_2d;
+
 typedef struct vector_struct_2d {
   double x;
   double y;
