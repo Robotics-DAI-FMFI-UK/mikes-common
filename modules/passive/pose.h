@@ -2,13 +2,14 @@
 #define _POSE_H_
 #include "../mikes-common/modules/live/base_module.h"
 
-#define STATE_WIDTH 25
+// STATE_WIDTH in cm
+#define STATE_WIDTH  25    
 #define STATES_W ((MAP_W/STATE_WIDTH) + 1)
 #define STATES_H ((MAP_H/STATE_WIDTH) + 1)
 
 typedef struct pose_str {
-	double x;
-	double y;
+	double x;  // in cm
+	double y;  // in cm
 	double heading;
         int row;
         int col;

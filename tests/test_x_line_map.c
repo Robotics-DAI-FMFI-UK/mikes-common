@@ -25,13 +25,11 @@ int rspeed[TEST_LENGTH] = { 0, 12, 0,  0,  0, 12, 0,  0, 0, 12, 0,  0, 0, 12, 0,
 
 void test_base_module(double px, double py, double heading)
 {
-    pose_type p;
-
     base_data_type base_data;
     int tm = 0;
     int tmptr = 0;
 
-    set_pose(px / 10.0, py / 10.0, heading);
+    set_pose(px, py, heading);  // 10.0
 
     x_line_map_toggle_pose_visible(1);
 
@@ -49,10 +47,7 @@ void test_base_module(double px, double py, double heading)
 	get_pose(&apose);
     	log_pose(&apose);
 
-    	p.x = apose.x * 10.0;
-    	p.y = py - (apose.y * 10.0 - py);
-        p.heading = apose.heading;
-        x_line_map_set_pose(p);
+        x_line_map_set_pose(apose);
 
         if ((tmptr < TEST_LENGTH) && (tm > times[tmptr]))
         {
@@ -79,13 +74,8 @@ int main(int argc, char **argv)
     init_gui();
     init_x_line_map(mikes_config.line_map_file, 600, 350);
 
-    test_base_module(1000, 1000, M_PI / 2);
-
-//    while (program_runs)
-//    {
-//      animate_pose(); 
-//      usleep(30000);
-//    }
+    // 1 meter from top left corner
+    test_base_module(11 + 100, 339 - 100, M_PI / 2);
 
     shutdown_x_line_map();
     shutdown_gui();
