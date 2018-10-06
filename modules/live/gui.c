@@ -525,8 +525,8 @@ double draw_svg_to_cairo(cairo_t *w, int x, int y, char *filename, int max_width
     double scale_y = max_height / (double)dimensions.height;
     double scale = scale_x;
     if (scale_y < scale_x) scale = scale_y;
-    cairo_translate(w, x, y);
-    cairo_scale(w, scale, scale);
+    cairo_translate(w, x, y + max_height);
+    cairo_scale(w, scale, -scale);
 
     if (!rsvg_handle_render_cairo(rsvg_handle, w))
     {

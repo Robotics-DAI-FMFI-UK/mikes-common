@@ -4,12 +4,12 @@ core/*.o
 modules/live/*.o
 modules/passive/*.o
 tests/*.o
-test_astar  
-test_base  
-test_gui  
-test_ncurses_control  
-test_pose  
-test_pq  
+test_astar
+test_base
+test_gui
+test_ncurses_control
+test_pose
+test_pq
 test_tim571
 test_x_base
 test_x_tim571
@@ -23,3 +23,8 @@ test_xtion
 test_x_xtion
 test_x_line_map
 test_line_map
+test_hough
+test_math_2d
+nxt/lib
+nxt/tmp-tests
+retired_to_be_deleted

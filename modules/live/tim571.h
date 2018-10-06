@@ -15,24 +15,22 @@
 #define TIM571_MAX_DISTANCE 15000
 #define TIM571_FREQUENCY 15
 
-
-typedef void (*tim571_receive_data_callback)(uint16_t *, uint8_t *);
-
-
 // status information received from the sensor (typical values in comments)
 typedef struct tim571_status_struct {
 	uint16_t firmware_version;     // 1
 	uint16_t sopas_device_id;      // configurable in SOPAS
-    uint32_t serial_number;        
-    uint8_t error;                 // 0 = device is ready
-    uint32_t scanning_frequency;   // 1500  in 1/100 Hz
-    float multiplier;              // 1
-    int32_t starting_angle;        // -450000 (in 1/10000 of degree)
-    uint32_t angular_step;         // 3333    (in 1/10000 of degree)
-    uint16_t data_count;           // number of distance/rssi data
-    uint8_t rssi_available;        // 0 = not receiving rssi data
-    char name[17];                 // name configurable in SOPAS or "\0"
+	uint32_t serial_number;
+	uint8_t error;                 // 0 = device is ready
+	uint32_t scanning_frequency;   // 1500  in 1/100 Hz
+	float multiplier;              // 1
+	int32_t starting_angle;        // -450000 (in 1/10000 of degree)
+	uint32_t angular_step;         // 3333    (in 1/10000 of degree)
+	uint16_t data_count;           // number of distance/rssi data
+	uint8_t rssi_available;        // 0 = not receiving rssi data
+	char name[17];                 // name configurable in SOPAS or "\0"
 } tim571_status_data;
+
+typedef void (*tim571_receive_data_callback)(uint16_t *, uint8_t *, tim571_status_data *status_data);
 
 
 void init_tim571();
@@ -41,6 +39,7 @@ void get_tim571_dist_data(uint16_t *buffer); // fills in data_count measured dat
 void get_tim571_rssi_data(uint8_t *buffer);  // fills in data_count measured rssi values
 void get_tim571_status_data(tim571_status_data *status_data); // fills in status data
 void pretty_print_status_data(char *buffer, tim571_status_data *sd); // prints status data to string buffer (must have enough space!)
+void log_tim571_data(tim571_status_data *sd, uint16_t *dist, uint8_t *rssi); // write all data to log file
 
 void register_tim571_callback(tim571_receive_data_callback callback);    // register for getting fresh data after received from sensor (copy quick!)
 void unregister_tim571_callback(tim571_receive_data_callback callback);  // remove previously registered callback

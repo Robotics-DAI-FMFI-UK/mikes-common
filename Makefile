@@ -7,7 +7,7 @@ SAN = -fsanitize=undefined               \
       -fsanitize=integer-divide-by-zero  \
       -fsanitize=unreachable             \
       -fsanitize=vla-bound               \
-      -fsanitize=null                    
+      -fsanitize=null
 MIKES_BASIC=modules/passive/mikes_logs.c \
             config/config.c \
             core/config_mikes.c \
@@ -38,6 +38,13 @@ TEST_X_TIM571_SRCS=tests/test_x_tim571.c \
                    modules/live/tim571.c \
                    modules/passive/x_tim571.c \
                    modules/live/gui.c \
+                   modules/live/tim_hough_transform.c \
+                   modules/live/line_filter.c \
+                   modules/live/tim_segment.c \
+                   bites/hough.c \
+                   bites/math_2d.c \
+                   bites/segment.c \
+                   bites/corner.c \
                    ${MIKES_BASIC}
 TEST_X_BASE_SRCS=tests/test_x_base.c \
                    modules/live/base_module.c \
@@ -78,10 +85,24 @@ TEST_X_XTION_SRCS=tests/test_x_xtion.c \
 TEST_X_LINE_MAP_SRCS=tests/test_x_line_map.c \
                      modules/passive/x_line_map.c \
                      modules/live/gui.c \
+                     modules/live/base_module.c \
+                     modules/passive/pose.c \
                      ${MIKES_BASIC}
 TEST_LINE_MAP_SRCS=tests/test_line_map.c \
                    modules/passive/line_map.c \
                    ${MIKES_BASIC}
+TEST_HOUGH_SRCS=tests/test_hough.c \
+                tests/hough_tests.c \
+                bites/hough.c \
+		bites/math_2d.c
+TEST_MATH_SRCS=tests/test_math_2d.c \
+               bites/math_2d.c
+TEST_NXT_SRCS=tests/test_nxt.c \
+              modules/live/nxt.c \
+              ${MIKES_BASIC}
+TEST_WHEELS_SRCS=tests/test_wheels.c \
+                 modules/passive/wheels.c \
+                 ${MIKES_BASIC}
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
@@ -102,15 +123,19 @@ TEST_XTION_OBJS=${TEST_XTION_SRCS:.c=.o} ${XTION_OBJS}
 TEST_X_XTION_OBJS=${TEST_X_XTION_SRCS:.c=.o} ${XTION_OBJS}
 TEST_X_LINE_MAP_OBJS=${TEST_X_LINE_MAP_SRCS:.c=.o}
 TEST_LINE_MAP_OBJS=${TEST_LINE_MAP_SRCS:.c=.o}
+TEST_HOUGH_OBJS=${TEST_HOUGH_SRCS:.c=.o}
+TEST_MATH_OBJS=${TEST_MATH_SRCS:.c=.o}
+TEST_NXT_OBJS=${TEST_NXT_SRCS:.c=.o}
+TEST_WHEELS_OBJS=${TEST_WHEELS_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
 
 #OPTIMIZE=-O0 ${SAN}
-OPTIMIZE=-O0 
+OPTIMIZE=-O0
 DEBUG_FLAGS=-g
 CFLAGS=${OPTIMIZE} ${DEBUG_FLAGS} -std=c11 -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I. -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -I/usr/include/librsvg-2.0/librsvg `pkg-config --cflags gio-2.0` -I/usr/include/libxml2 -I/usr/include/gdk-pixbuf-2.0 -Wall
-CPPFLAGS=${OPTIMIZE} ${DEBUG_FLAGS} -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I. -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -Wall -Wno-write-strings -I/usr/include/librsvg-2.0/librsvg `pkg-config --cflags gio-2.0` -I/usr/include/gdk-pixbuf-2.0 
+CPPFLAGS=${OPTIMIZE} ${DEBUG_FLAGS} -D_BSD_SOURCE -D_XOPEN_SOURCE=600 -I. -I/usr/include/cairo -I/usr/local/rplidar/sdk/sdk/include -Wall -Wno-write-strings -I/usr/include/librsvg-2.0/librsvg `pkg-config --cflags gio-2.0` -I/usr/include/gdk-pixbuf-2.0
 #LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -g -lstdc++ ${SAN} -lubsan
 LDFLAGS=${DEBUG_FLAGS} -pthread -lrt -lcairo -lX11 -lm -lncurses -L/usr/local/rplidar/sdk/output/Linux/Release -lrplidar_sdk -lrsvg-2 -lxml2 -lpng -lstdc++ `pkg-config --libs gio-2.0`
 PREFIX=/usr/local
@@ -119,12 +144,12 @@ export MIKES_CORE
 
 all: test
 
-# ${OBJS} ${CPPOBJS} 
+# ${OBJS} ${CPPOBJS}
 #	${CPP} ${OBJS} ${CPPOBJS} -o ${PROG} ${CFLAGS} ${LDFLAGS}
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -163,13 +188,23 @@ ${XTION_OBJS}: ${XTION_SRCS}
 test_x_xtion: ${TEST_X_XTION_OBJS}
 	${CPP} -o test_x_xtion $^ ${LDFLAGS} ${DEBUG_FLAGS} -lOpenNI
 test_x_line_map: ${TEST_X_LINE_MAP_OBJS}
-	${CC} -o test_x_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS} 
+	${CC} -o test_x_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_line_map: ${TEST_LINE_MAP_OBJS}
 	${CC} -o test_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
-     
+test_hough: ${TEST_HOUGH_OBJS}
+	${CC} -o test_hough $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_math_2d: ${TEST_MATH_OBJS}
+	${CC} -o test_math_2d $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_nxt: ${TEST_NXT_OBJS} nxt/NXTOperator.cs nxt/tests/TestMonoBrick.cs
+	$(MAKE) -C nxt
+	${CC} -o test_nxt ${TEST_NXT_OBJS} ${LDFLAGS} ${DEBUG_FLAGS}
+test_wheels: ${TEST_WHEELS_OBJS} 
+	${CC} -o test_wheels $^ ${LDFLAGS} ${DEBUG_FLAGS}
+
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtiontest_x_xtion test_x_line_map test_line_map
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels
 	rm -rf modules/live/xtion/Arm-Release
-
+	make -C nxt clean
+	rm -f grey_gradient.png rgb_gradient.png

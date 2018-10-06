@@ -22,6 +22,8 @@ void test_tim571()
             printf("%5u (%3u)  ", buffer[i], buf2[i]);
     }
     printf("\n---\n");
+
+    log_tim571_data(&status_data, buffer, buf2);
 }
 
 

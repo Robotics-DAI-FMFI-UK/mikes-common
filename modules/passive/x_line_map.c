@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "../live/gui.h"
+#include "../live/base_module.h"    /* WHEELS_DISTANCE */
 #include "../passive/pose.h"
 #include "mikes_logs.h"
 #include "core/config_mikes.h"
@@ -11,7 +12,7 @@
 #define BORDER_TOP 20
 #define BORDER_BOTTOM 20
 
-#define POSE_ARROW_LENGTH 450
+#define POSE_ARROW_LENGTH (WHEELS_DISTANCE / 10.0)    /* in cm */
 
 static int win;
 
@@ -23,6 +24,10 @@ static pose_type last_pose;
 static double svg_map_scale;
 
 static cairo_surface_t *svg_drawn;
+
+// project coordinates in mm to map window pixel coordinates
+#define XMM2WIN(x) ((int)(BORDER_LEFT             + (x) * svg_map_scale))
+#define YMM2WIN(y) ((int)(height - 1 - BORDER_TOP - (y) * svg_map_scale))
 
 void x_line_map_paint(cairo_t *w)
 {
@@ -47,21 +52,36 @@ void x_line_map_paint(cairo_t *w)
    {
      cairo_set_source_rgb(w, 0.1, 0.1, 0.5);
      cairo_set_line_width(w, 1);
-     int px1_win = (int)(BORDER_LEFT + (last_pose.x - POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading)) * svg_map_scale / 10.0);
-     int py1_win = (int)(BORDER_TOP + (last_pose.y + POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading)) * svg_map_scale / 10.0);
-     int px2_win = (int)(BORDER_LEFT + (last_pose.x + POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading)) * svg_map_scale / 10.0);
-     int py2_win = (int)(BORDER_TOP + (last_pose.y - POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading)) * svg_map_scale / 10.0);
-     int px3_win = (int)(BORDER_LEFT + (last_pose.x + POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading + M_PI / 2.0)) * svg_map_scale / 10.0);
-     int py3_win = (int)(BORDER_TOP + (last_pose.y - POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading + M_PI / 2.0)) * svg_map_scale / 10.0);
-     int px4_win = (int)(BORDER_LEFT + (last_pose.x + POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading - M_PI / 2.0)) * svg_map_scale / 10.0);
-     int py4_win = (int)(BORDER_TOP + (last_pose.y - POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading - M_PI / 2.0)) * svg_map_scale / 10.0);
+     int px1_win = XMM2WIN(last_pose.x - POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading));
+     int py1_win = YMM2WIN(last_pose.y - POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading));
+     int px2_win = XMM2WIN(last_pose.x + POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading));
+     int py2_win = YMM2WIN(last_pose.y + POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading));
+     int px3_win = XMM2WIN(last_pose.x + POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading + M_PI / 2.0));
+     int py3_win = YMM2WIN(last_pose.y + POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading + M_PI / 2.0));
+     int px4_win = XMM2WIN(last_pose.x + POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading - M_PI / 2.0));
+     int py4_win = YMM2WIN(last_pose.y + POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading - M_PI / 2.0));
 
      cairo_move_to(w, px1_win, py1_win);
      cairo_line_to(w, px2_win, py2_win);
 
      cairo_line_to(w, px3_win, py3_win);
-     cairo_move_to(w, px2_win, py2_win);
+     //cairo_move_to(w, px2_win, py2_win);
      cairo_line_to(w, px4_win, py4_win);
+     cairo_line_to(w, px2_win, py2_win);
+
+     /*
+     // draw map bounding rectangle (just to test correct X,Y transformations)
+     int mx1 = XMM2WIN(11 * 10.0);
+     int my1 = YMM2WIN(12.000005 * 10.0);
+     int mx2 = XMM2WIN(591 * 10.0);
+     int my2 = YMM2WIN(339 * 10.0);
+
+     cairo_move_to(w, mx1, my1);
+     cairo_line_to(w, mx2, my1);
+     cairo_line_to(w, mx2, my2);
+     cairo_line_to(w, mx1, my2);
+     cairo_line_to(w, mx1, my1);
+     */
 
      cairo_stroke(w);
    }
@@ -86,8 +106,8 @@ void x_line_map_set_pose(pose_type p)
 
 void line_map_mouse_listener(int x, int y, int button)
 {
-   double map_x = (x - BORDER_LEFT) / svg_map_scale * 10.0;  // assuming dimensions in svg are centimeters
-   double map_y = (y - BORDER_TOP) / svg_map_scale * 10.0;
+   double map_x = (x - BORDER_LEFT) / svg_map_scale;  // * 10.0  // assuming dimensions in svg are centimeters
+   double map_y = (y - BORDER_TOP) / svg_map_scale;   // * 10.0  // calculated coordinates are in centimeters
    printf("line map click: win_x=%d, win_y=%d, map_x=%.3lf, map_y=%.3lf\n", x, y, map_x, map_y);
 }
 

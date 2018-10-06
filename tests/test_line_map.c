@@ -19,8 +19,8 @@ void test_line_map()
   for (int i = 0; i < 50; i++)
   {
      // assume map 45x45 m
-     double x = (rand() / (double)RAND_MAX) * 45000.0;
-     double y = (rand() / (double)RAND_MAX) * 45000.0;
+     double x = (rand() / (double)RAND_MAX) * 4500.0;
+     double y = (rand() / (double)RAND_MAX) * 4500.0;
      double alpha = (rand() / (double)RAND_MAX) * 2 * M_PI;
      double length = 6000;
 
@@ -36,7 +36,7 @@ void test_line_map()
 int main(int argc, char **argv)
 {
     mikes_init(argc, argv);
-    init_line_map(mikes_config.line_map_file);
+    init_line_map("images/pavilon_I.svg");
     test_line_map();
     mikes_shutdown();
 }

@@ -44,6 +44,9 @@ void init_base_module();
 // retrieve the latest sensor data from base board
 void get_base_data(base_data_type *buffer);
 
+// write base data to log file
+void log_base_data(base_data_type* buffer);
+
 // waits until the next sensor data from the base board have not been received
 // since the serial line is full duplex, one packet could have been already on the way,
 // therefore you need to call this twice, to be sure the next status reflects the last
@@ -76,12 +79,6 @@ void resume_status_reporting();
 
 // configure laziness for velocity regulation mode
 void set_laziness(unsigned char laziness);
-
-// utility function to compute directional angle from alpha to beta (+/- 180), all values in deg.
-short angle_difference(short alpha, short beta);
-
-// utility function to compute directional angle from alpha to beta (+/- 180), all values in deg.
-double angle_rad_difference(double alpha, double beta);
 
 // utility function to convert the angular counter to travelled distance in mm
 short counter2mm(short counter);

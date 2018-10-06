@@ -92,6 +92,20 @@ void connect_base_module()
     base_initialized = 1;
 }
 
+#define BASE_LOGSTR_LEN 1024
+
+void log_base_data(base_data_type* buffer)
+{
+    char str[BASE_LOGSTR_LEN];
+
+    sprintf(str, "[main] base_module::log_base_data(): timestamp=%lu, counterA=%ld, counterB=%ld, velocityA=%d, velocityB=%d, dist1=%d, dist2=%d, dist3=%d, cube=%d, heading=%d, ax=%d, ay=%d, az=%d, gx=%d, gy=%d, gz=%d",
+        buffer->timestamp, buffer->counterA, buffer->counterB, buffer->velocityA, buffer->velocityB,
+        buffer->dist1, buffer->dist2, buffer->dist3, buffer->cube, buffer->heading,
+        buffer->ax, buffer->ay, buffer->az, buffer->gx, buffer->gy, buffer->gz);
+
+    mikes_log(ML_DEBUG, str);
+}
+
 base_data_type local_data;
 
 void read_base_packet()
@@ -309,24 +323,6 @@ void get_base_data(base_data_type* buffer)
     pthread_mutex_lock(&base_module_lock);
     memcpy(buffer, &local_data, sizeof(base_data_type));
     pthread_mutex_unlock(&base_module_lock);
-}
-
-short angle_difference(short alpha, short beta)
-{
-  short diff = beta - alpha;
-  if (diff > 180) return diff - 360;
-  else if (diff < -180) return diff + 360;
-  return diff;
-}
-
-double angle_rad_difference(double alpha, double beta)
-{
-  beta = rad_normAlpha(beta);
-  alpha = rad_normAlpha(alpha);
-  double diff = beta - alpha;
-  if (diff > M_PI) return diff - 2.0 * M_PI;
-  else if (diff < -M_PI) return diff + 2.0 * M_PI;
-  return diff;
 }
 
 void cancel_azimuth_mode()

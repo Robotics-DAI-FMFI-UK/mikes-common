@@ -26,11 +26,10 @@ int parse_element(xmlNode* a_node, line *lines)
             xmlChar *x2 = xmlGetProp(cur_node, (const xmlChar *) "x2");
             xmlChar *y2 = xmlGetProp(cur_node, (const xmlChar *) "y2");
             xmlChar *lineId = xmlGetProp(cur_node, (const xmlChar *) "lineId");
-            lines[i].x1 = 10.0 * (double) atoi((const char *) x1);
-            lines[i].y1 = 10.0 * (double) atoi((const char *) y1);
-            lines[i].x2 = 10.0 * (double) atoi((const char *) x2);
-            lines[i].y2 = 10.0 * (double) atoi((const char *) y2);
-            lines[i].x1 = 10.0 * (double) atoi((const char *) x1);
+            lines[i].x1 = (double) atoi((const char *) x1);  // * 10.0
+            lines[i].y1 = (double) atoi((const char *) y1);  // * 10.0
+            lines[i].x2 = (double) atoi((const char *) x2);  // * 10.0
+            lines[i].y2 = (double) atoi((const char *) y2);  // * 10.0
             lines[i].id = atoi((const char *) lineId);
             i++;
             if (i == MAX_LINES_IN_LINE_MAP)
