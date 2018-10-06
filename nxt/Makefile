@@ -9,5 +9,5 @@ TestMonoBrick: tests/TestMonoBrick.cs
 	mcs tests/TestMonoBrick.cs -out:TestMonoBrick -r:lib/MonoBrick
 
 clean:
-	rm -f TestMonoBrick NXTOperator
+	rm -f TestMonoBrick NXTOperator NXTOperator.mdb
 	rm -f tests/*.exe
