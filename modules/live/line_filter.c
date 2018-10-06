@@ -6,6 +6,7 @@
 
 #include "../../bites/mikes.h"
 #include "../../bites/filter.h"
+#include "../../bites/util.h"
 #include "line_filter.h"
 #include "../passive/mikes_logs.h"
 #include "core/config_mikes.h"

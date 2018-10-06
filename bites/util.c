@@ -11,7 +11,7 @@
 #include <sys/time.h>
 
 #include "../modules/passive/mikes_logs.h"
-#include "../core/config_mikes.h"
+#include "core/config_mikes.h"
 #include "util.h"
 
 
