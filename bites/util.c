@@ -11,6 +11,7 @@
 #include <sys/time.h>
 
 #include "../modules/passive/mikes_logs.h"
+#include "../core/config_mikes.h"
 #include "util.h"
 
 
@@ -101,3 +102,13 @@ int alert_new_data(int *fd)
   return write(fd[1], sendbuffer, sizeof(sendbuffer));
 }
 
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+// ---------------------------MAP ALPHA----------------------------
+// ----------------------------------------------------------------
+// ----------------------------------------------------------------
+
+double robot_alpha_to_map_azimuth(double alpha)
+{
+  return normAlpha(alpha + mikes_config.map_azimuth);
+}
