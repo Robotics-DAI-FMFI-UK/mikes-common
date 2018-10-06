@@ -26,43 +26,47 @@ using MonoBrick.NXT;
 //  Start - after NXT has been started by the user
 //  Done - after position has been reached
 //  Off - for each command request when NXT is not running
-//  Stop - NXT has been stopped by the user
+//  Stop - NXT or NXT program has been stopped by the user
 //  <Key> - Left, Right, Enter
 
 // on NXT mikes.rxe program should be downloaded in advance,
 // NXTOperator communicates with NXT using the following communication protocol:
 //
 // Pi->NXT / NXT->Pi
-//  'A'  return grabber completely in / sensor 4 light on when ready
-//  'B'  extend grabber completely out / sensor 4 light on when ready
-//  'C'  extend grabber out till first mark / sensor 1 light on when ready
-//  'D'  extend grabber out till second mark / sensor 1 light on when ready
+//  'A'  return grabber completely in / sensor 4 light off when ready
+//  'B'  extend grabber completely out / sensor 4 light off when ready
+//  'C'  extend grabber out till first mark / sensor 1 light off when ready
+//  'D'  extend grabber out till second mark / sensor 1 light off when ready
 //  'E'  set slow speed
 //  'F'  set high speed
-//  'M'  read key and send back / key entered (1, 2, or 3)
-//  'O'  acknowledge key has been read
+//  'M'  read key and send back / key entered (sensor 1, 2, or 4 off)
+//  'O'  acknowledge sensor status has been read, set all sensors to on again
 //  'X'  clear display
 //
 // example (command 'Line3'):
-//  Pi->NXT: 'G'
-//  Pi reset sensor 4 (now it should read 0)
 //  Pi->NXT: 'B'
-//  Pi reads sensor 4 until the value > 0
+//  Pi reads sensor 4, and when the value == 0, it nows it's done
+//  Pi->NXT: 'O'
+//  (NXT sets the sensor on again)
 //  (NXTOperator reports 'Done')
 
 //  internal architecture - main thread doing the work using state machine
 //                          extra thread reading from standard input
 //  states:
 //    1. waiting for NXT power on (active waiting with small sleeps) 
-//    2. waiting
-//    3. executing command
-//    4. quitting
+//    2. waiting for program to run (same)
+//    3. waiting
+//    4. executing command
+//    5. quitting
 
-//    1 -> 2 report 'Start' when NXT on and sensor 4 detected on
-//    2 -> 1 report 'Stop' when NXT disconnects
-//    2 -> 3 command arrived on stdin, start executing the command
-//    3 -> 2 NXT reported done using sensor 1/4
-//    any -> 4 'Quit' command arrived
+//    1 -> 3 report 'Start' when NXT on and sensor 4 detected on
+//    any -> 2 sensor 2 detected off (user switched off program), report 'Stop'
+//    any -> 1 exception when communicating (user switched off brick), report 'Stop'
+//    2 -> 3 sensor 4 detected on (user switched on program)
+//    3 -> 3 command arrived on stdin, but it is executed instantly
+//    3 -> 4 command arrived on stdin, start executing the command
+//    4 -> 3 NXT reported done using sensor 1/4
+//    any -> 5 'Quit' command arrived
 
 
 namespace Application
@@ -79,29 +83,26 @@ namespace Application
       }
 
       private const byte WAITING_FOR_NXT_POWER_ON = 0;
-      private const byte WAITING = 1;
-      private const byte EXECUTING = 2;
-      private const byte QUITTING = 3;
+      private const byte WAITING_FOR_PROGRAM_TO_RUN = 1;
+      private const byte WAITING = 2;
+      private const byte EXECUTING = 3;
+      private const byte QUITTING = 4;
 
       private byte state;
       private NXTLightSensor monitored_sensor;
-      private bool connected;
 
       private Brick<NXTLightSensor,NXTLightSensor,Sensor,NXTLightSensor> brick;
       private NXTLightSensor light1, light2, light4;
-      private bool we_run;
       private readonly Object inMove;
 
       public NXTOperator()
       {
-         connected = false;
          state = WAITING_FOR_NXT_POWER_ON;
          inMove = new Object();
          Console.SetIn(new StreamReader(Console.OpenStandardInput()));
-         //Console.SetOut(new StreamWriter(Console.OpenStandardOutput()));
          brick = new Brick<NXTLightSensor,NXTLightSensor,Sensor,NXTLightSensor>("usb");
+         configure_sensors();
 
-         we_run = true;
          Thread readThread = new Thread(new ThreadStart(read_loop));
          readThread.Start();
      }
@@ -112,9 +113,14 @@ namespace Application
            brick.Connection.Open();
          } catch (Exception) { return false; }
 
-         configure_sensors();
          run_mikes_program();
-         return try_wait_for_sensors_activated(); 
+         if (try_wait_for_sensors_activated())
+            return true;
+         else 
+         {
+            brick.Connection.Close();
+            return false;
+         }
      }
 
      private void configure_sensors()
@@ -129,48 +135,54 @@ namespace Application
 
      private void run_mikes_program()
      {
-         brick.StopProgram();
+         try { brick.StopProgram(); } catch (Exception) {}
          Thread.Sleep(1000);
          brick.StartProgram("mikes.rxe", true);
      }
 
      private bool try_wait_for_sensors_activated()
      {
-         int cnt = 0;
-         while (light4.ReadLightLevel() == 0)
-         {
-            Thread.Sleep(300);
-            cnt ++;
-            if (cnt > 20) 
-            { 
-               brick.Connection.Close();
-               return false;
-            }
-         } 
-         Console.WriteLine("Start");
-         connected = true;
-         return true;
+         try {
+           int cnt = 0;
+           while (light4.ReadLightLevel() == 0)
+           {
+              Thread.Sleep(300);
+              cnt ++;
+              if (cnt > 20) return false;
+           } 
+           Console.WriteLine("Start");
+           return true;
+         } catch (Exception)
+           {
+             state = WAITING_FOR_NXT_POWER_ON;
+             return false;
+           }
       }
 
       private void close()
       {
-         brick.Connection.Close();
+         try { brick.Connection.Close(); } catch (Exception) {}
       }
 
       private void sensor_loop()
       {
-         while (we_run)
+         while (state != QUITTING)
          { 
            if (state == WAITING_FOR_NXT_POWER_ON) 
            {
               if (try_connect()) state = WAITING;
               else Thread.Sleep(1000);
            }
+           else if (state == WAITING_FOR_PROGRAM_TO_RUN)
+           {
+              if (try_wait_for_sensors_activated()) state = WAITING;
+              else Thread.Sleep(1000);
+           }
            else 
            {
              lock(inMove) Monitor.Wait(inMove);
 
-             while (we_run && (state == EXECUTING))
+             while (state == EXECUTING)
              {
                if (check_movement_completed()) state = WAITING;
                else Thread.Sleep(10);
@@ -194,20 +206,28 @@ namespace Application
 
       private void read_loop()
       {
-         while (we_run)
+         while (state != QUITTING)
          {
             String cmd = Console.ReadLine();
             if (cmd.Equals("Quit")) quit();
-            else if (!connected) Console.WriteLine("Off");
-            else if ((state == WAITING) || (state == EXECUTING))
+            else if (state < WAITING) Console.WriteLine("Off");
+            else 
             {
-              if (light2.ReadLightLevel() == 0)
-              {
-                 connected = false;
-                 state = WAITING_FOR_NXT_POWER_ON;
-                 Console.WriteLine("Stop");
-              }
-              else process_command(cmd);
+              try { 
+                if (light2.ReadLightLevel() == 0)
+                {
+                   state = WAITING_FOR_PROGRAM_TO_RUN;
+                   Console.WriteLine("Stop");
+                   lock(inMove) Monitor.Pulse(inMove);
+                }
+                else process_command(cmd);
+              } catch (Exception) 
+                    { 
+                      state = WAITING_FOR_NXT_POWER_ON; 
+                      brick.Connection.Close();
+                      Console.WriteLine("Stop");
+                      lock(inMove) Monitor.Pulse(inMove);
+                    }
             }
          }
       }
@@ -296,7 +316,7 @@ namespace Application
          brick.Mailbox.Send("M", Box.Box0);
          while ((light1.ReadLightLevel() > 0) && 
                 (light2.ReadLightLevel() > 0) && 
-                (light4.ReadLightLevel() > 0) && we_run) Thread.Sleep(10);
+                (light4.ReadLightLevel() > 0) && (state != QUITTING)) Thread.Sleep(10);
          if (light1.ReadLightLevel() == 0) Console.WriteLine("Left"); 
          else if (light2.ReadLightLevel() == 0) Console.WriteLine("Right"); 
          else if (light4.ReadLightLevel() == 0) Console.WriteLine("Enter"); 
@@ -306,12 +326,14 @@ namespace Application
 
       private void quit()
       {
-         if (connected) off(); 
-         state = QUITTING;
-         we_run = false;
-         if (connected) brick.StopProgram();
-         if (state != WAITING_FOR_NXT_POWER_ON) 
+         if (state >= WAITING_FOR_PROGRAM_TO_RUN) off(); 
+         if (state > WAITING_FOR_PROGRAM_TO_RUN) 
+         { 
+           brick.StopProgram();
+           state = QUITTING;
            lock(inMove) Monitor.Pulse(inMove);
+         }
+         else state = QUITTING;
       }
     }
 }

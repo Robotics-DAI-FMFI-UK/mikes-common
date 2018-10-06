@@ -198,7 +198,7 @@ test_nxt: ${TEST_NXT_OBJS} nxt/NXTOperator.cs nxt/tests/TestMonoBrick.cs
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtiontest_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt
 	rm -rf modules/live/xtion/Arm-Release
 	make -C nxt clean
 	rm -f grey_gradient.png rgb_gradient.png
