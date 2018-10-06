@@ -25,6 +25,10 @@ test_x_line_map
 test_line_map
 test_hough
 test_math_2d
+test_nxt
+test_wheels
+test_x_line_map_original
+poses.txt
 nxt/lib
 nxt/tmp-tests
 retired_to_be_deleted
