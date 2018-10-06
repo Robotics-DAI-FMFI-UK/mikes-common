@@ -5,6 +5,7 @@
 #include "../live/gui.h"
 #include "mikes_logs.h"
 #include "core/config_mikes.h"
+#include "bites/mikes.h"
 
 #define ENLARGE_CENTER 50
 
@@ -15,10 +16,10 @@
 #define BASIC_LINE 1
 #define FILTERED_LINE 2
 
-int show_raw_lines;
-int show_filtered_lines;
-int show_segments;
-int show_corners;
+static int show_raw_lines;
+static int show_filtered_lines;
+static int show_segments;
+static int show_corners;
 
 static int win;
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
@@ -210,7 +211,15 @@ void tim_segments_update(segments_data *segments)
 {
   segments_local = *segments;
   corner_find_from_segments(&segments_local, &corners_local);
-  corner_print_data(&corners_local);
+}
+
+void x_tim571_key_listener(int win, int key)
+{
+    if (key == 'r') show_raw_lines ^= 1;
+    else if (key == 'f') show_filtered_lines ^= 1;
+    else if (key == 's') show_segments ^= 1;
+    else if (key == 'c') show_corners ^= 1;
+    else if (key == GUI_ESC_KEY) program_runs = 0;
 }
 
 void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
@@ -237,6 +246,7 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
    register_line_filter_callback(filtered_lines_update);
    register_tim_segment_callback(tim_segments_update);
    get_tim571_status_data(&status_local_copy);
+   gui_add_key_listener("showing", x_tim571_key_listener);
 }
 
 void shutdown_x_tim571()

@@ -56,27 +56,23 @@ void filter_lines()
     while ((j < n) && (lines_data_local.lines[j].distance <= maxdist))
     {
       short beta = lines_data_local.lines[j].angle;
-      if (angle_difference(alpha, beta) < LINES_SAME_CLUSTER_MAX_ANGLE_DIFFERENCE)
+      if (abs(angle_difference(alpha, beta)) < LINES_SAME_CLUSTER_MAX_ANGLE_DIFFERENCE)
         if (cluster[i] != cluster[j])
         {
-          if (i < j)
+          if (cluster[i] < cluster[j])
           {
             for (int k = 0; k < n; k++)
-              if (cluster[k] == j) cluster[k] = i;
+              if (cluster[k] == cluster[j]) cluster[k] = cluster[i];
           }
           else
           {
             for (int k = 0; k < n; k++)
-              if (cluster[k] == i) cluster[k] = j;
+              if (cluster[k] == cluster[i]) cluster[k] = cluster[j];
           }
         }
       j++;
     }
   }
-
-  for (int i = 0; i < n; i++)
-    printf("%d ", cluster[i]);
-  printf("\n---\n");
 
   uint8_t cluster_used[n];
   int cluster_size[n];
@@ -135,7 +131,6 @@ void filter_lines()
 void process_new_lines()
 {
   filter_lines();
-  printf("filtered %d lines to %d\n", lines_data_local.count, filtered_lines.count);
   for (int i = 0; i < callbacks_count; i++)
     callbacks[i](&status_data_local_copy, dist_local_copy, rssi_local_copy, &filtered_lines);
 }

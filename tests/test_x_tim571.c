@@ -9,13 +9,6 @@
 #include "modules/live/tim_segment.h"
 #include "bites/mikes.h"
 
-void key_listener(int win, int key)
-{
-    if (key == 'r') show_raw_lines ^= 1;
-    if (key == 'f') show_filtered_lines ^= 1;
-    if (key == 's') show_segments ^= 1;
-    if (key == 'c') show_corners ^= 1;
-}
 
 int main(int argc, char **argv)
 {
@@ -28,7 +21,6 @@ int main(int argc, char **argv)
     init_line_filter();
     init_tim_segment();
     init_x_tim571(7000, 400);
-    gui_add_key_listener("showing", key_listener);
 
     while (program_runs)
     {
