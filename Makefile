@@ -88,6 +88,10 @@ TEST_X_LINE_MAP_SRCS=tests/test_x_line_map.c \
                      modules/live/base_module.c \
                      modules/passive/pose.c \
                      ${MIKES_BASIC}
+TEST_X_LINE_MAP_O_SRCS=tests/test_x_line_map_original.c \
+                       modules/passive/x_line_map.c \
+                       modules/live/gui.c \
+                       ${MIKES_BASIC}
 TEST_LINE_MAP_SRCS=tests/test_line_map.c \
                    modules/passive/line_map.c \
                    ${MIKES_BASIC}
@@ -122,6 +126,7 @@ TEST_PNGWRITER_OBJS=${TEST_PNGWRITER_SRCS:.c=.o} ${TEST_PNGWRITER_SRCS:.c=.o}
 TEST_XTION_OBJS=${TEST_XTION_SRCS:.c=.o} ${XTION_OBJS}
 TEST_X_XTION_OBJS=${TEST_X_XTION_SRCS:.c=.o} ${XTION_OBJS}
 TEST_X_LINE_MAP_OBJS=${TEST_X_LINE_MAP_SRCS:.c=.o}
+TEST_X_LINE_MAP_O_OBJS=${TEST_X_LINE_MAP_O_SRCS:.c=.o}
 TEST_LINE_MAP_OBJS=${TEST_LINE_MAP_SRCS:.c=.o}
 TEST_HOUGH_OBJS=${TEST_HOUGH_SRCS:.c=.o}
 TEST_MATH_OBJS=${TEST_MATH_SRCS:.c=.o}
@@ -149,7 +154,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_line_map_original
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -189,6 +194,8 @@ test_x_xtion: ${TEST_X_XTION_OBJS}
 	${CPP} -o test_x_xtion $^ ${LDFLAGS} ${DEBUG_FLAGS} -lOpenNI
 test_x_line_map: ${TEST_X_LINE_MAP_OBJS}
 	${CC} -o test_x_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_x_line_map_original: ${TEST_X_LINE_MAP_O_OBJS}
+	${CC} -o test_x_line_map_original $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_line_map: ${TEST_LINE_MAP_OBJS}
 	${CC} -o test_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_hough: ${TEST_HOUGH_OBJS}
@@ -204,7 +211,7 @@ test_wheels: ${TEST_WHEELS_OBJS}
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_line_map_original
 	rm -rf modules/live/xtion/Arm-Release
 	make -C nxt clean
 	rm -f grey_gradient.png rgb_gradient.png

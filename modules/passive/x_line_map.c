@@ -61,13 +61,14 @@ void x_line_map_paint(cairo_t *w)
      int px4_win = XMM2WIN(last_pose.x + POSE_ARROW_LENGTH / 2.0 * sin(last_pose.heading - M_PI / 2.0));
      int py4_win = YMM2WIN(last_pose.y + POSE_ARROW_LENGTH / 2.0 * cos(last_pose.heading - M_PI / 2.0));
 
+     cairo_move_to(w, px2_win, py2_win);
+     cairo_line_to(w, px3_win, py3_win);
+     cairo_line_to(w, px4_win, py4_win);
+     cairo_line_to(w, px2_win, py2_win);     
+     cairo_fill(w);
      cairo_move_to(w, px1_win, py1_win);
      cairo_line_to(w, px2_win, py2_win);
-
-     cairo_line_to(w, px3_win, py3_win);
-     //cairo_move_to(w, px2_win, py2_win);
-     cairo_line_to(w, px4_win, py4_win);
-     cairo_line_to(w, px2_win, py2_win);
+     cairo_stroke(w);
 
      /*
      // draw map bounding rectangle (just to test correct X,Y transformations)
@@ -83,7 +84,6 @@ void x_line_map_paint(cairo_t *w)
      cairo_line_to(w, mx1, my1);
      */
 
-     cairo_stroke(w);
    }
    cairo_pop_group_to_source(w);
    cairo_paint(w);
