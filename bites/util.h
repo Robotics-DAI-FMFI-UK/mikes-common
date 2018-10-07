@@ -28,6 +28,6 @@ short angle_difference(short alpha, short beta);
 double angle_rad_difference(double alpha, double beta);
 
 // change robot angle to map angle
-double robot_alpha_to_map_azimuth(double alpha);
+double compass_heading_to_map_heading(double alpha);
 
 #endif

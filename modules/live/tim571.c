@@ -16,6 +16,7 @@
 #include <stdint.h>
 
 #include "../../bites/mikes.h"
+#include "../../bites/util.h"
 #include "tim571.h"
 #include "../passive/mikes_logs.h"
 #include "core/config_mikes.h"
@@ -489,6 +490,18 @@ void log_tim571_data(tim571_status_data *sd, uint16_t *dist, uint8_t *rssi)
 double tim571_ray2azimuth(int ray)
 {
   return 135 - (ray / ((double)TIM571_DATA_COUNT - 1)) * 270.0;
+}
+
+double tim571_azimuth_to_robot_azimuth(double alpha)
+{
+  return normAlpha(alpha + 0); // When robot 0 will be difference from tim517 0 (laser is not pointing to front of robot)
+}
+
+double tim571_angle_and_compass_heading_to_map_angle(double tim571_angle, double heading)
+{
+  double map_heading = compass_heading_to_map_heading(heading);
+  double map_angle = tim571_azimuth_to_robot_azimuth(tim571_angle) - map_heading;
+  return normAlpha(map_angle);
 }
 
 int tim571_azimuth2ray(int alpha)

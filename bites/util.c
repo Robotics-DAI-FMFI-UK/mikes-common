@@ -108,7 +108,7 @@ int alert_new_data(int *fd)
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 
-double robot_alpha_to_map_azimuth(double alpha)
+double compass_heading_to_map_heading(double alpha)
 {
   return normAlpha(alpha + mikes_config.map_azimuth);
 }
