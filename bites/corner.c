@@ -2,18 +2,15 @@
 
 #include "corner.h"
 
-#define MAX_TOLERANCE_ANGLE 5.0
-#define MAX_TOLERANCE_DISTANCE 20.0
-
-uint8_t is_point_close_to_segment(point_2d *point, segment_data *segment)
+uint8_t is_point_close_to_segment(double *max_tolerance_distance, point_2d *point, segment_data *segment)
 {
   if (segment->start.x < segment->end.x) {
-    return point->x > segment->start.x - MAX_TOLERANCE_DISTANCE && point->x < segment->end.x + MAX_TOLERANCE_DISTANCE;
+    return point->x > segment->start.x - *max_tolerance_distance && point->x < segment->end.x + *max_tolerance_distance;
   }
-  return point->x > segment->end.x - MAX_TOLERANCE_DISTANCE && point->x < segment->start.x + MAX_TOLERANCE_DISTANCE;
+  return point->x > segment->end.x - *max_tolerance_distance && point->x < segment->start.x + *max_tolerance_distance;
 }
 
-void corner_find_from_segments(segments_data *segments, corners_data *corners)
+void corner_find_from_segments(corner_config *config, segments_data *segments, corners_data *corners)
 {
   corners->count = 0;
   point_2d cross;
@@ -43,7 +40,7 @@ void corner_find_from_segments(segments_data *segments, corners_data *corners)
       difference = PERPENDICULAR_ANGLE - angle;
       difference = difference < 0 ? -difference : difference;
 
-      if (difference < MAX_TOLERANCE_ANGLE) {
+      if (difference < config->max_tolerance_angle) {
         get_normal_vector(&segment_v1, &segment_normal1);
         get_normal_vector(&segment_v2, &segment_normal2);
         normalize_vector(&segment_normal1);
@@ -51,7 +48,7 @@ void corner_find_from_segments(segments_data *segments, corners_data *corners)
 
         find_cross_of_two_lines(&segment_normal1, &segment1->start, &segment_normal2, &segment2->start, &cross);
 
-        if (is_point_close_to_segment(&cross, segment1) && is_point_close_to_segment(&cross, segment2)) {
+        if (is_point_close_to_segment(&config->max_tolerance_distance, &cross, segment1) && is_point_close_to_segment(&config->max_tolerance_distance, &cross, segment2)) {
           if (corners->count < CORNERS_MAX_DATA_COUNT) {
             corner = &corners->corners[corners->count++];
             corner->corner = cross;

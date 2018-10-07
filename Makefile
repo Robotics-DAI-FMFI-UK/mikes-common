@@ -41,6 +41,7 @@ TEST_X_TIM571_SRCS=tests/test_x_tim571.c \
                    modules/live/tim_hough_transform.c \
                    modules/live/line_filter.c \
                    modules/live/tim_segment.c \
+                   modules/live/tim_corner.c \
                    bites/hough.c \
                    bites/filter.c \
                    bites/math_2d.c \

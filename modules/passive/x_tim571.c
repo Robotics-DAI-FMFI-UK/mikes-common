@@ -7,6 +7,12 @@
 #include "core/config_mikes.h"
 #include "../../bites/mikes.h"
 
+#include "../live/tim571.h"
+#include "../live/tim_hough_transform.h"
+#include "../live/line_filter.h"
+#include "../live/tim_segment.h"
+#include "../live/tim_corner.h"
+
 #define ENLARGE_CENTER 50
 
 #define RAY_USUAL_TYPE 1
@@ -210,7 +216,11 @@ void filtered_lines_update(tim571_status_data *status_data, uint16_t *distance, 
 void tim_segments_update(segments_data *segments)
 {
   segments_local = *segments;
-  corner_find_from_segments(&segments_local, &corners_local);
+}
+
+void tim_corners_update(corners_data *corners)
+{
+  corners_local = *corners;
 }
 
 void x_tim571_key_listener(int win, int key)
@@ -245,6 +255,7 @@ void init_x_tim571(int max_range_in_mm, int window_update_period_in_ms)
    register_tim_hough_transform_callback(x_tim571_lines_update);
    register_line_filter_callback(filtered_lines_update);
    register_tim_segment_callback(tim_segments_update);
+   register_tim_corner_callback(tim_corners_update);
    get_tim571_status_data(&status_local_copy);
    gui_add_key_listener("showing", x_tim571_key_listener);
 }
