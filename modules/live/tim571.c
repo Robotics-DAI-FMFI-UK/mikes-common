@@ -494,7 +494,7 @@ double tim571_ray2azimuth(int ray)
 
 double tim571_azimuth_to_robot_azimuth(double alpha)
 {
-  return normAlpha(alpha + 0); // When robot 0 will be difference from tim517 0 (laser is not pointing to front of robot)
+  return normAlpha(90 - alpha);
 }
 
 double tim571_angle_and_compass_heading_to_map_angle(double tim571_angle, double heading)
