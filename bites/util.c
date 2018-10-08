@@ -112,3 +112,8 @@ double compass_heading_to_map_heading(double alpha)
 {
   return normAlpha(alpha + mikes_config.map_azimuth);
 }
+
+double math_azimuth_to_robot_azimuth(double alpha)
+{
+  return normAlpha(90.0 - alpha);
+}

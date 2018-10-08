@@ -49,9 +49,6 @@ void test_tim571();
 /* ray: 0..TIM571_DATA_COUNT - 1, returns: 0-360 */
 double tim571_ray2azimuth(int ray);
 
-/* tim571 azimuth to robot azimuth */
-double tim571_azimuth_to_robot_azimuth(double angle);
-
 /* tim571 local angle with compass heading to angle from map azimuth */
 double tim571_angle_and_compass_heading_to_map_angle(double tim571_angle, double heading);
 

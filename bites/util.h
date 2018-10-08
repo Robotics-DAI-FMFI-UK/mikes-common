@@ -30,4 +30,7 @@ double angle_rad_difference(double alpha, double beta);
 // change robot angle to map angle
 double compass_heading_to_map_heading(double alpha);
 
+// Change start of nagle from (1:0) to (0:1) and from anticlockwise to clockwise
+double math_azimuth_to_robot_azimuth(double alpha);
+
 #endif

@@ -492,16 +492,11 @@ double tim571_ray2azimuth(int ray)
   return 135 - (ray / ((double)TIM571_DATA_COUNT - 1)) * 270.0;
 }
 
-double tim571_azimuth_to_robot_azimuth(double alpha)
-{
-  return normAlpha(90.0 - alpha);
-}
-
 double tim571_angle_and_compass_heading_to_map_angle(double tim571_angle, double heading)
 {
   double map_heading = compass_heading_to_map_heading(heading);
   double difference = 360 - map_heading;
-  double map_angle = tim571_azimuth_to_robot_azimuth(tim571_angle) - difference;
+  double map_angle = math_azimuth_to_robot_azimuth(tim571_angle) - difference;
   return normAlpha(map_angle);
 }
 
