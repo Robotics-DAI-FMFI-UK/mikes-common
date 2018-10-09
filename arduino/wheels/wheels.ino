@@ -2,12 +2,15 @@
 #include <Servo.h>
 
 Servo s;
+Servo d;
 
 void setup()
 {
   s.attach(10);
+  d.attach(9);
   Serial.begin(115200);
   s.write(0);
+  d.write(100);
 }
 
 void loop() 
@@ -20,6 +23,8 @@ void loop()
     else if (c == 'D') s.write(180);
     else if (c == 'F') s.write(90);
     else if (c == 'T') test();
+    else if (c == 'O') d.write(180);
+    else if (c == 'C') d.write(100);
     else Serial.write('?');
   }
 }
