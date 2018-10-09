@@ -48,6 +48,21 @@ TEST_X_TIM571_SRCS=tests/test_x_tim571.c \
                    bites/segment.c \
                    bites/corner.c \
                    ${MIKES_BASIC}
+TEST_X_AVOID_SRCS=tests/test_x_tim571.c \
+                   modules/live/tim571.c \
+                   modules/passive/x_tim571.c \
+                   modules/live/gui.c \
+                   modules/live/tim_hough_transform.c \
+                   modules/live/line_filter.c \
+                   modules/live/tim_segment.c \
+                   modules/live/tim_corner.c \
+                   modules/live/avoid.c \
+                   bites/hough.c \
+                   bites/filter.c \
+                   bites/math_2d.c \
+                   bites/segment.c \
+                   bites/corner.c \
+                   ${MIKES_BASIC}
 TEST_X_BASE_SRCS=tests/test_x_base.c \
                    modules/live/base_module.c \
                    modules/passive/pose.c \
@@ -84,13 +99,15 @@ TEST_X_XTION_SRCS=tests/test_x_xtion.c \
                   modules/live/gui.c \
                   bites/pngwriter.c \
                   ${MIKES_BASIC}
-TEST_X_LINE_MAP_SRCS=tests/test_x_line_map.c \
+TEST_X_NAVIG_SRCS=tests/test_x_navig.c \
                      modules/passive/x_line_map.c \
                      modules/live/gui.c \
                      modules/live/base_module.c \
+                     modules/live/navig.c \
                      modules/passive/pose.c \
+                     bites/math_2d.c \
                      ${MIKES_BASIC}
-TEST_X_LINE_MAP_O_SRCS=tests/test_x_line_map_original.c \
+TEST_X_LINE_MAP_SRCS=tests/test_x_line_map.c \
                        modules/passive/x_line_map.c \
                        modules/live/gui.c \
                        ${MIKES_BASIC}
@@ -109,6 +126,11 @@ TEST_NXT_SRCS=tests/test_nxt.c \
 TEST_WHEELS_SRCS=tests/test_wheels.c \
                  modules/passive/wheels.c \
                  ${MIKES_BASIC}
+TEST_ACTUATOR_SRCS=tests/test_actuator.c \
+                 modules/passive/wheels.c \
+                 modules/live/nxt.c \
+                 modules/passive/actuator.c \
+                 ${MIKES_BASIC}
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
@@ -118,6 +140,7 @@ TEST_NCURSES_OBJS=${TEST_NCURSES_SRCS:.c=.o}
 TEST_TIM571_OBJS=${TEST_TIM571_SRCS:.c=.o}
 TEST_GUI_OBJS=${TEST_GUI_SRCS:.c=.o}
 TEST_X_TIM571_OBJS=${TEST_X_TIM571_SRCS:.c=.o}
+TEST_X_AVOID_OBJS=${TEST_X_AVOID_SRCS:.c=.o}
 TEST_X_BASE_OBJS=${TEST_X_BASE_SRCS:.c=.o}
 TEST_RFID_OBJS=${TEST_RFID_SRCS:.c=.o}
 TEST_UST10LX_OBJS=${TEST_UST10LX_SRCS:.c=.o}
@@ -127,13 +150,14 @@ TEST_X_LIDAR_OBJS=${TEST_X_LIDAR_SRCS:.c=.o} ${TEST_X_LIDAR_CPPSRCS:.cpp=.o}
 TEST_PNGWRITER_OBJS=${TEST_PNGWRITER_SRCS:.c=.o} ${TEST_PNGWRITER_SRCS:.c=.o}
 TEST_XTION_OBJS=${TEST_XTION_SRCS:.c=.o} ${XTION_OBJS}
 TEST_X_XTION_OBJS=${TEST_X_XTION_SRCS:.c=.o} ${XTION_OBJS}
+TEST_X_NAVIG_OBJS=${TEST_X_NAVIG_SRCS:.c=.o}
 TEST_X_LINE_MAP_OBJS=${TEST_X_LINE_MAP_SRCS:.c=.o}
-TEST_X_LINE_MAP_O_OBJS=${TEST_X_LINE_MAP_O_SRCS:.c=.o}
 TEST_LINE_MAP_OBJS=${TEST_LINE_MAP_SRCS:.c=.o}
 TEST_HOUGH_OBJS=${TEST_HOUGH_SRCS:.c=.o}
 TEST_MATH_OBJS=${TEST_MATH_SRCS:.c=.o}
 TEST_NXT_OBJS=${TEST_NXT_SRCS:.c=.o}
 TEST_WHEELS_OBJS=${TEST_WHEELS_SRCS:.c=.o}
+TEST_ACTUATOR_OBJS=${TEST_ACTUATOR_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -156,7 +180,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_line_map_original
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -174,6 +198,8 @@ test_gui: ${TEST_GUI_OBJS}
 	${CC} -o test_gui $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_x_tim571: ${TEST_X_TIM571_OBJS}
 	${CC} -o test_x_tim571 $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_x_avoid: ${TEST_X_AVOID_OBJS}
+	${CC} -o test_x_avoid $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_x_base: ${TEST_X_BASE_OBJS}
 	${CC} -o test_x_base $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_rfid: ${TEST_RFID_OBJS}
@@ -196,8 +222,8 @@ test_x_xtion: ${TEST_X_XTION_OBJS}
 	${CPP} -o test_x_xtion $^ ${LDFLAGS} ${DEBUG_FLAGS} -lOpenNI
 test_x_line_map: ${TEST_X_LINE_MAP_OBJS}
 	${CC} -o test_x_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
-test_x_line_map_original: ${TEST_X_LINE_MAP_O_OBJS}
-	${CC} -o test_x_line_map_original $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_x_navig: ${TEST_X_NAVIG_OBJS}
+	${CC} -o test_x_navig $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_line_map: ${TEST_LINE_MAP_OBJS}
 	${CC} -o test_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_hough: ${TEST_HOUGH_OBJS}
@@ -209,11 +235,13 @@ test_nxt: ${TEST_NXT_OBJS} nxt/NXTOperator.cs nxt/tests/TestMonoBrick.cs
 	${CC} -o test_nxt ${TEST_NXT_OBJS} ${LDFLAGS} ${DEBUG_FLAGS}
 test_wheels: ${TEST_WHEELS_OBJS}
 	${CC} -o test_wheels $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_actuator: ${TEST_ACTUATOR_OBJS}
+	${CC} -o test_actuator $^ ${LDFLAGS} ${DEBUG_FLAGS}
 
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_line_map_original
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator
 	rm -rf modules/live/xtion/Arm-Release
 	make -C nxt clean
 	rm -f grey_gradient.png rgb_gradient.png
