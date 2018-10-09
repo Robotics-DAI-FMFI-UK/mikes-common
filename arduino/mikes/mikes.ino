@@ -208,7 +208,9 @@ void setup_mpu(void)
   compass.setSamples(HMC5883L_SAMPLES_8);
   
   // Set calibration offset. See HMC5883L_calibration.ino
-  compass.setOffset(-283, -64);
+  //compass.setOffset(-283, -64);
+  //compass.setOffset(-128, 120);
+  compass.setOffset(-147, -4);
 
   mpu_initialized = 1;
 }
