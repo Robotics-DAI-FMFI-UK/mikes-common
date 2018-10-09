@@ -193,6 +193,7 @@ namespace Application
 
       private bool check_movement_completed()
       {
+        try {
          while (true)
          {
            if (monitored_sensor.ReadLightLevel() == 0) break;
@@ -202,6 +203,8 @@ namespace Application
          Thread.Sleep(100);
          Console.WriteLine("Done");
          return true;
+        } catch (Exception) {}
+        return true;
       }
 
       private void read_loop()
