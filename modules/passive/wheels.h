@@ -16,4 +16,7 @@ void wheels_forward();
 // test all positions
 void wheels_test();
 
+// unload cargo
+void cargo_unload();
+
 #endif

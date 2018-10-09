@@ -103,6 +103,13 @@ void wheels_test()
     wheels_send_cmd("T");
 }
 
+void cargo_unload()
+{
+    wheels_send_cmd("O");
+    sleep(10);
+    wheels_send_cmd("C");
+}
+
 void init_wheels()
 {
     wheels_initialized = 0;
