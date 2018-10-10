@@ -63,7 +63,7 @@ void update_actual_pose()
   }
 }
 
-int register_navig_actualize_pose_function(navig_actualize_pose_function fn)
+int navig_register_actualize_pose_function(navig_actualize_pose_function fn)
 {
   if (!navig.init) return -1;
 

@@ -72,7 +72,7 @@ void shutdown_navig();
 int  navig_register_callback(navig_data_callback callback);
 void navig_unregister_callback(navig_data_callback callback);
 
-int register_navig_actualize_pose_function(navig_actualize_pose_function fn);
+int navig_register_actualize_pose_function(navig_actualize_pose_function fn);
 
 int navig_cmd_goto_point(double px, double py, double ph);
 int navig_cmd_get_result(int cmd_id);
