@@ -14,6 +14,7 @@
 #define MAX_TIM_HOUGH_TRANSFORM_CALLBACKS 20
 
 static pthread_mutex_t      tim_hough_transform_lock;
+static pthread_mutex_t      tim_hough_transform_mode_lock;
 static int                  fd[2];
 
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
@@ -26,6 +27,9 @@ static tim_hough_transform_receive_data_callback  callbacks[MAX_TIM_HOUGH_TRANSF
 static int                                        callbacks_count;
 
 static int online;
+
+static int current_mode = TIM_HOUGH_TRANSFORM_MODE_CONTINUOUS;
+static int compute_next_tick = 0;
 
 static hough_config tim_hough_default_config = {
   .distance_max = TIM571_MAX_DISTANCE,
@@ -41,6 +45,25 @@ static hough_config tim_hough_default_config = {
 // --------------------------LIFECYCLE-----------------------------
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
+
+int tim_hough_transform_should_compute()
+{
+  return current_mode == TIM_HOUGH_TRANSFORM_MODE_CONTINUOUS || compute_next_tick;
+}
+
+void tim_hough_transform_do_compute_once()
+{
+  pthread_mutex_lock(&tim_hough_transform_lock);
+  compute_next_tick = 1;
+  pthread_mutex_unlock(&tim_hough_transform_lock);
+}
+
+void tim_hough_transform_set_mode(int mode)
+{
+  pthread_mutex_lock(&tim_hough_transform_mode_lock);
+  current_mode = mode;
+  pthread_mutex_unlock(&tim_hough_transform_mode_lock);
+}
 
 void tim_hough_transform_change_default_config(hough_config *config)
 {
@@ -77,13 +100,16 @@ void *tim_hough_transform_thread(void *args)
 
 void tim571_new_data(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
-  if (pthread_mutex_trylock(&tim_hough_transform_lock) == 0) {
+  pthread_mutex_lock(&tim_hough_transform_mode_lock);
+  if (tim_hough_transform_should_compute() && pthread_mutex_trylock(&tim_hough_transform_lock) == 0) {
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     status_data_local_copy = *status_data;
+    compute_next_tick = 0;
     alert_new_data(fd);
     pthread_mutex_unlock(&tim_hough_transform_lock);
   }
+  pthread_mutex_unlock(&tim_hough_transform_mode_lock);
 }
 
 void init_tim_hough_transform()
@@ -105,6 +131,7 @@ void init_tim_hough_transform()
 
   pthread_t t;
   pthread_mutex_init(&tim_hough_transform_lock, 0);
+  pthread_mutex_init(&tim_hough_transform_mode_lock, 0);
   register_tim571_callback(tim571_new_data);
   if (pthread_create(&t, 0, tim_hough_transform_thread, 0) != 0)
   {
