@@ -53,6 +53,8 @@ int tim_hough_transform_should_compute()
 
 void tim_hough_transform_do_compute_once()
 {
+  if (!online) return;
+
   pthread_mutex_lock(&tim_hough_transform_lock);
   compute_next_tick = 1;
   pthread_mutex_unlock(&tim_hough_transform_lock);
@@ -60,6 +62,8 @@ void tim_hough_transform_do_compute_once()
 
 void tim_hough_transform_set_mode(int mode)
 {
+  if (!online) return;
+
   pthread_mutex_lock(&tim_hough_transform_mode_lock);
   current_mode = mode;
   pthread_mutex_unlock(&tim_hough_transform_mode_lock);
@@ -67,6 +71,8 @@ void tim_hough_transform_set_mode(int mode)
 
 void tim_hough_transform_change_default_config(hough_config *config)
 {
+  if (!online) return;
+
   pthread_mutex_lock(&tim_hough_transform_lock);
   memcpy(config, &tim_hough_default_config, sizeof(hough_config));
   pthread_mutex_unlock(&tim_hough_transform_lock);
