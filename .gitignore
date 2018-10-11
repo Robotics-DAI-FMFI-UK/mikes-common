@@ -28,6 +28,9 @@ test_math_2d
 test_nxt
 test_wheels
 test_x_line_map_original
+test_actuator
+test_x_avoid
+test_x_navig
 poses.txt
 nxt/lib
 nxt/tmp-tests

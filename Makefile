@@ -48,7 +48,7 @@ TEST_X_TIM571_SRCS=tests/test_x_tim571.c \
                    bites/segment.c \
                    bites/corner.c \
                    ${MIKES_BASIC}
-TEST_X_AVOID_SRCS=tests/test_x_tim571.c \
+TEST_X_AVOID_SRCS=tests/test_x_avoid.c \
                    modules/live/tim571.c \
                    modules/passive/x_tim571.c \
                    modules/live/gui.c \

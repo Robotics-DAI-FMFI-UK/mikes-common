@@ -8,6 +8,7 @@
 #include "modules/live/line_filter.h"
 #include "modules/live/tim_segment.h"
 #include "modules/live/tim_corner.h"
+#include "modules/live/avoid.h"
 #include "bites/mikes.h"
 
 
@@ -23,12 +24,14 @@ int main(int argc, char **argv)
     init_tim_segment();
     init_tim_corner();
     init_x_tim571(7000, 400);
+    init_avoid();
 
     while (program_runs)
     {
       usleep(30000);
     }
 
+    shutdown_avoid();
     shutdown_line_filter();
     shutdown_tim_hough_transform();
     shutdown_x_tim571();

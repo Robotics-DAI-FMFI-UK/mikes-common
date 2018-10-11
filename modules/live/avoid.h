@@ -6,13 +6,13 @@
 
 #define AVOID_MAX_CALLBACKS 20
 
-#define AVOID_MSG_TYPE_NONE       0
-#define AVOID_MSG_TYPE_STOPPED    1
-#define AVOID_MSG_TYPE_UNBLOCKED  2
-#define AVOID_MSG_TYPE__COUNT     3
+#define AVOID_STATE_NONE       0
+#define AVOID_STATE_STOPPED    1
+#define AVOID_STATE_UNBLOCKED  2
+#define AVOID_STATE__COUNT     3
 
 typedef struct { 
-    int avoid_msg_type;
+    int avoid_state;
 } avoid_callback_data_t;
 
 typedef void (*avoid_data_callback)(avoid_callback_data_t *data);
@@ -20,6 +20,7 @@ typedef void (*avoid_data_callback)(avoid_callback_data_t *data);
 
 typedef struct { 
     int init;
+    int terminate;
     pthread_t thread;
 
     int data_fd[2];
@@ -28,10 +29,12 @@ typedef struct {
     int callbacks_count;
     avoid_data_callback callbacks[AVOID_MAX_CALLBACKS];
 
-    tim571_status_data status_data_local_copy;
-    uint16_t dist_local_copy[TIM571_DATA_COUNT];
-    uint8_t  rssi_local_copy[TIM571_DATA_COUNT];
+    tim571_status_data tim571_status;
+    uint16_t tim571_dist[TIM571_DATA_COUNT];
+    uint8_t  tim571_rssi[TIM571_DATA_COUNT];
 
+    int state;
+    int state_old;
 } avoid_t;
 
 

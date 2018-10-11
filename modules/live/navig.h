@@ -13,7 +13,7 @@
 #define NAVIG_RESULT_FAILED   -1
 #define NAVIG_RESULT_WAIT      1
 
-typedef struct {
+typedef struct { 
     int navig_cmd_id;
     int navig_result;    /* NAVIG_RESULT_ */
 } navig_callback_data_t;
@@ -23,7 +23,7 @@ typedef void (*navig_data_callback)(navig_callback_data_t *data);
 typedef void (*navig_actualize_pose_function)(void);
 
 #define NAVIG_CMD_ID_NONE            0
-
+ 
 #define NAVIG_CMD_TYPE_NONE          0
 #define NAVIG_CMD_TYPE_GOTO_POINT    1
 
@@ -33,8 +33,9 @@ typedef void (*navig_actualize_pose_function)(void);
 #define NAVIG_STATE_CMD_FINISH       3
 #define NAVIG_STATE__COUNT           4  /* count */
 
-typedef struct {
+typedef struct { 
     int init;
+    int terminate;
     pthread_t thread;
 
     int data_fd[2];

@@ -159,14 +159,14 @@ int main(int argc, char **argv)
     // test_navig(11 + 100, 339 - 100, M_PI / 2);
     test_navig(11 + 50, 174, M_PI / 2);
 
-    mikes_shutdown();
-
     navig_unregister_callback(new_navig_data);
 
     shutdown_navig();
 
     shutdown_x_line_map();
     shutdown_gui();
+
+    mikes_shutdown();
 
     return 0;
 }

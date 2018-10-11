@@ -52,38 +52,89 @@ int avoid_data_wait()
 
 #define AVOID_LOGSTR_LEN   1024
 
-static char *avoid_msg_str[AVOID_MSG_TYPE__COUNT] = { "none", "stopped", "unblocked" };
+static char *avoid_state_str[AVOID_STATE__COUNT] = { "none", "stopped", "unblocked" };
 
-void avoid_log_data(int msg_type)
+void avoid_log_data(int state, int state_old)
 {
     char str[AVOID_LOGSTR_LEN];
 
-    if ((msg_type < 0) || (msg_type >= AVOID_MSG_TYPE__COUNT)) msg_type = AVOID_MSG_TYPE_NONE;
+    /* log only state changes */
+    if (state == state_old) return;
 
-    sprintf(str, "[avoid] avoid::avoid_log_data(): msg_type=\"%s\"", avoid_msg_str[msg_type]);
+    if ((state < 0) || (state >= AVOID_STATE__COUNT)) state = AVOID_STATE_NONE;
+    if ((state_old < 0) || (state_old >= AVOID_STATE__COUNT)) state_old = AVOID_STATE_NONE;
+
+    sprintf(str, "[avoid] avoid::avoid_log_data(): state=\"%s\", state_old=\"%s\"", 
+        avoid_state_str[state], avoid_state_str[state_old]);
 
     mikes_log(ML_DEBUG, str);
 }
+
+#define AVOID_TIM571_DISTANCE_BAD            0
+#define AVOID_TIM571_RSSI_BAD                0
+#define AVOID_TIM571_DISTANCE_MAX            TIM571_MAX_DISTANCE  /* 15000 */
+#define AVOID_TIM571_DISTANCE_STEP          20
+#define AVOID_TIM571_ANGLE_STEP              1
+#define AVOID_TIM571_ANGLE_MULTIPLIER    10000
+
+#define AVOID_TIM571_ANGLE_MIN             -45
+#define AVOID_TIM571_ANGLE_MAX             +45
+#define AVOID_TIM571_DISTANCE_MIN          500    /* mm */
+#define AVOID_TIM571_DATA_COUNT             20
+
+/*
+  tim571_status:
+    multiplier = 1.000;
+    starting_angle = -450000;
+    angular_step = 3333;
+    data_count = 811;
+    rssi_available = 1;
+*/
 
 void avoid_process_data()
 {
     avoid_callback_data_t callback_data;
 
-    // fixme process
-    callback_data.avoid_msg_type = AVOID_MSG_TYPE_STOPPED;
+    avoid_log_data(avoid.state, avoid.state_old);
+    avoid.state_old = avoid.state;
 
-    for (int i = 0; i < avoid.callbacks_count; i++) {
-        avoid.callbacks[i](&callback_data);
+    int cnt = 0;
+    for(int index = 0; index < avoid.tim571_status.data_count; index++) {
+        if ((avoid.tim571_dist[index] <= AVOID_TIM571_DISTANCE_BAD) || 
+            (avoid.tim571_rssi[index] <= AVOID_TIM571_RSSI_BAD)) continue;
+
+        /* distance in milimeters, angle in degrees (counterclockwise, 0=x-axis)*/
+        double dist = avoid.tim571_dist[index];
+        double ang = (avoid.tim571_status.starting_angle + 
+                      index * avoid.tim571_status.angular_step) / AVOID_TIM571_ANGLE_MULTIPLIER;
+
+        if ((ang < AVOID_TIM571_ANGLE_MIN) || (ang > AVOID_TIM571_ANGLE_MAX)) continue;
+             
+        if (dist < AVOID_TIM571_DISTANCE_MIN) cnt++;
+    }        
+
+    if (cnt > AVOID_TIM571_DATA_COUNT) {
+        avoid.state = AVOID_STATE_STOPPED;
+    } else {
+        avoid.state = AVOID_STATE_UNBLOCKED;
     }
 
-    avoid_log_data(callback_data.avoid_msg_type);
+    avoid_log_data(avoid.state, avoid.state_old);
+
+    if (avoid.state != avoid.state_old) {
+        callback_data.avoid_state = avoid.state;
+
+        for (int i = 0; i < avoid.callbacks_count; i++) {
+            avoid.callbacks[i](&callback_data);
+        }
+    }
 }
 
 void *avoid_thread(void *args)
 {
-    mikes_log(ML_INFO, "[avoid_] avoid::avoid_thread(): msg=\"avoid starts\"");
+    mikes_log(ML_INFO, "[avoid] avoid::avoid_thread(): msg=\"avoid starts\"");
 
-    while (program_runs) {
+    while (program_runs && !avoid.terminate) {
         avoid_data_wait();
 
         avoid_data_lock();
@@ -103,9 +154,9 @@ void *avoid_thread(void *args)
 void avoid_tim571_new_data(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
     if (avoid_data_trylock() == 0) {
-        memcpy(avoid.dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
-        memcpy(avoid.rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
-        avoid.status_data_local_copy = *status_data;
+        memcpy(avoid.tim571_dist, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
+        memcpy(avoid.tim571_rssi, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
+        avoid.tim571_status = *status_data;
         alert_new_data(avoid.data_fd);
         avoid_data_unlock();
     }
@@ -114,11 +165,15 @@ void avoid_tim571_new_data(uint16_t *dist, uint8_t *rssi, tim571_status_data *st
 int avoid_init()
 {
     avoid.init = 0;
+    avoid.terminate = 0;
     avoid.callbacks_count = 0;
 
-    memset(&avoid.status_data_local_copy, 0, sizeof(avoid.status_data_local_copy));
-    memset(&avoid.dist_local_copy, 0, sizeof(avoid.dist_local_copy));
-    memset(&avoid.rssi_local_copy, 0, sizeof(avoid.rssi_local_copy));
+    memset(&avoid.tim571_status, 0, sizeof(avoid.tim571_status));
+    memset(&avoid.tim571_dist, 0, sizeof(avoid.tim571_dist));
+    memset(&avoid.tim571_rssi, 0, sizeof(avoid.tim571_rssi));
+
+    avoid.state = AVOID_STATE_UNBLOCKED;
+    avoid.state_old = AVOID_STATE_NONE;
 
     if (!mikes_config_use_avoid)
     {
@@ -180,6 +235,9 @@ int avoid_stop(void)
         mikes_log(ML_ERR, "[main] avoid::avoid_stop(): msg=\"wrong program_runs value - unable to stop!\"");
         return -2;
     }
+
+    avoid.terminate = 1;
+    alert_new_data(avoid.data_fd);
 
     mikes_log(ML_INFO, "[main] avoid::avoid_stop(): msg=\"joining threads...\"");
 

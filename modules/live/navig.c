@@ -9,10 +9,8 @@
 #include "../../bites/mikes.h"
 #include "../../bites/util.h"
 #include "../../bites/math_2d.h"
-#include "../passive/x_line_map.h"
 #include "../passive/mikes_logs.h"
 #include "../passive/pose.h"
-#include "../live/gui.h"
 #include "../live/base_module.h"
 #include "core/config_mikes.h"
 
@@ -37,7 +35,7 @@ int navig_data_unlock()
     return pthread_mutex_unlock(&navig.data_lock);
 }
 
-int navig_data_wait()
+int navig_data_wait() 
 {
     if (wait_for_new_data(navig.data_fd) < 0) {
         perror("mikes:navig");
@@ -95,7 +93,7 @@ int navig_register_actualize_pose_function(navig_actualize_pose_function fn)
 
 static char *navig_action_str[NAVIG_ACTION_COUNT] = { "none", "move", "turn", "stop" };
 
-void navig_log_data(int action, double dx, double dy, double dd, double navig_head, double apose_head, double dh,
+void navig_log_data(int action, double dx, double dy, double dd, double navig_head, double apose_head, double dh, 
          int turn_only, double left_motor, double right_motor, int res)
 {
     char str[NAVIG_LOGSTR_LEN];
@@ -103,7 +101,7 @@ void navig_log_data(int action, double dx, double dy, double dd, double navig_he
     if ((action < 0) || (action >= NAVIG_ACTION_COUNT)) action = NAVIG_ACTION_NONE;
 
     sprintf(str, "[navig] navig::navig_log_data(): action=\"%s\", dx=%0.2f, dy=%0.2f, dd=%0.2f, navig_head_deg=%0.2f, apose_head_deg=%0.2f, dh_deg=%0.2f, turn_only=%d, left_motor=%0.2f, right_motor=%0.2f, res=%d",
-        navig_action_str[action], dx, dy, dd, navig_head / M_PI * 180.0, apose_head / M_PI * 180.0, dh  / M_PI * 180.0,
+        navig_action_str[action], dx, dy, dd, navig_head / M_PI * 180.0, apose_head / M_PI * 180.0, dh  / M_PI * 180.0, 
         turn_only, left_motor, right_motor, res);
 
     mikes_log(ML_DEBUG, str);
@@ -179,7 +177,7 @@ int navig_to_point(double px, double py, double ph)
 
     /* relative difference between motor speeds */
     double diff = dh / (M_PI / 4);
-
+  
     if (diff > 0.5) {
         diff = 0.5;
     } else
@@ -188,9 +186,9 @@ int navig_to_point(double px, double py, double ph)
     }
 
     if (diff >= 0) {
-        right_motor *= (1 - diff);
+        right_motor *= (1 - diff); 
     } else {
-        left_motor *= (1 + diff);
+        left_motor *= (1 + diff); 
     }
 
     set_motor_speeds((int)left_motor, (int)right_motor);
@@ -233,12 +231,12 @@ void navig_process_data()
     navig.state_old = navig.state;
 
     switch (navig.state) {
-        case NAVIG_STATE_WAIT_CMD:
-            if ((navig.new_cmd_id != NAVIG_CMD_ID_NONE) &&
+        case NAVIG_STATE_WAIT_CMD: 
+            if ((navig.new_cmd_id != NAVIG_CMD_ID_NONE) && 
                 (navig.new_cmd_type == NAVIG_CMD_TYPE_GOTO_POINT)) {
                 navig.cmd_id = navig.new_cmd_id;
                 navig.cmd_px = navig.new_cmd_px;
-                navig.cmd_py = navig.new_cmd_py;
+                navig.cmd_py = navig.new_cmd_py; 
                 navig.cmd_ph = navig.new_cmd_ph;
 
                 navig.new_cmd_id = NAVIG_CMD_ID_NONE;
@@ -247,8 +245,8 @@ void navig_process_data()
             }
             break;
 
-        case NAVIG_STATE_GOTO_POINT:
-            if (navig_to_point(navig.cmd_px, navig.cmd_py, navig.cmd_ph) > 0) {
+        case NAVIG_STATE_GOTO_POINT: 
+            if (navig_to_point(navig.cmd_px, navig.cmd_py, navig.cmd_ph) > 0) { 
                 navig.state = NAVIG_STATE_CMD_FINISH;
                 update_actual_pose();
             }
@@ -263,7 +261,7 @@ void navig_process_data()
             for (int i = 0; i < navig.callbacks_count; i++) {
                 navig.callbacks[i](&callback_data);
             }
-
+ 
             navig.cmd_id = NAVIG_CMD_ID_NONE;
             navig.cmd_type = NAVIG_CMD_TYPE_NONE;
             navig.state = NAVIG_STATE_WAIT_CMD;
@@ -282,7 +280,7 @@ int navig_cmd_goto_point(double px, double py, double ph)
     navig.new_cmd_id = new_cmd_id;
     navig.new_cmd_type = NAVIG_CMD_TYPE_GOTO_POINT;
     navig.new_cmd_px = px;
-    navig.new_cmd_py = py;
+    navig.new_cmd_py = py; 
     navig.new_cmd_ph = ph;
 
     navig_data_unlock();
@@ -312,7 +310,7 @@ int navig_cmd_get_result(int cmd_id)
 
     if (res != NAVIG_RESULT_WAIT) {
         char str[NAVIG_LOGSTR_LEN];
-        sprintf(str, "[main] navig::navig_cmd_get_result(): cmd_id=%d, res=%d", cmd_id, res);
+        sprintf(str, "[main] navig::navig_cmd_get_result(): cmd_id=%d, res=%d", cmd_id, res);    
         mikes_log(ML_INFO, str);
     }
 
@@ -323,7 +321,7 @@ void *navig_thread(void *args)
 {
     mikes_log(ML_INFO, "[navig] navig::navig_thread(): msg=\"navig starts.\"");
 
-    while (program_runs) {
+    while (program_runs && !navig.terminate) {
         // fixme: not using calbacks currently
         //navig_data_wait();
 
@@ -354,6 +352,7 @@ void navig_new_base_data(base_data_type *data)
 int navig_init()
 {
     navig.init = 0;
+    navig.terminate = 0;
     navig.callbacks_count = 0;
     navig.update_pose_function = 0;
     memset(&navig.base_data, 0, sizeof(navig.base_data));
@@ -388,7 +387,7 @@ int navig_init()
         return -2;
     }
 
-    if (pthread_mutex_init(&navig.data_lock, 0) != 0)
+    if (pthread_mutex_init(&navig.data_lock, 0) != 0) 
     {
         perror("mikes:navig");
         mikes_log(ML_ERR, "[main] navig::navig_init(): msg=\"error creating mutex!\"");
@@ -427,8 +426,8 @@ void navig_close()
     navig.init = 0;
 }
 
-int navig_stop(void)
-{
+int navig_stop(void) 
+{    
     if (!navig.init) return -1;
 
     if (program_runs) {
@@ -438,7 +437,8 @@ int navig_stop(void)
 
     mikes_log(ML_INFO, "[main] navig::navig_stop(): msg=\"joining threads...\"");
 
-    void *status;
+    void *status;    
+    navig.terminate = 1;
     pthread_join(navig.thread, &status);
 
     mikes_log(ML_INFO, "[main] navig::navig_stop(): msg=\"finished\"");
