@@ -51,6 +51,7 @@ typedef struct {
     int callbacks_count;
     navig_data_callback callbacks[NAVIG_MAX_CALLBACKS];
 
+    int was_updated_localize;
     navig_actualize_pose_function update_pose_function;
 
     base_data_type base_data;
