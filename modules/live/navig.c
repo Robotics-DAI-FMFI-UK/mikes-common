@@ -58,7 +58,7 @@ int request_update_actual_pose()
   if (navig.update_pose_function) {
     navig.was_updated_localize = 0;
     navig.update_pose_function(NAVIG_START_LOCALIZE);
-    return 1
+    return 1;
   }
   return 0;
 }
