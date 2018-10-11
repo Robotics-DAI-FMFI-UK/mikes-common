@@ -52,6 +52,7 @@ typedef struct {
     navig_data_callback callbacks[NAVIG_MAX_CALLBACKS];
 
     int was_updated_localize;
+    int number_of_attempts_localize;
     navig_actualize_pose_function update_pose_function;
 
     base_data_type base_data;
@@ -83,6 +84,7 @@ void navig_unregister_callback(navig_data_callback callback);
 
 int navig_register_actualize_pose_function(navig_actualize_pose_function fn);
 int navig_can_actualize_pose_now();
+int navig_fail_actualize_pose();
 
 int navig_cmd_goto_point(double px, double py, double ph);
 int navig_cmd_get_result(int cmd_id);

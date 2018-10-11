@@ -52,15 +52,24 @@ int navig_data_wait()
 // ----------------------------------------------------------------
 
 #define WAIT_SOME_LOST_MESSAGES_TO_FLUSH 500000
+#define MAXIMUM_ATTEMPTS_TO_WAIT 10
 
 int request_update_actual_pose()
 {
   if (navig.update_pose_function) {
     navig.was_updated_localize = 0;
+    navig.number_of_attempts_localize = 0;
     navig.update_pose_function(NAVIG_START_LOCALIZE);
     return 1;
   }
   return 0;
+}
+
+int is_waiting_for_actualize()
+{
+  return navig.update_pose_function &&
+        (navig.state == NAVIG_STATE_WAIT_LOCALIZE_BEFORE || navig.state == NAVIG_STATE_WAIT_LOCALIZE_AFTER) &&
+         navig.was_updated_localize == 0;
 }
 
 int navig_register_actualize_pose_function(navig_actualize_pose_function fn)
@@ -79,7 +88,7 @@ int navig_can_actualize_pose_now()
   int result = 0;
 
   navig_data_lock();
-  if (navig.update_pose_function && (navig.state == NAVIG_STATE_WAIT_LOCALIZE_BEFORE || navig.state == NAVIG_STATE_WAIT_LOCALIZE_AFTER) && navig.was_updated_localize == 0) {
+  if (is_waiting_for_actualize()) {
     navig.was_updated_localize = 1;
     result = 1;
     navig.update_pose_function(NAVIG_STOP_LOCALIZE);
@@ -88,6 +97,19 @@ int navig_can_actualize_pose_now()
   navig_data_unlock();
 
   return result;
+}
+
+void navig_fail_actualize_pose()
+{
+  navig_data_lock();
+  if (is_waiting_for_actualize()) {
+    if (navig.number_of_attempts_localize++ > MAXIMUM_ATTEMPTS_TO_WAIT) {
+      navig.was_updated_localize = 1;
+      navig.update_pose_function(NAVIG_STOP_LOCALIZE);
+      usleep(WAIT_SOME_LOST_MESSAGES_TO_FLUSH);
+    }
+  }
+  navig_data_unlock();
 }
 
 // ----------------------------------------------------------------
@@ -402,6 +424,7 @@ int navig_init()
     navig.terminate = 0;
     navig.callbacks_count = 0;
     navig.was_updated_localize = 0;
+    navig.number_of_attempts_localize = 0;
     navig.update_pose_function = 0;
     memset(&navig.base_data, 0, sizeof(navig.base_data));
     memset(&navig.pose_data, 0, sizeof(navig.pose_data));
