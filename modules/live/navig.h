@@ -34,11 +34,9 @@ typedef void (*navig_actualize_pose_function)(int cmd);
 #define NAVIG_STATE_WAIT_CMD                1
 #define NAVIG_STATE_GOTO_POINT              2
 #define NAVIG_STATE_CMD_FINISH              3
-#define NAVIG_STATE_REQUEST_LOCALIZE_BEFORE 4
-#define NAVIG_STATE_WAIT_LOCALIZE_BEFORE    5
-#define NAVIG_STATE_REQUEST_LOCALIZE_AFTER  6
-#define NAVIG_STATE_WAIT_LOCALIZE_AFTER     7
-#define NAVIG_STATE__COUNT                  8  /* count */
+#define NAVIG_STATE_REQUEST_LOCALIZE        4
+#define NAVIG_STATE_WAIT_LOCALIZE           5
+#define NAVIG_STATE__COUNT                  6  /* count */
 
 typedef struct {
     int init;
@@ -53,6 +51,7 @@ typedef struct {
 
     int was_updated_localize;
     int number_of_attempts_localize;
+    int stete_after_localize;
     navig_actualize_pose_function update_pose_function;
 
     base_data_type base_data;

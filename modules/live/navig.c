@@ -68,7 +68,7 @@ int request_update_actual_pose()
 int is_waiting_for_actualize()
 {
   return navig.update_pose_function &&
-        (navig.state == NAVIG_STATE_WAIT_LOCALIZE_BEFORE || navig.state == NAVIG_STATE_WAIT_LOCALIZE_AFTER) &&
+         navig.state == NAVIG_STATE_WAIT_LOCALIZE &&
          navig.was_updated_localize == 0;
 }
 
@@ -249,7 +249,7 @@ void navig_read_data()
     log_pose(&navig.pose_data);
 }
 
-static char *navig_state_str[NAVIG_STATE__COUNT] = { "none", "wait_cmd", "goto_point", "cmd_finish", "request_localize_before", "wait_localize_before", "request_localize_after", "wait_localize_after" };
+static char *navig_state_str[NAVIG_STATE__COUNT] = { "none", "wait_cmd", "goto_point", "cmd_finish", "request_localize", "wait_localize" };
 
 void navig_log_process_state(int state, int state_old)
 {
@@ -274,6 +274,20 @@ void navig_process_data()
     navig.state_old = navig.state;
 
     switch (navig.state) {
+        case NAVIG_STATE_REQUEST_LOCALIZE:
+            if (request_update_actual_pose()) {
+                navig.state = NAVIG_STATE_WAIT_LOCALIZE;
+            } else {
+                navig.state = navig.stete_after_localize;
+            }
+            break;
+
+        case NAVIG_STATE_WAIT_LOCALIZE:
+            if (navig.was_updated_localize) {
+              navig.state = navig.stete_after_localize;
+            }
+            break;
+
         case NAVIG_STATE_WAIT_CMD:
             if ((navig.new_cmd_id != NAVIG_CMD_ID_NONE) &&
                 (navig.new_cmd_type == NAVIG_CMD_TYPE_GOTO_POINT)) {
@@ -283,41 +297,15 @@ void navig_process_data()
                 navig.cmd_ph = navig.new_cmd_ph;
 
                 navig.new_cmd_id = NAVIG_CMD_ID_NONE;
-                navig.state = NAVIG_STATE_REQUEST_LOCALIZE_BEFORE;
-            }
-            break;
-
-        case NAVIG_STATE_REQUEST_LOCALIZE_BEFORE:
-            if (request_update_actual_pose()) {
-                navig.state = NAVIG_STATE_WAIT_LOCALIZE_BEFORE;
-            } else {
-                navig.state = NAVIG_STATE_GOTO_POINT;
-            }
-            break;
-
-        case NAVIG_STATE_WAIT_LOCALIZE_BEFORE:
-            if (navig.was_updated_localize) {
-              navig.state = NAVIG_STATE_GOTO_POINT;
+                navig.state = NAVIG_STATE_REQUEST_LOCALIZE;
+                navig.stete_after_localize = NAVIG_STATE_GOTO_POINT;
             }
             break;
 
         case NAVIG_STATE_GOTO_POINT:
             if (navig_to_point(navig.cmd_px, navig.cmd_py, navig.cmd_ph) > 0) {
-                navig.state = NAVIG_STATE_REQUEST_LOCALIZE_AFTER;
-            }
-            break;
-
-        case NAVIG_STATE_REQUEST_LOCALIZE_AFTER:
-            if (request_update_actual_pose()) {
-                navig.state = NAVIG_STATE_WAIT_LOCALIZE_AFTER;
-            } else {
-                navig.state = NAVIG_STATE_CMD_FINISH;
-            }
-            break;
-
-        case NAVIG_STATE_WAIT_LOCALIZE_AFTER:
-            if (navig.was_updated_localize) {
-              navig.state = NAVIG_STATE_CMD_FINISH;
+                navig.state = NAVIG_STATE_REQUEST_LOCALIZE;
+                navig.stete_after_localize = NAVIG_STATE_CMD_FINISH;
             }
             break;
 
@@ -425,6 +413,7 @@ int navig_init()
     navig.callbacks_count = 0;
     navig.was_updated_localize = 0;
     navig.number_of_attempts_localize = 0;
+    navig.stete_after_localize = 0;
     navig.update_pose_function = 0;
     memset(&navig.base_data, 0, sizeof(navig.base_data));
     memset(&navig.pose_data, 0, sizeof(navig.pose_data));
