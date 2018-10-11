@@ -55,17 +55,12 @@ int navig_data_wait()
 
 int request_update_actual_pose()
 {
-  int result = 0;
-
-  navig_data_lock();
   if (navig.update_pose_function) {
     navig.was_updated_localize = 0;
-    result = 1;
     navig.update_pose_function(NAVIG_START_LOCALIZE);
+    return 1
   }
-  navig_data_unlock();
-
-  return result;
+  return 0;
 }
 
 int navig_register_actualize_pose_function(navig_actualize_pose_function fn)
