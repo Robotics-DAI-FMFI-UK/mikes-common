@@ -13,27 +13,34 @@
 #define NAVIG_RESULT_FAILED   -1
 #define NAVIG_RESULT_WAIT      1
 
-typedef struct { 
+typedef struct {
     int navig_cmd_id;
     int navig_result;    /* NAVIG_RESULT_ */
 } navig_callback_data_t;
 
 typedef void (*navig_data_callback)(navig_callback_data_t *data);
 
-typedef void (*navig_actualize_pose_function)(void);
+#define NAVIG_START_LOCALIZE   0
+#define NAVIG_STOP_LOCALIZE    1
+
+typedef void (*navig_actualize_pose_function)(int cmd);
 
 #define NAVIG_CMD_ID_NONE            0
- 
+
 #define NAVIG_CMD_TYPE_NONE          0
 #define NAVIG_CMD_TYPE_GOTO_POINT    1
 
-#define NAVIG_STATE_NONE             0
-#define NAVIG_STATE_WAIT_CMD         1
-#define NAVIG_STATE_GOTO_POINT       2
-#define NAVIG_STATE_CMD_FINISH       3
-#define NAVIG_STATE__COUNT           4  /* count */
+#define NAVIG_STATE_NONE                    0
+#define NAVIG_STATE_WAIT_CMD                1
+#define NAVIG_STATE_GOTO_POINT              2
+#define NAVIG_STATE_CMD_FINISH              3
+#define NAVIG_STATE_REQUEST_LOCALIZE_BEFORE 4
+#define NAVIG_STATE_WAIT_LOCALIZE_BEFORE    5
+#define NAVIG_STATE_REQUEST_LOCALIZE_AFTER  6
+#define NAVIG_STATE_WAIT_LOCALIZE_AFTER     7
+#define NAVIG_STATE__COUNT                  8  /* count */
 
-typedef struct { 
+typedef struct {
     int init;
     int terminate;
     pthread_t thread;
@@ -74,6 +81,7 @@ int  navig_register_callback(navig_data_callback callback);
 void navig_unregister_callback(navig_data_callback callback);
 
 int navig_register_actualize_pose_function(navig_actualize_pose_function fn);
+int navig_can_actualize_pose_now();
 
 int navig_cmd_goto_point(double px, double py, double ph);
 int navig_cmd_get_result(int cmd_id);
