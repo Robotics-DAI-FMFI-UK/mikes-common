@@ -172,13 +172,13 @@ void read_base_packet()
 
     pthread_mutex_lock(&base_module_lock);
     sscanf(line, "%lu%ld%ld%hd%hd%hd%hd%hd%hd%hd%hd%hd%hd%hd%hd%hd",
-                                  &(local_data.timestamp), 
+                                  &(local_data.timestamp),
                                   &(local_data.counterA), &(local_data.counterB), &(local_data.velocityA),
                                   &(local_data.velocityB), &(local_data.dist1), &(local_data.dist2),
                                   &(local_data.dist3), &(local_data.cube), &(local_data.heading ),
                                   &(local_data.ax), &(local_data.ay), &(local_data.az),
                                   &(local_data.gx), &(local_data.gy), &(local_data.gz));
-    
+
     //printf("%s\n", line);
     new_base_data_arrived = 1;
     //printf("CA: %ld,  CB: %ld\n", local_data.counterA, local_data.counterB);
@@ -211,6 +211,11 @@ void set_motor_speeds(int left_motor, int right_motor)
        perror("mikes:base");
        mikes_log(ML_ERR, "base: could not send command");
     }
+}
+
+void escape_now_and_quick()
+{
+  // TODO implements
 }
 
 void stop_now()
@@ -277,7 +282,7 @@ void *base_module_thread(void *args)
 {
 	//int i = 0;
 	//pose_type pose;
-	
+
     while (program_runs)
     {
         read_base_packet();
@@ -285,7 +290,7 @@ void *base_module_thread(void *args)
         update_pose(&local_data);
         //i++;
         //if (i == 50) {
-			
+
 			//get_pose(&pose);
 			//get_grid_location(pose);
 			//i = 0;
@@ -384,4 +389,3 @@ void unregister_base_callback(base_receive_data_callback callback)
        callbacks_count--;
     }
 }
-

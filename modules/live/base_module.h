@@ -56,6 +56,9 @@ void wait_for_new_base_data();
 // direct motor power control mode: start moving with the specified speeds
 void set_motor_speeds(int left_motor, int right_motor);
 
+// escape away and quick
+void escape_now_and_quick();
+
 // stop moving in every mode, also cancels azimuth and velocity modes
 void stop_now();
 
@@ -87,9 +90,9 @@ short counter2mm(short counter);
 int get_current_azimuth();
 
 // register for getting fresh data after received from base (copy quick!)
-void register_base_callback(base_receive_data_callback callback);    
+void register_base_callback(base_receive_data_callback callback);
 
 // remove previously registered callback
-void unregister_base_callback(base_receive_data_callback callback);  
+void unregister_base_callback(base_receive_data_callback callback);
 
 #endif
