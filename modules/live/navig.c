@@ -84,7 +84,7 @@ int navig_can_actualize_pose_now()
   int result = 0;
 
   navig_data_lock();
-  if (navig.update_pose_function && (navig.state == NAVIG_STATE_WAIT_LOCALIZE_BEFORE || navit.state == NAVIG_STATE_WAIT_LOCALIZE_AFTER) && navig.was_updated_localize == 0) {
+  if (navig.update_pose_function && (navig.state == NAVIG_STATE_WAIT_LOCALIZE_BEFORE || navig.state == NAVIG_STATE_WAIT_LOCALIZE_AFTER) && navig.was_updated_localize == 0) {
     navig.was_updated_localize = 1;
     result = 1;
     navig.update_pose_function(NAVIG_STOP_LOCALIZE);
@@ -266,7 +266,7 @@ void navig_process_data()
                 navig.cmd_ph = navig.new_cmd_ph;
 
                 navig.new_cmd_id = NAVIG_CMD_ID_NONE;
-                navig.state = NAVIG_STATE_REQUEST_LOCALIZE;
+                navig.state = NAVIG_STATE_REQUEST_LOCALIZE_BEFORE;
             }
             break;
 
