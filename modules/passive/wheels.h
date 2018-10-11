@@ -19,4 +19,7 @@ void wheels_test();
 // unload cargo
 void cargo_unload();
 
+// should be called at the end
+void shutdown_wheels();
+
 #endif

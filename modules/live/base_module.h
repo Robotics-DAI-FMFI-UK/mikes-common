@@ -95,4 +95,8 @@ void register_base_callback(base_receive_data_callback callback);
 // remove previously registered callback
 void unregister_base_callback(base_receive_data_callback callback);
 
+// shaking movement while unloading
+void unloading_shake();
+
+
 #endif

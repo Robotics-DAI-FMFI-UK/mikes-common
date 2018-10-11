@@ -10,7 +10,8 @@
 #include <errno.h>
 
 #include "../../bites/mikes.h"
-#include "../passive/mikes_logs.h"
+#include "mikes_logs.h"
+#include "../live/base_module.h"
 #include "wheels.h"
 
 static int fdR[2];
@@ -106,7 +107,11 @@ void wheels_test()
 void cargo_unload()
 {
     wheels_send_cmd("O");
-    sleep(10);
+    sleep(3);
+    unloading_shake();
+    sleep(3);
+    unloading_shake();
+    sleep(3);
     wheels_send_cmd("C");
 }
 
@@ -115,3 +120,13 @@ void init_wheels()
     wheels_initialized = 0;
     connect_wheels();
 }
+
+void shutdown_wheels()
+{
+    printf("shutdown_wheels()\n");
+    close(fdR[1]);
+    close(fdW[0]);
+    usleep(10000);
+    kill(plink_child, SIGTERM);
+}
+

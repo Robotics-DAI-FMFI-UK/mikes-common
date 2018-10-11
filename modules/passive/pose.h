@@ -1,6 +1,6 @@
 #ifndef _POSE_H_
 #define _POSE_H_
-#include "../mikes-common/modules/live/base_module.h"
+#include "../live/base_module.h"
 
 // STATE_WIDTH in cm
 #define STATE_WIDTH  25    

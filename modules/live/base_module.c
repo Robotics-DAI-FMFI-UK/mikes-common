@@ -389,3 +389,17 @@ void unregister_base_callback(base_receive_data_callback callback)
        callbacks_count--;
     }
 }
+
+void unloading_shake()
+{
+  for (int i = 0; i < 15; i++)
+  {
+    set_motor_speeds(-50, 50);
+    usleep(80000);
+    set_motor_speeds(50, -50);
+    usleep(80000);
+    set_motor_speeds(0, 0);
+    usleep(160000);
+  }
+}
+

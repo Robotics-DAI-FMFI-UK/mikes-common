@@ -3,6 +3,7 @@
 
 #include "../modules/passive/wheels.h"
 #include "../bites/mikes.h"
+#include "../modules/live/base_module.h"
 
 void test_wheels()
 {
@@ -27,9 +28,11 @@ int main(int argc, char **argv)
 {
     mikes_init(argc, argv);
 
+    init_base_module();
     init_wheels();
     test_wheels();
 
+    shutdown_wheels();
     mikes_shutdown();
 }
 

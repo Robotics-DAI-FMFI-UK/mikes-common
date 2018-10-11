@@ -125,12 +125,20 @@ TEST_NXT_SRCS=tests/test_nxt.c \
               ${MIKES_BASIC}
 TEST_WHEELS_SRCS=tests/test_wheels.c \
                  modules/passive/wheels.c \
+                 modules/live/base_module.c \
+                 modules/passive/pose.c \
                  ${MIKES_BASIC}
 TEST_ACTUATOR_SRCS=tests/test_actuator.c \
                  modules/passive/wheels.c \
                  modules/live/nxt.c \
                  modules/passive/actuator.c \
+                 modules/live/base_module.c \
+                 modules/passive/pose.c \
                  ${MIKES_BASIC}
+TEST_SHAKE_SRCS=tests/test_shake.c \
+                modules/passive/pose.c \
+                modules/live/base_module.c \
+                ${MIKES_BASIC}
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
@@ -158,6 +166,7 @@ TEST_MATH_OBJS=${TEST_MATH_SRCS:.c=.o}
 TEST_NXT_OBJS=${TEST_NXT_SRCS:.c=.o}
 TEST_WHEELS_OBJS=${TEST_WHEELS_SRCS:.c=.o}
 TEST_ACTUATOR_OBJS=${TEST_ACTUATOR_SRCS:.c=.o}
+TEST_SHAKE_OBJS=${TEST_SHAKE_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -180,7 +189,7 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -237,11 +246,13 @@ test_wheels: ${TEST_WHEELS_OBJS}
 	${CC} -o test_wheels $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_actuator: ${TEST_ACTUATOR_OBJS}
 	${CC} -o test_actuator $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_shake: ${TEST_SHAKE_OBJS}
+	${CC} -o test_shake $^ ${LDFLAGS} ${DEBUG_FLAGS}
 
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
 	rm -rf modules/live/xtion/Arm-Release
 	make -C nxt clean
 	rm -f grey_gradient.png rgb_gradient.png
