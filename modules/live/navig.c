@@ -59,7 +59,7 @@ void update_actual_pose()
 {
   if (navig.update_pose_function) {
     navig.update_pose_function();
-    usleep(WAIT_TO_UPDATE_POSE);
+    usleep(WAIT_TIME_TO_UPDATE_POSE);
   }
 }
 
