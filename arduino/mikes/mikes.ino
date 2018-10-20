@@ -10,7 +10,6 @@
 #define DIST1 A6
 #define DIST2 A7
 #define DIST3 A2
-
 #define CUBE A1
 
 #define ENCB1 A3
@@ -37,6 +36,9 @@
 #define WAITING_AZIMUTH3 10
 #define WAITING_DIGIT2B 11
 #define WAITING_DIGIT4B 12
+#define WAITING_TICKS1 13
+#define WAITING_TICKS2 14
+#define WAITING_TICKS3 15
 
 #define VELOCITY_MEASURING_PERIOD 8
 
@@ -94,6 +96,9 @@ int16_t wished_speed_right;
 int8_t speed_up_left;
 int8_t speed_up_right;
 int8_t laziness;
+int16_t ticksmax;
+int16_t ticksmax_val;
+int32_t ticks_init_A, ticks_init_B;
 
 int16_t azimuth_speed;    // -90..90, 0=stop
 int16_t azimuth;
@@ -209,8 +214,11 @@ void setup_mpu(void)
   
   // Set calibration offset. See HMC5883L_calibration.ino
   //compass.setOffset(-283, -64);
+  
   //compass.setOffset(-128, 120);
-  compass.setOffset(-147, -4);
+  //ftlab best:
+  //compass.setOffset(-147, -4);
+  compass.setOffset(-170, 13);
 
   mpu_initialized = 1;
 }
@@ -221,6 +229,7 @@ void setup()
     current_left_speed = 90; current_right_speed = 90; 
     velocity_regulation = 0;
     azimuth = 0;
+    ticksmax = 0;
     azimuth_regulation = 0;
     azimuth_speed = 0;
     inpstate = WAITING_FOR_START;
@@ -324,6 +333,7 @@ void set_wished_speed()
  *  @S          - stop now (within about 0.5 second, not abruptly)
  *  @R          - reset 32-bit rotation counters of both encoders
  *  @AXXX       - set new azimuth - should be used together with @M/@V command, robot will automatically start moving towards a specified azimuth XXX = 0..360 degrees
+ *  @DXX        - number of ticks after which motors will stop
  *  @X          - stop following the azimuth (cancel @A mode)
  *  @VsLLLzRRR  - set wished motor velocities (speed-regulated mode) the robot will try to move so that the actual speed of the left (LLL) and right (RRR) wheel
  *                is as specified (in degrees/second - the same unit as reported in the output status)
@@ -366,6 +376,7 @@ void process_char(uint8_t ch)
                             else if (ch == 'R') counterA = counterB = 0;
                             else if (ch == 'X') azimuth_regulation = 0;
                             else if (ch == 'A') inpstate = WAITING_AZIMUTH1; 
+                            else if (ch == 'D') inpstate = WAITING_TICKS1;
                             else if (ch == '+') sending_status = 1;
                             else if (ch == '-') sending_status = 0;
                             else if ((ch == 'V') || (ch == 'M') || (ch == 'L')) inpstate = WAITING_SIGN1; 
@@ -418,6 +429,18 @@ void process_char(uint8_t ch)
                           velocity_regulation = 1;
                           azimuth_regulation = 0;
                           break;
+    case WAITING_TICKS1: ticksmax_val = (ch - '0') * 100;
+                         inpstate = WAITING_TICKS2;
+                         break;
+    case WAITING_TICKS2: ticksmax_val += (ch - '0') * 10;
+                         inpstate = WAITING_TICKS3;
+                         break;                         
+    case WAITING_TICKS3: ticksmax_val += (ch - '0');
+                         ticks_init_A = counterA;
+                         ticks_init_B = counterB;
+                         ticksmax = ticksmax_val;
+                         inpstate = WAITING_FOR_START;
+                         break;
     case WAITING_AZIMUTH1: azimuth = (ch - '0') * 100; 
                            inpstate = WAITING_AZIMUTH2;
                            break;
@@ -532,8 +555,8 @@ void loop()
     // For Bratislava declination angle is 4'28E (positive)
     // For SICK declination angle is 2 deg 17 min E (positive)
     // Formula: (deg + (min / 60.0)) / (180 / M_PI);
-    float declinationAngle = (4.0 + (28.0 / 60.0)) / (180 / M_PI);
-    //float declinationAngle = (2.0 + (17.0 / 60.0)) / (180 / M_PI);
+    //float declinationAngle = (4.0 + (28.0 / 60.0)) / (180 / M_PI);
+    float declinationAngle = (2.0 + (17.0 / 60.0)) / (180 / M_PI);
     heading += declinationAngle;
 
     // Correct for heading < 0deg and heading > 360deg
@@ -572,6 +595,19 @@ void loop()
       //Serial.print(current_right_speed); Serial.print(" ");
       Serial.print("\n");
     }
+
+    if (ticksmax > 0) 
+      if ((counterA > ticks_init_A + ticksmax) || (counterB > ticks_init_B + ticksmax))
+      {
+        motorA.write(0);
+        motorB.write(0);
+        current_left_speed = 90;
+        current_right_speed = 90;
+        azimuth_speed = 0;
+        azimuth_regulation = 0;
+        velocity_regulation = 0;
+        ticksmax = 0;
+      }
 
     while (Serial.available()) process_char(Serial.read());
     delay(20);
