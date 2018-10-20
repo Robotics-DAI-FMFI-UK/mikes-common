@@ -5,6 +5,15 @@
 #include "../bites/mikes.h"
 #include "../modules/live/base_module.h"
 
+void test_obstacle()
+{
+   for (int i = 0; i < 500; i++)
+   {
+     printf("%d\n", wheels_obstacle());
+     usleep(100000);
+   }
+}
+
 void test_wheels()
 {
     printf("test\n");
@@ -30,6 +39,8 @@ int main(int argc, char **argv)
 
     init_base_module();
     init_wheels();
+
+    test_obstacle();
     test_wheels();
 
     shutdown_wheels();
