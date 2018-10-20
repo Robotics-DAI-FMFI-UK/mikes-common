@@ -98,5 +98,14 @@ void unregister_base_callback(base_receive_data_callback callback);
 // shaking movement while unloading
 void unloading_shake();
 
+// block motors - afterwards all motor commands will be ignored
+void set_motor_blocked(int blocked);
+
+// get motor blocked state 
+int get_motor_blocked(void);
+
+// set the number of encoder ticks for automatic stop, call this before set_motor_speed(). applies once.
+void set_max_ticks(int max_ticks);
+
 
 #endif

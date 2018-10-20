@@ -35,6 +35,8 @@ static pid_t plink_child;
 static volatile unsigned char new_base_data_arrived;
 static unsigned char base_initialized;
 
+static int base_motor_blocked = 0;
+
 void connect_base_module()
 {
     if (pipe(fdR) < 0)
@@ -195,7 +197,7 @@ void wait_for_new_base_data()
     while (!new_base_data_arrived) usleep(1000);
 }
 
-void set_motor_speeds(int left_motor, int right_motor)
+void set_motor_speeds_ex(int left_motor, int right_motor)
 {
     char cmd[40];
     int lm = abs(left_motor);
@@ -213,9 +215,20 @@ void set_motor_speeds(int left_motor, int right_motor)
     }
 }
 
+void set_motor_speeds(int left_motor, int right_motor)
+{
+    if (base_motor_blocked)  return;   
+    
+    set_motor_speeds_ex(left_motor, right_motor);
+}
+
+#define BASE_ESCAPE_MOTOR_SPEED 22
+
 void escape_now_and_quick()
 {
-  // TODO implements
+    set_motor_speeds_ex(-BASE_ESCAPE_MOTOR_SPEED, -BASE_ESCAPE_MOTOR_SPEED*6/10);
+    usleep(4000000);
+    stop_now();
 }
 
 void stop_now()
@@ -230,6 +243,8 @@ void stop_now()
 
 void follow_azimuth(int azimuth)
 {
+    if (base_motor_blocked) return;
+
     char cmd[20];
     current_azimuth = azimuth;
     sprintf(cmd, "@A%d%d%d", azimuth / 100, (azimuth % 100) / 10, azimuth % 10);
@@ -258,6 +273,8 @@ void reset_counters()
 
 void regulated_speed(int left_motor, int right_motor)
 {
+    if (base_motor_blocked) return;
+
     char cmd[40];
     int lm = abs(left_motor);
     int rm = abs(right_motor);
@@ -394,12 +411,40 @@ void unloading_shake()
 {
   for (int i = 0; i < 15; i++)
   {
-    set_motor_speeds(-50, 50);
+    set_motor_speeds(-30, 30);
     usleep(80000);
-    set_motor_speeds(50, -50);
+    set_motor_speeds(30, -30);
     usleep(80000);
     set_motor_speeds(0, 0);
     usleep(160000);
   }
 }
 
+void set_motor_blocked(int blocked)
+{
+    if (!base_motor_blocked && blocked) {
+        stop_now();
+    }
+    base_motor_blocked = blocked;
+
+    char str[BASE_LOGSTR_LEN];
+    sprintf(str, "[main] base_module::set_motor_blocked(): blocked=%d", blocked);
+    mikes_log(ML_INFO, str);
+}
+
+int get_motor_blocked(void)
+{
+    return base_motor_blocked;
+}
+
+void set_max_ticks(int max_ticks)
+{
+    char cmd[10];
+    max_ticks = abs(max_ticks);
+    sprintf(cmd, "@D%d%d%d", max_ticks / 100, (max_ticks % 100) / 10, max_ticks % 10);
+    if (write(fdR[1], cmd, strlen(cmd)) < strlen(cmd))
+    {
+      perror("mikes:base");
+      mikes_log(ML_ERR, "base: could not send maxticks");
+    }
+}
