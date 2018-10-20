@@ -6,6 +6,7 @@
 
 #include "../modules/passive/actuator.h"
 #include "../modules/passive/wheels.h"
+#include "../modules/passive/mikes_logs.h"
 #include "../modules/live/base_module.h"
 #include "../modules/live/nxt.h"
 #include "../bites/mikes.h"
@@ -17,18 +18,16 @@
 
 void test_actuator(int tests)
 {
+    long long t1 = usec();
     if (tests == ALL_TESTS)
     {
       say("grabbing the balls");
-      sleep(1);
   
       grab_line(1);
-      sleep(2);
       grab_line(2);
-      sleep(2);
       grab_line(3);
-      sleep(1);
     }
+    printf("grabbing time: %.3lf s\n", (usec() - t1) / 1000000.0);
 
     say("unloading");
     unload_cargo();
@@ -46,7 +45,9 @@ int main(int argc, char **argv)
     else tests = ALL_TESTS;
   }
 
-  printf("init()\n");
+  printf("mikes initialized\n");
+  init_wheels();
+
   if (tests == ALL_TESTS)
   {
     init_nxt();
@@ -54,19 +55,21 @@ int main(int argc, char **argv)
     if (!nxt_is_online())
     {
       printf("nxt is not connected\n");
+      mikes_log(ML_ERR, "nxt not online");
+      shutdown_wheels();
       shutdown_nxt();
       mikes_shutdown();
       return 0;
     }
   }
+  printf("nxt initialized\n");
   init_base_module();
-
-  init_wheels();
   sleep(2);
 
   init_actuator();
   sleep(1);
 
+  printf("testing\n");
   test_actuator(tests);
 
   shutdown_nxt();
