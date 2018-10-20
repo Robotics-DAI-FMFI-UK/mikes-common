@@ -28,7 +28,7 @@ static int online;
 
 static corner_config tim_corner_default_config = {
   .max_tolerance_angle = 5.0,
-  .max_tolerance_distance = 20.0
+  .max_tolerance_distance = 40.0 /* 20.0 */
 };
 
 // ----------------------------------------------------------------
