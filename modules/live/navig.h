@@ -51,7 +51,7 @@ typedef struct {
 
     int was_updated_localize;
     int number_of_attempts_localize;
-    int stete_after_localize;
+    int state_after_localize;
     navig_actualize_pose_function update_pose_function;
 
     base_data_type base_data;
@@ -72,6 +72,8 @@ typedef struct {
     double new_cmd_px;
     double new_cmd_py;
     double new_cmd_ph;
+
+    long long blocked_start_tm;
 } navig_t;
 
 

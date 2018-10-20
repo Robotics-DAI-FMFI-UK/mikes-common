@@ -267,6 +267,7 @@ void navig_log_process_state(int state, int state_old)
     mikes_log(ML_DEBUG, str);
 }
 
+#define NAVIG_ESCAPE_BLOCKED_TIMEOUT  (20*1000)  /* (msek) */
 
 void navig_process_data()
 {
@@ -278,13 +279,13 @@ void navig_process_data()
             if (request_update_actual_pose()) {
                 navig.state = NAVIG_STATE_WAIT_LOCALIZE;
             } else {
-                navig.state = navig.stete_after_localize;
+                navig.state = navig.state_after_localize;
             }
             break;
 
         case NAVIG_STATE_WAIT_LOCALIZE:
             if (navig.was_updated_localize) {
-              navig.state = navig.stete_after_localize;
+                navig.state = navig.state_after_localize;
             }
             break;
 
@@ -295,17 +296,39 @@ void navig_process_data()
                 navig.cmd_px = navig.new_cmd_px;
                 navig.cmd_py = navig.new_cmd_py;
                 navig.cmd_ph = navig.new_cmd_ph;
+                navig.blocked_start_tm = -1LL;
 
                 navig.new_cmd_id = NAVIG_CMD_ID_NONE;
                 navig.state = NAVIG_STATE_REQUEST_LOCALIZE;
-                navig.stete_after_localize = NAVIG_STATE_GOTO_POINT;
+                navig.state_after_localize = NAVIG_STATE_GOTO_POINT;
             }
             break;
 
         case NAVIG_STATE_GOTO_POINT:
+            if (get_motor_blocked()) {
+                if (navig.blocked_start_tm < 0) {
+                    navig.blocked_start_tm = msec();                    
+                    mikes_log(ML_DEBUG, "[navig] navig::navig_process_data(): msg=\"blocked start\"");
+                }
+                long long dt = msec() - navig.blocked_start_tm;
+                if (dt > (long long)NAVIG_ESCAPE_BLOCKED_TIMEOUT) {
+                    mikes_log(ML_DEBUG, "[navig] navig::navig_process_data(): msg=\"blocked timeout\"");
+                    escape_now_and_quick();
+                    sleep(2);
+                    navig.state = NAVIG_STATE_REQUEST_LOCALIZE;
+                    navig.state_after_localize = NAVIG_STATE_GOTO_POINT;
+                    navig.blocked_start_tm = -1LL;
+                } 
+            } else {
+                if (navig.blocked_start_tm >= 0) {
+                    mikes_log(ML_DEBUG, "[navig] navig::navig_process_data(): msg=\"blocked finish\"");
+                }
+                navig.blocked_start_tm = -1LL;                
+            }
+
             if (navig_to_point(navig.cmd_px, navig.cmd_py, navig.cmd_ph) > 0) {
                 navig.state = NAVIG_STATE_REQUEST_LOCALIZE;
-                navig.stete_after_localize = NAVIG_STATE_CMD_FINISH;
+                navig.state_after_localize = NAVIG_STATE_CMD_FINISH;
             }
             break;
 
@@ -330,7 +353,8 @@ void navig_process_data()
 int navig_cmd_goto_point(double px, double py, double ph)
 // returns cmd_id
 {
-    navig_data_lock();
+    //fixme: locking cause issue with planning next point from cmd_finish callback
+    //navig_data_lock();
 
     int new_cmd_id = (++navig.cmd_id_last);
 
@@ -340,7 +364,7 @@ int navig_cmd_goto_point(double px, double py, double ph)
     navig.new_cmd_py = py;
     navig.new_cmd_ph = ph;
 
-    navig_data_unlock();
+    //navig_data_unlock();
 
     char str[NAVIG_LOGSTR_LEN];
 
@@ -413,10 +437,12 @@ int navig_init()
     navig.callbacks_count = 0;
     navig.was_updated_localize = 0;
     navig.number_of_attempts_localize = 0;
-    navig.stete_after_localize = 0;
+    navig.state_after_localize = 0;
     navig.update_pose_function = 0;
     memset(&navig.base_data, 0, sizeof(navig.base_data));
     memset(&navig.pose_data, 0, sizeof(navig.pose_data));
+
+    navig.blocked_start_tm = -1LL;
 
     navig.state = NAVIG_STATE_WAIT_CMD;
     navig.state_old = NAVIG_STATE_NONE;
