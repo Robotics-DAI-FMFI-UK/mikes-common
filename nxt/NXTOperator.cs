@@ -45,7 +45,7 @@ using MonoBrick.NXT;
 //
 // example (command 'Line3'):
 //  Pi->NXT: 'B'
-//  Pi reads sensor 4, and when the value == 0, it nows it's done
+//  Pi reads sensor 4, and when the value == 0, it knows it's done
 //  Pi->NXT: 'O'
 //  (NXT sets the sensor on again)
 //  (NXTOperator reports 'Done')
@@ -88,11 +88,11 @@ namespace Application
       private const byte EXECUTING = 3;
       private const byte QUITTING = 4;
 
-      private byte state;
-      private NXTLightSensor monitored_sensor;
+      private volatile byte state;
+      private volatile NXTLightSensor monitored_sensor;
 
-      private Brick<NXTLightSensor,NXTLightSensor,Sensor,NXTLightSensor> brick;
-      private NXTLightSensor light1, light2, light4;
+      private volatile Brick<NXTLightSensor,NXTLightSensor,Sensor,NXTLightSensor> brick;
+      private volatile NXTLightSensor light1, light2, light4;
       private readonly Object inMove;
 
       public NXTOperator()
@@ -111,7 +111,11 @@ namespace Application
      {
          try {
            brick.Connection.Open();
-         } catch (Exception) { return false; }
+         } catch (Exception ex) { 
+           Console.Error.WriteLine("NXTOperator: Exception on connection open");
+           Console.Error.WriteLine(ex.ToString());
+           return false; 
+         }
 
          run_mikes_program();
          if (try_wait_for_sensors_activated())
@@ -136,7 +140,7 @@ namespace Application
      private void run_mikes_program()
      {
          try { brick.StopProgram(); } catch (Exception) {}
-         Thread.Sleep(1000);
+         Thread.Sleep(1500);
          brick.StartProgram("mikes.rxe", true);
      }
 
@@ -152,8 +156,10 @@ namespace Application
            } 
            Console.WriteLine("Start");
            return true;
-         } catch (Exception)
+         } catch (Exception ex)
            {
+             Console.Error.WriteLine("NXTOperator: Exception on try_wait...");
+             Console.Error.WriteLine(ex.ToString());
              state = WAITING_FOR_NXT_POWER_ON;
              return false;
            }
@@ -185,7 +191,7 @@ namespace Application
              while (state == EXECUTING)
              {
                if (check_movement_completed()) state = WAITING;
-               else Thread.Sleep(10);
+               else Thread.Sleep(50);
              }
            }
          }
@@ -194,17 +200,18 @@ namespace Application
       private bool check_movement_completed()
       {
         try {
-         while (true)
-         {
-           if (monitored_sensor.ReadLightLevel() == 0) break;
-           return false;
-         }
+         if (monitored_sensor.ReadLightLevel() != 0) return false;
+         Thread.Sleep(50);
          brick.Mailbox.Send("O", Box.Box0);
          Thread.Sleep(100);
          Console.WriteLine("Done");
          return true;
-        } catch (Exception) {}
-        return true;
+        } catch (Exception) {
+             //Console.Error.WriteLine("NXTOperator: Exception on check_movement...");
+             //Console.Error.WriteLine(ex.ToString());
+             // unfortunately this happens sometimes, but recovers soon (too fast message stream?)
+             return false;
+        }
       }
 
       private void read_loop()
@@ -224,8 +231,10 @@ namespace Application
                    lock(inMove) Monitor.Pulse(inMove);
                 }
                 else process_command(cmd);
-              } catch (Exception) 
+              } catch (Exception ex) 
                     { 
+                      Console.Error.WriteLine("NXTOperator: Exception on read_loop...");
+                      Console.Error.WriteLine(ex.ToString());
                       state = WAITING_FOR_NXT_POWER_ON; 
                       brick.Connection.Close();
                       Console.WriteLine("Stop");
