@@ -51,11 +51,14 @@ TEST_X_TIM571_SRCS=tests/test_x_tim571.c \
 TEST_X_AVOID_SRCS=tests/test_x_avoid.c \
                    modules/live/tim571.c \
                    modules/passive/x_tim571.c \
+                   modules/passive/pose.c \
+                   modules/passive/wheels.c \
                    modules/live/gui.c \
                    modules/live/tim_hough_transform.c \
                    modules/live/line_filter.c \
                    modules/live/tim_segment.c \
                    modules/live/tim_corner.c \
+                   modules/live/base_module.c \
                    modules/live/avoid.c \
                    bites/hough.c \
                    bites/filter.c \
