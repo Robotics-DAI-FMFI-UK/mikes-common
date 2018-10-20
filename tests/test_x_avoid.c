@@ -8,6 +8,7 @@
 #include "modules/live/line_filter.h"
 #include "modules/live/tim_segment.h"
 #include "modules/live/tim_corner.h"
+#include "modules/live/base_module.h"
 #include "modules/live/avoid.h"
 #include "bites/mikes.h"
 
@@ -15,6 +16,8 @@
 int main(int argc, char **argv)
 {
     mikes_init(argc, argv);
+
+    init_base_module();
 
     init_gui();
     init_tim571();
@@ -26,9 +29,16 @@ int main(int argc, char **argv)
     init_x_tim571(7000, 400);
     init_avoid();
 
+    avoid_zone_enable(1, 1);
+
     while (program_runs)
     {
-      usleep(30000);
+      for(int i = 0; i < 10*5; i++) { set_motor_speeds(12, 12);  usleep(200000); }
+      set_motor_speeds(0, 0);
+      sleep(1);
+      for(int i = 0; i <  7*5; i++) { set_motor_speeds(12,  0);  usleep(200000); }
+      set_motor_speeds(0, 0);
+      sleep(1);
     }
 
     shutdown_avoid();

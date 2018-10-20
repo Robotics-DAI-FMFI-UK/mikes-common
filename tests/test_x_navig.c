@@ -13,6 +13,7 @@
 #include "modules/passive/pose.h"
 #include "bites/math_2d.h"
 #include "modules/live/navig.h"
+//#include "modules/live/avoid.h"
 
 #define PROCESS_STATE_NONE    0
 #define PROCESS_STATE_INIT    1
@@ -150,6 +151,7 @@ int main(int argc, char **argv)
     init_gui();
     init_x_line_map(mikes_config.line_map_file, 600, 350);
 
+//    init_avoid();
     init_navig();
 
     navig_register_callback(new_navig_data);
@@ -162,6 +164,7 @@ int main(int argc, char **argv)
     navig_unregister_callback(new_navig_data);
 
     shutdown_navig();
+//    shutdown_avoid();
 
     shutdown_x_line_map();
     shutdown_gui();
