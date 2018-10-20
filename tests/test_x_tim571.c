@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     init_line_filter();
     init_tim_segment();
     init_tim_corner();
-    init_x_tim571(7000, 400);
+    init_x_tim571(20000, 400);
 
     while (program_runs)
     {
