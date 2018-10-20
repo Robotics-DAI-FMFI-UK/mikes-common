@@ -22,4 +22,5 @@ void cargo_unload();
 // should be called at the end
 void shutdown_wheels();
 
+int wheels_obstacle();
 #endif

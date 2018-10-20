@@ -130,3 +130,13 @@ void shutdown_wheels()
     kill(plink_child, SIGTERM);
 }
 
+int wheels_obstacle()
+{
+    char o;
+    wheels_send_cmd("V");
+    int cnt = 0;
+    while ((cnt++ < 20) && (read(fdW[0], &o, 1) != 1)) usleep(1000); 
+    if (o == 'P') return 1;
+    return 0;
+}
+
