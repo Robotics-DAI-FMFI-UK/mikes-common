@@ -12,7 +12,7 @@
 #define TIM571_SIZE_OF_ONE_DEG ((TIM571_DATA_COUNT - 1) / TIM571_TOTAL_ANGLE_DEG)
 #define TIM571_PORT 2111
 #define TIM571_ADDR "169.254.0.5"
-#define TIM571_MAX_DISTANCE 15000
+#define TIM571_MAX_DISTANCE 25000  /* 15000 */
 #define TIM571_FREQUENCY 15
 
 // status information received from the sensor (typical values in comments)
