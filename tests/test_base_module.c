@@ -24,8 +24,8 @@ int lspeed[TEST_LENGTH] = { 0, 12, 0,  0,  0, 12, 0,  0, 0, 12, 0,  0, 0, 12, 0,
 void test_base_module()
 {
     base_data_type base_data;
-    int tm = 0;
-    int tmptr = 0;
+//    int tm = 0;
+//    int tmptr = 0;
     while (1)
     {
     	get_base_data(&base_data);
@@ -40,15 +40,24 @@ void test_base_module()
 	get_pose(&apose);
     	log_pose(&apose);
 
-        if ((tmptr < TEST_LENGTH) && (tm > times[tmptr]))
-        {
-            if (lspeed[tmptr] == 100) break;
-            printf("moving %d %d...\n", lspeed[tmptr], rspeed[tmptr]);
-            set_motor_speeds(lspeed[tmptr], rspeed[tmptr]);
-            tmptr++;
-        }
-        usleep(200000);
-        tm += 200;
+        set_motor_speeds(8, 12);
+        usleep(3500000);
+
+        set_motor_speeds(0, 0);
+        sleep(3);
+//        escape_now_and_quick();
+//        sleep(2);
+
+//        if ((tmptr < TEST_LENGTH) && (tm > times[tmptr]))
+//        {
+//            if (lspeed[tmptr] == 100) break;
+//            printf("moving %d %d...\n", lspeed[tmptr], rspeed[tmptr]);
+//            set_motor_speeds(lspeed[tmptr], rspeed[tmptr]);
+//            tmptr++;
+//        }
+//        usleep(200000);
+//        tm += 200;
+
     }
 }
 
