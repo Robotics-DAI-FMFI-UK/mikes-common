@@ -13,6 +13,13 @@
 
 typedef struct { 
     int avoid_state;
+
+    int zone1_enabled; 
+    int zone1_active;  
+    int zone2_enabled; 
+    int zone2_active;  
+    int zone3_enabled; 
+    int zone3_active;  
 } avoid_callback_data_t;
 
 typedef void (*avoid_data_callback)(avoid_callback_data_t *data);
@@ -35,6 +42,13 @@ typedef struct {
 
     int state;
     int state_old;
+
+    int zone1_enabled; 
+    int zone1_active;  
+    int zone2_enabled; 
+    int zone2_active;  
+    int zone3_enabled; 
+    int zone3_active;  
 } avoid_t;
 
 
@@ -43,5 +57,7 @@ void shutdown_avoid();
 
 int  avoid_register_callback(avoid_data_callback callback);
 void avoid_unregister_callback(avoid_data_callback callback);
+
+void avoid_zone_enable(int zone, int enable);
 
 #endif

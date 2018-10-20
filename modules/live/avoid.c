@@ -10,6 +10,7 @@
 #include "../../bites/util.h"
 #include "../passive/mikes_logs.h"
 #include "../live/base_module.h"
+#include "../passive/wheels.h"
 #include "core/config_mikes.h"
 
 
@@ -54,33 +55,59 @@ int avoid_data_wait()
 
 static char *avoid_state_str[AVOID_STATE__COUNT] = { "none", "stopped", "unblocked" };
 
-void avoid_log_data(int state, int state_old)
+int xzone1_cnt, xzone2_cnt, xzone3_cnt;
+
+void avoid_log_data(int state, int state_old, int force)
+// force = force logging even if state did not change
 {
     char str[AVOID_LOGSTR_LEN];
 
     /* log only state changes */
-    if (state == state_old) return;
+    if ((state == state_old) && !force) return;
 
     if ((state < 0) || (state >= AVOID_STATE__COUNT)) state = AVOID_STATE_NONE;
     if ((state_old < 0) || (state_old >= AVOID_STATE__COUNT)) state_old = AVOID_STATE_NONE;
 
-    sprintf(str, "[avoid] avoid::avoid_log_data(): state=\"%s\", state_old=\"%s\"", 
-        avoid_state_str[state], avoid_state_str[state_old]);
+    sprintf(str, "[avoid] avoid::avoid_log_data(): state=\"%s\", state_old=\"%s\", active=\"%d%d%d\", enabled=\"%d%d%d\", cnt=\"%d,%d,%d\"", 
+        avoid_state_str[state], avoid_state_str[state_old], 
+        avoid.zone1_active,  avoid.zone2_active,  avoid.zone3_active,
+        avoid.zone1_enabled, avoid.zone2_enabled, avoid.zone3_enabled,
+        xzone1_cnt, xzone2_cnt, xzone3_cnt);
 
     mikes_log(ML_DEBUG, str);
+
+   if (state != state_old) {
+       log_tim571_data(&avoid.tim571_status, avoid.tim571_dist, avoid.tim571_rssi);
+   }
+}
+
+int avoid_get_zone_mask(void)
+{
+    return (avoid.zone1_enabled?0x10:0) | (avoid.zone2_enabled?0x20:0) | (avoid.zone3_enabled?0x40:0) |
+           (avoid.zone1_active?0x01:0)  | (avoid.zone2_active?0x02:0)  | (avoid.zone3_active?0x04:0);
 }
 
 #define AVOID_TIM571_DISTANCE_BAD            0
-#define AVOID_TIM571_RSSI_BAD                0
+#define AVOID_TIM571_RSSI_BAD               100
 #define AVOID_TIM571_DISTANCE_MAX            TIM571_MAX_DISTANCE  /* 15000 */
 #define AVOID_TIM571_DISTANCE_STEP          20
 #define AVOID_TIM571_ANGLE_STEP              1
 #define AVOID_TIM571_ANGLE_MULTIPLIER    10000
 
-#define AVOID_TIM571_ANGLE_MIN             -45
-#define AVOID_TIM571_ANGLE_MAX             +45
-#define AVOID_TIM571_DISTANCE_MIN          500    /* mm */
-#define AVOID_TIM571_DATA_COUNT             20
+#define AVOID_ZONE1_ANGLE_MIN             -75
+#define AVOID_ZONE1_ANGLE_MAX             +75
+#define AVOID_ZONE1_DISTANCE              500    /* mm */
+#define AVOID_ZONE1_DATA_COUNT              2
+
+#define AVOID_ZONE2_ANGLE_MIN             -75
+#define AVOID_ZONE2_ANGLE_MAX             +75
+#define AVOID_ZONE2_DISTANCE              300    /* mm */
+#define AVOID_ZONE2_DATA_COUNT              2
+
+#define AVOID_ZONE3_ANGLE_MIN             -75
+#define AVOID_ZONE3_ANGLE_MAX             +75
+#define AVOID_ZONE3_DISTANCE              100    /* mm */
+#define AVOID_ZONE3_DATA_COUNT              2
 
 /*
   tim571_status:
@@ -95,38 +122,93 @@ void avoid_process_data()
 {
     avoid_callback_data_t callback_data;
 
-    avoid_log_data(avoid.state, avoid.state_old);
-    avoid.state_old = avoid.state;
+    int mask_old = avoid_get_zone_mask();
 
-    int cnt = 0;
+    int zone1_cnt = 0;
+    int zone2_cnt = 0;
+    int zone3_cnt = 0;
+
     for(int index = 0; index < avoid.tim571_status.data_count; index++) {
-        if ((avoid.tim571_dist[index] <= AVOID_TIM571_DISTANCE_BAD) || 
-            (avoid.tim571_rssi[index] <= AVOID_TIM571_RSSI_BAD)) continue;
+        if (avoid.tim571_dist[index] < 30) continue; 
+//&&       (avoid.tim571_rssi[index] >= 100)) continue;
+
+        if (avoid.tim571_rssi[index] < AVOID_TIM571_RSSI_BAD) continue;
+
+//        if ((avoid.tim571_dist[index] == -1) || (avoid.tim571_rssi[index] == 0)) continue;
+
+//        if ((avoid.tim571_dist[index] < AVOID_TIM571_DISTANCE_BAD) || 
+//            (avoid.tim571_rssi[index] < AVOID_TIM571_RSSI_BAD)) continue;
 
         /* distance in milimeters, angle in degrees (counterclockwise, 0=x-axis)*/
         double dist = avoid.tim571_dist[index];
         double ang = (avoid.tim571_status.starting_angle + 
                       index * avoid.tim571_status.angular_step) / AVOID_TIM571_ANGLE_MULTIPLIER;
 
-        if ((ang < AVOID_TIM571_ANGLE_MIN) || (ang > AVOID_TIM571_ANGLE_MAX)) continue;
-             
-        if (dist < AVOID_TIM571_DISTANCE_MIN) cnt++;
+       
+        if ((ang >= AVOID_ZONE1_ANGLE_MIN) && (ang <= AVOID_ZONE1_ANGLE_MAX) && 
+            (dist < AVOID_ZONE1_DISTANCE)) zone1_cnt++;
+
+        if ((ang >= AVOID_ZONE2_ANGLE_MIN) && (ang <= AVOID_ZONE2_ANGLE_MAX) && 
+            (dist < AVOID_ZONE2_DISTANCE)) zone2_cnt++;
+
+        if ((ang >= AVOID_ZONE3_ANGLE_MIN) && (ang <= AVOID_ZONE3_ANGLE_MAX) && 
+            (dist < AVOID_ZONE3_DISTANCE)) zone3_cnt++;             
     }        
 
-    if (cnt > AVOID_TIM571_DATA_COUNT) {
+    xzone1_cnt = zone1_cnt;  xzone2_cnt = zone2_cnt;  xzone3_cnt = zone3_cnt;
+
+    avoid.zone1_active = (zone1_cnt >= AVOID_ZONE1_DATA_COUNT);
+    avoid.zone2_active = (zone2_cnt >= AVOID_ZONE2_DATA_COUNT);
+    avoid.zone3_active = (zone3_cnt >= AVOID_ZONE3_DATA_COUNT);
+
+    if (wheels_obstacle() ||
+        (avoid.zone1_enabled && avoid.zone1_active) || 
+        (avoid.zone2_enabled && avoid.zone2_active) || 
+        (avoid.zone3_enabled && avoid.zone3_active)) {
         avoid.state = AVOID_STATE_STOPPED;
     } else {
         avoid.state = AVOID_STATE_UNBLOCKED;
     }
 
-    avoid_log_data(avoid.state, avoid.state_old);
+    int blocked = (avoid.state == AVOID_STATE_STOPPED);
+    if (blocked != get_motor_blocked()) set_motor_blocked(blocked);
+
+    int mask = avoid_get_zone_mask();
+
+    avoid_log_data(avoid.state, avoid.state_old, mask != mask_old);
 
     if (avoid.state != avoid.state_old) {
         callback_data.avoid_state = avoid.state;
 
+        callback_data.zone1_enabled = avoid.zone1_enabled;
+        callback_data.zone1_active  = avoid.zone1_active; 
+        callback_data.zone2_enabled = avoid.zone2_enabled;
+        callback_data.zone2_active  = avoid.zone2_active; 
+        callback_data.zone3_enabled = avoid.zone3_enabled;
+        callback_data.zone3_active  = avoid.zone3_active;
+
         for (int i = 0; i < avoid.callbacks_count; i++) {
             avoid.callbacks[i](&callback_data);
         }
+    }
+
+    avoid.state_old = avoid.state;
+}
+
+void avoid_zone_enable(int zone, int enable)
+{
+    avoid_log_data(avoid.state, avoid.state_old, 1);
+
+    switch(zone) {
+    case 1:
+        avoid.zone1_enabled = enable;
+        break;
+    case 2:
+        avoid.zone2_enabled = enable;
+        break;
+    case 3:
+        avoid.zone3_enabled = enable;
+        break;
     }
 }
 
@@ -174,6 +256,16 @@ int avoid_init()
 
     avoid.state = AVOID_STATE_UNBLOCKED;
     avoid.state_old = AVOID_STATE_NONE;
+
+    avoid.zone1_enabled = 0; 
+    avoid.zone1_active = 0;  
+    avoid.zone2_enabled = 0; 
+    avoid.zone2_active = 0;  
+    avoid.zone3_enabled = 0; 
+    avoid.zone3_active = 0;  
+
+    avoid_log_data(avoid.state, avoid.state_old, 0);
+    avoid.state_old = avoid.state;
 
     if (!mikes_config_use_avoid)
     {
