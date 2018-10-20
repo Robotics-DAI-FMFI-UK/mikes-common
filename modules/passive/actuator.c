@@ -10,30 +10,49 @@
 #include "../live/nxt.h"
 #include "../passive/wheels.h"
 
+void wait_till_done()
+{
+  while (!nxt_done()) usleep(20000);
+}
+
 void init_actuator()
 {
   nxt_dock();
+  wait_till_done();
   wheels_up();
 }
 
-
 void grab_line(int line)
 {
+  mikes_log_val(ML_INFO, "actuator: grabbing line ", line);
+
+  mikes_log(ML_INFO, "actuator: dock");
   nxt_dock();
+  wait_till_done();
+  mikes_log(ML_INFO, "actuator: docked");
+
+  mikes_log(ML_INFO, "actuator: line");
   nxt_line(line);
-  sleep(4);
+  wait_till_done();
+  mikes_log(ML_INFO, "actuator: on line");
   nxt_wheels_on();
+  mikes_log(ML_INFO, "actuator: wheels are on");
   wheels_down();
+  mikes_log(ML_INFO, "actuator: wheels are going down, sleep 2");
   sleep(2);
+  mikes_log(ML_INFO, "actuator: dock");
   nxt_dock();
-  sleep(4);
+  wait_till_done();
+  mikes_log(ML_INFO, "actuator: docked, turning off wheels");
   nxt_wheels_off();
+  mikes_log(ML_INFO, "actuator: moving wheels up");
   wheels_up();
-  sleep(2);
+  mikes_log(ML_INFO, "actuator: done grabbing line");
 }
 
 void unload_cargo()
 {
+  mikes_log(ML_INFO, "actuator: unloading cargo");
   cargo_unload();
 }
 
