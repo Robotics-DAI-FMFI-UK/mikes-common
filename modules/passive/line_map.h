@@ -34,4 +34,6 @@ double line_intersection(double x1, double y1, double x2, double y2,
  * if the line does not intersect with map, it returns -1, otherwise the distance of the intersection point is returned. */
 double find_intersection_of_line_with_line_map(double x1, double y1, double alpha, double length, double *nx, double *ny);
 
+void get_line_map_data(line *map_lines, int *map_lines_count);
+
 #endif

@@ -4,6 +4,8 @@
 #include "line_map.h"
 #include "mikes_logs.h"
 
+#define LINE_MAP_MULTIPLIER 1.0 // 10.0
+
 static int lines_count;
 static line lines[MAX_LINES_IN_LINE_MAP];
 static const double epsilon = 0.000001;
@@ -26,10 +28,10 @@ int parse_element(xmlNode* a_node, line *lines)
             xmlChar *x2 = xmlGetProp(cur_node, (const xmlChar *) "x2");
             xmlChar *y2 = xmlGetProp(cur_node, (const xmlChar *) "y2");
             xmlChar *lineId = xmlGetProp(cur_node, (const xmlChar *) "lineId");
-            lines[i].x1 = (double) atoi((const char *) x1);  // * 10.0
-            lines[i].y1 = (double) atoi((const char *) y1);  // * 10.0
-            lines[i].x2 = (double) atoi((const char *) x2);  // * 10.0
-            lines[i].y2 = (double) atoi((const char *) y2);  // * 10.0
+            lines[i].x1 = (double) atoi((const char *) x1) * LINE_MAP_MULTIPLIER;
+            lines[i].y1 = (double) atoi((const char *) y1) * LINE_MAP_MULTIPLIER;
+            lines[i].x2 = (double) atoi((const char *) x2) * LINE_MAP_MULTIPLIER;
+            lines[i].y2 = (double) atoi((const char *) y2) * LINE_MAP_MULTIPLIER;
             lines[i].id = atoi((const char *) lineId);
             i++;
             if (i == MAX_LINES_IN_LINE_MAP)
@@ -158,7 +160,7 @@ double line_intersection(
 /* finds a point where the given line segment specified by its starting point x1,y1, heading alpha, and length
  * intersects with some line in the map (intersection point is returned in nx,ny)
  * if the line does not intersect with map, it returns -1, otherwise the distance of the intersection point is returned. */
-double find_intersection_of_line_with_line_map(double x1, double y1, double alpha, double length, double *nx, double *ny) 
+double find_intersection_of_line_with_line_map(double x1, double y1, double alpha, double length, double *nx, double *ny)
 {
    double min_sq_dist = length * length;
    double sq_dist;
@@ -169,10 +171,10 @@ double find_intersection_of_line_with_line_map(double x1, double y1, double alph
    double intx, inty;
    int found = 0;
 
-   for (int i = 0; i < lines_count; i++) 
+   for (int i = 0; i < lines_count; i++)
    {
-      if (line_intersection(x1, y1, x2, y2, 
-                            lines[i].x1, lines[i].y1, lines[i].x2, lines[i].y2, 
+      if (line_intersection(x1, y1, x2, y2,
+                            lines[i].x1, lines[i].y1, lines[i].x2, lines[i].y2,
                             &intx, &inty) > 0)
       {
         sq_dist = (intx - x1) * (intx - x1) + (inty - y1) * (inty - y1);
@@ -190,8 +192,13 @@ double find_intersection_of_line_with_line_map(double x1, double y1, double alph
    return sqrt(min_sq_dist);
 }
 
+void get_line_map_data(line *map_lines, int *map_lines_count)
+{
+  memcpy(map_lines, lines, sizeof(line) * lines_count);
+  *map_lines_count = lines_count;
+}
+
 void init_line_map(char *filename)
 {
    lines_count = get_lines_from_file(filename, lines);
 }
-
