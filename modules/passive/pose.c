@@ -150,7 +150,7 @@ void set_pose(double newx, double newy, double newheading)
 		
     pthread_mutex_unlock(&pose_module_lock);
 
-    mikes_log_double2(ML_DEBUG, "pose: set pose x y: ", pos_x, pos_y);
-    mikes_log_double(ML_DEBUG, "pose: set pose heading: ", pos_heading);
-    mikes_log_double2(ML_DEBUG, "pose: set pose old_A old_B: ", old_A, old_B);
+    //mikes_log_double2(ML_DEBUG, "pose: set pose x y: ", pos_x, pos_y);
+    //mikes_log_double(ML_DEBUG, "pose: set pose heading: ", pos_heading);
+    //mikes_log_double2(ML_DEBUG, "pose: set pose old_A old_B: ", old_A, old_B);
 }

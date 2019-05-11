@@ -34,7 +34,7 @@ void segment_transform_points_and_lines_to_segments(segment_config *config, tim5
         get_line_data_from_distance_and_angle(&distance, &angle, &point_vector, &point_normal, &point);
         find_distance_and_angle_between_point_and_line(&point, &line_vector, &line_point, &distance, &angle);
 
-        if (distance <= config->max_distance_error) {
+        if (distance <= config->max_distance_error && point_i + 1 != status_data->data_count) {
           if (has_start) {
             votes++;
             end_normal = point_normal;

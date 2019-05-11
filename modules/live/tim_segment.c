@@ -30,9 +30,9 @@ static int                                callbacks_count;
 static int online;
 
 static segment_config tim_segment_default_config = {
-  .max_distance_error = 150.0,  /* 100.0, */
-  .min_points_segment = 20,
-  .max_points_skip = 5,
+  .max_distance_error = 50.0,  /* 100.0, */
+  .min_points_segment = 15,
+  .max_points_skip = 3,
   .bad_rssi = 0
 };
 

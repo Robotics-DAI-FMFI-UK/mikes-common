@@ -35,7 +35,7 @@ static hough_config tim_hough_default_config = {
   .distance_max = TIM571_MAX_DISTANCE,
   .distance_step = 20,
   .angle_step = 1,
-  .votes_min = 50,
+  .votes_min = 15,
   .bad_distance = 0,
   .bad_rssi = 0
 };

@@ -4,7 +4,7 @@
 #include "../modules/live/tim571.h"
 #include "math_2d.h"
 
-#define LINE_MAX_DATA_COUNT 50
+#define LINE_MAX_DATA_COUNT 250
 
 typedef struct line_struct {
   angle_line_2d line; // 0 angle is on the right side of the robot, increasing counter-clockwise

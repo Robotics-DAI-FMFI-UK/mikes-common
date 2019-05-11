@@ -1,5 +1,6 @@
 #include <libxml/xmlreader.h>
 #include <math.h>
+#include <string.h>
 
 #include "line_map.h"
 #include "mikes_logs.h"
