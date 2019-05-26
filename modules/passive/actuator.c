@@ -46,6 +46,7 @@ void grab_line(int line)
   mikes_log(ML_INFO, "actuator: docked, turning off wheels");
   nxt_wheels_off();
   mikes_log(ML_INFO, "actuator: moving wheels up");
+  usleep(300000);
   wheels_up();
   mikes_log(ML_INFO, "actuator: done grabbing line");
 }

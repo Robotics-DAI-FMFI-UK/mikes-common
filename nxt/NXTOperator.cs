@@ -88,15 +88,19 @@ namespace Application
       private const byte EXECUTING = 3;
       private const byte QUITTING = 4;
 
+      private const String NXT_LOG_FILE = "nxtoperator.log";
+
       private volatile byte state;
       private volatile NXTLightSensor monitored_sensor;
 
       private volatile Brick<NXTLightSensor,NXTLightSensor,Sensor,NXTLightSensor> brick;
       private volatile NXTLightSensor light1, light2, light4;
       private readonly Object inMove;
+      private long time_started;
 
       public NXTOperator()
       {
+         time_started =  DateTime.Now.Ticks;
          state = WAITING_FOR_NXT_POWER_ON;
          inMove = new Object();
          Console.SetIn(new StreamReader(Console.OpenStandardInput()));
@@ -105,6 +109,14 @@ namespace Application
 
          Thread readThread = new Thread(new ThreadStart(read_loop));
          readThread.Start();
+     }
+
+     private void log_msg(String msg)
+     {
+        String msg_with_time = ((DateTime.Now.Ticks - time_started) / (double)TimeSpan.TicksPerSecond)  + ": " + msg;
+	StreamWriter pw = File.AppendText(NXT_LOG_FILE);
+        pw.WriteLine(msg_with_time);
+        pw.Close();
      }
 
      private bool try_connect()
@@ -118,6 +130,7 @@ namespace Application
          }
 
          run_mikes_program();
+         Thread.Sleep(500);
          if (try_wait_for_sensors_activated())
             return true;
          else 
@@ -140,7 +153,7 @@ namespace Application
      private void run_mikes_program()
      {
          try { brick.StopProgram(); } catch (Exception) {}
-         Thread.Sleep(1500);
+         Thread.Sleep(2500);
          brick.StartProgram("mikes.rxe", true);
      }
 
@@ -201,9 +214,9 @@ namespace Application
       {
         try {
          if (monitored_sensor.ReadLightLevel() != 0) return false;
-         Thread.Sleep(50);
-         brick.Mailbox.Send("O", Box.Box0);
          Thread.Sleep(100);
+         brick.Mailbox.Send("O", Box.Box0);
+         Thread.Sleep(200);
          Console.WriteLine("Done");
          return true;
         } catch (Exception) {
@@ -246,6 +259,7 @@ namespace Application
 
       private void process_command(String cmd)
       {
+         log_msg("process_command(" + cmd + ")");
          if (cmd.Equals("Dock")) line(0);
          else if (cmd.Equals("Sleep")) sleep();
          else if (cmd.Equals("On")) on();
@@ -263,8 +277,11 @@ namespace Application
       private void on()
       {
          brick.MotorA.On(100);
+         Thread.Sleep(20);
          brick.MotorB.On(100);
+         Thread.Sleep(20);
          brick.MotorC.On(100);
+         Thread.Sleep(20);
       }
 
       private void sleep()
@@ -277,8 +294,11 @@ namespace Application
       private void off()
       { 
          brick.MotorA.Off();
+         Thread.Sleep(20);
          brick.MotorB.Off();
+         Thread.Sleep(20);
          brick.MotorC.Off();
+         Thread.Sleep(20);
       }
 
       private void line(int ln)
@@ -286,6 +306,7 @@ namespace Application
          String cmd = select_sensor_and_command_for_line(ln);
          brick.Mailbox.Send(cmd, Box.Box0);
          state = EXECUTING;
+         log_msg("line(" + ln + ") sent");
          Thread.Sleep(300);
          lock(inMove) Monitor.Pulse(inMove);
       }
@@ -311,24 +332,35 @@ namespace Application
       private void set_slow_speed()
       {
          brick.Mailbox.Send("E", Box.Box0);
+         Thread.Sleep(20);
       }
 
       private void set_fast_speed()
       {
          brick.Mailbox.Send("F", Box.Box0);
+         Thread.Sleep(20);
       }
 
       private void clear_display()
       {
          brick.Mailbox.Send("X", Box.Box0);
+         Thread.Sleep(20);
       }
 
       private void read_key()
       {
          brick.Mailbox.Send("M", Box.Box0);
-         while ((light1.ReadLightLevel() > 0) && 
-                (light2.ReadLightLevel() > 0) && 
-                (light4.ReadLightLevel() > 0) && (state != QUITTING)) Thread.Sleep(10);
+         Thread.Sleep(50);
+         while (true)
+         {
+            if (light1.ReadLightLevel() == 0) break;
+            Thread.Sleep(50);
+            if (light2.ReadLightLevel() == 0) break;
+            Thread.Sleep(50);
+            if (light4.ReadLightLevel() == 0) break;
+            if (state == QUITTING) break;
+            Thread.Sleep(50);
+         }
          if (light1.ReadLightLevel() == 0) Console.WriteLine("Left"); 
          else if (light2.ReadLightLevel() == 0) Console.WriteLine("Right"); 
          else if (light4.ReadLightLevel() == 0) Console.WriteLine("Enter"); 
