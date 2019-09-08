@@ -192,7 +192,8 @@ all: test
 
 install:
 
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
+#test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -226,12 +227,12 @@ test_x_rplidar: ${TEST_X_LIDAR_OBJS}
 	${CPP} -o test_x_rplidar $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_pngwriter: ${TEST_PNGWRITER_OBJS}
 	${CC} -o test_pngwriter $^ ${LDFLAGS} ${DEBUG_FLAGS}
-test_xtion: ${TEST_XTION_OBJS}
-	${CPP} -o test_xtion $^ ${LDFLAGS} ${DEBUG_FLAGS} -lOpenNI
-${XTION_OBJS}: ${XTION_SRCS}
-	$(MAKE) -C modules/live/xtion
-test_x_xtion: ${TEST_X_XTION_OBJS}
-	${CPP} -o test_x_xtion $^ ${LDFLAGS} ${DEBUG_FLAGS} -lOpenNI
+#test_xtion: ${TEST_XTION_OBJS}
+#	${CPP} -o test_xtion $^ ${LDFLAGS} ${DEBUG_FLAGS} -lOpenNI
+#${XTION_OBJS}: ${XTION_SRCS}
+#	$(MAKE) -C modules/live/xtion
+#test_x_xtion: ${TEST_X_XTION_OBJS}
+#	${CPP} -o test_x_xtion $^ ${LDFLAGS} ${DEBUG_FLAGS} -lOpenNI
 test_x_line_map: ${TEST_X_LINE_MAP_OBJS}
 	${CC} -o test_x_line_map $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_x_navig: ${TEST_X_NAVIG_OBJS}
@@ -255,7 +256,8 @@ test_shake: ${TEST_SHAKE_OBJS}
 uninstall:
 
 clean:
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
+	#rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
 	rm -rf modules/live/xtion/Arm-Release
 	make -C nxt clean
 	rm -f grey_gradient.png rgb_gradient.png
