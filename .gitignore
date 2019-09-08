@@ -34,5 +34,9 @@ test_x_navig
 poses.txt
 nxt/lib
 nxt/tmp-tests
+nxt/NXTOperator
+nxt/NXTOperator.mdb
+nxt/TestMonoBrick
+test_shake
 retired_to_be_deleted
 last
