@@ -42,7 +42,7 @@ static int online;
 int connect_lidar()
 {
     // create the driver instance
-    drv = RPlidarDriver::CreateDriver(RPlidarDriver::DRIVER_TYPE_SERIALPORT);
+    drv = RPlidarDriver::CreateDriver(); 
     sleep(1);
 
     if (!drv) 
@@ -142,7 +142,7 @@ void *lidar_thread(void *args)
         int erri = 0;
         while (erri < 30) 
         {
-            if (IS_FAIL(drv->startScan())) 
+            if (IS_FAIL(drv->startScan(false, true))) 
             {
                 mikes_log_val(ML_ERR, "rplidar error, cannot start the scan operation. Trying again.", erri);
                 ++erri;
