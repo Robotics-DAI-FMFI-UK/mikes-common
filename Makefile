@@ -31,6 +31,9 @@ TEST_NCURSES_SRCS=tests/test_ncurses_control.c \
 TEST_TIM571_SRCS=tests/test_tim571.c \
                  modules/live/tim571.c \
                  ${MIKES_BASIC}
+TEST_T265_SRCS=tests/test_t265.c \
+               modules/live/t265.c \
+               ${MIKES_BASIC}
 TEST_GUI_SRCS=tests/test_gui.c \
               modules/live/gui.c \
               ${MIKES_BASIC}
@@ -149,6 +152,7 @@ TEST_PQ_OBJS=${TEST_PQ_SRCS:.c=.o}
 TEST_BASE_OBJS=${TEST_BASE_SRCS:.c=.o}
 TEST_NCURSES_OBJS=${TEST_NCURSES_SRCS:.c=.o}
 TEST_TIM571_OBJS=${TEST_TIM571_SRCS:.c=.o}
+TEST_T265_OBJS=${TEST_T265_SRCS:.c=.o}
 TEST_GUI_OBJS=${TEST_GUI_SRCS:.c=.o}
 TEST_X_TIM571_OBJS=${TEST_X_TIM571_SRCS:.c=.o}
 TEST_X_AVOID_OBJS=${TEST_X_AVOID_SRCS:.c=.o}
@@ -193,7 +197,8 @@ all: test
 install:
 
 #test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_wheels test_x_navig test_x_avoid test_actuator test_shake test_t265
+#test_nxt
 
 test_pq: ${TEST_PQ_OBJS}
 	${CC} -o test_pq $^ ${LDFLAGS} ${DEBUG_FLAGS}
@@ -207,6 +212,8 @@ test_ncurses_control: ${TEST_NCURSES_OBJS}
 	${CC} -o test_ncurses_control $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_tim571: ${TEST_TIM571_OBJS}
 	${CC} -o test_tim571 $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_t265: ${TEST_T265_OBJS}
+	${CC} -o test_t265 $^ ${LDFLAGS} ${DEBUG_FLAGS} -lrealsense2 -latomic
 test_gui: ${TEST_GUI_OBJS}
 	${CC} -o test_gui $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_x_tim571: ${TEST_X_TIM571_OBJS}
@@ -257,7 +264,8 @@ uninstall:
 
 clean:
 	#rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_wheels test_x_navig test_x_avoid test_actuator test_shake test_t265
+#test_nxt
 	rm -rf modules/live/xtion/Arm-Release
-	make -C nxt clean
+#	make -C nxt clean
 	rm -f grey_gradient.png rgb_gradient.png
