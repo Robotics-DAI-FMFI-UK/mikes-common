@@ -12,7 +12,8 @@
 #define DIST3 A2
 #define CUBE A1
 
-#define ENCB1 A3
+//A3
+#define ENCB1 17 
 #define ENCB2 3
 #define ENCA1 4
 #define ENCA2 8

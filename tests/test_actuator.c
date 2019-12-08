@@ -51,7 +51,7 @@ int main(int argc, char **argv)
   if (tests == ALL_TESTS)
   {
     init_nxt();
-    sleep(3);
+    sleep(5);
     if (!nxt_is_online())
     {
       printf("nxt is not connected\n");
