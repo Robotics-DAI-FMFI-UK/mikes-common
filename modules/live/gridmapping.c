@@ -11,13 +11,17 @@
 #include "../passive/pose.h"
 #include "../passive/gridmap.h"
 #include "tim571.h"
+#include "t265.h"
 
 #define EPSILON 0.000000001
 
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
+static t265_pose_type 	pose_local_copy;
+static pose_type initial_pose;
 
 static volatile uint8_t  need_new_data;
+static volatile uint8_t  need_new_pos;
 
 static int                  fd[2];
 
@@ -28,7 +32,17 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     need_new_data = 0;
+    need_new_pos = 1;
     alert_new_data(fd);
+  }
+}
+
+void t265_newpos_callback(t265_pose_type *pose)
+{
+  if (need_new_pos)
+  {
+	pose_local_copy = (t265_pose_type) *pose;
+    need_new_pos = 0;
   }
 }
 
@@ -118,8 +132,12 @@ void put_tim571_data_to_gridmap()
 		double map_angle = angle / 180 * M_PI + pos.heading;
 		while (map_angle < 0) map_angle+=2*M_PI;
 		while (map_angle > 2*M_PI) map_angle-=2*M_PI;
-		int x = pos.x;
-		int y = pos.y;
+		//int x = pos.x;
+		//int y = pos.y;
+		int pos_x = initial_pose.x + pose_local_copy.translation.x*100;
+		int pos_y = initial_pose.y + pose_local_copy.translation.y*100;
+		int x = pos_x;
+		int y = pos_y;
 		int dx; 
 		int dy;
 		if (map_angle< M_PI_2){
@@ -140,14 +158,17 @@ void put_tim571_data_to_gridmap()
 		}			
 		
 		while(1){
-			int intersects = line_cell_intersects(pos.x, pos.y, map_angle, x + dx, y, 10, 10, dist_local_copy[i] / 10);
+			//int intersects = line_cell_intersects(pos.x, pos.y, map_angle, x + dx, y, 10, 10, dist_local_copy[i] / 10);
+			int intersects = line_cell_intersects(pos_x, pos_y, map_angle, x + dx, y, 10, 10, dist_local_copy[i] / 10);
+			
 			if (intersects == 2) break;
 			if (intersects == 1){
 				inc_grid_empty(y/10, x/10);
 				x += dx;
 				continue;
 			}
-			intersects = line_cell_intersects(pos.x, pos.y, map_angle, x, y + dy, 10, 10, dist_local_copy[i] / 10);
+			//intersects = line_cell_intersects(pos.x, pos.y, map_angle, x, y + dy, 10, 10, dist_local_copy[i] / 10);
+			intersects = line_cell_intersects(pos_x, pos_y, map_angle, x, y + dy, 10, 10, dist_local_copy[i] / 10);
 			if (intersects == 2) break;
 			if (intersects == 1){
 				inc_grid_empty(y/10,x/10);
@@ -185,6 +206,8 @@ void *gridmapping_thread(void *args)
 void init_gridmapping(){
 
   need_new_data = 1;
+  need_new_pos = 1;
+  get_pose(&initial_pose);
   pthread_t t;
   
   if (pipe(fd) != 0)
@@ -195,6 +218,7 @@ void init_gridmapping(){
   }
   
   register_tim571_callback(tim571_newdata_callback);
+  register_t265_callback(t265_newpos_callback);
   if (pthread_create(&t, 0, gridmapping_thread, 0) != 0)
   {
     perror("mikes:gridmapping");

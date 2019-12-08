@@ -7,11 +7,11 @@
 
 typedef rs2_pose t265_pose_type;
 
-typedef void (*t265_receive_data_callback)(t265_pose_type *pose); // ???
+typedef void (*t265_receive_data_callback)(t265_pose_type *pose);
 
 void init_t265();
 
-void get_t265_pose(t265_pose_type *pose); // fills in pose values in cm
+void get_t265_pose(t265_pose_type *pose); // pose values in m
 
 void register_t265_callback(t265_receive_data_callback callback);    // register for getting fresh data after received from sensor (copy quick!)
 void unregister_t265_callback(t265_receive_data_callback callback);  // remove previously registered callback
