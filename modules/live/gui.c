@@ -179,6 +179,11 @@ void draw_windows_title(int window_handle)
     XStoreName(dsp, x11windows[window_handle], fullname);
 }
 
+void write_to_png(int window_handle, char *png_filename)
+{
+  cairo_surface_write_to_png(surfaces[window_handle], png_filename);
+}
+
 void gui_set_window_title(int window_handle, char *title)
 {
     pthread_mutex_lock(&gui_lock);

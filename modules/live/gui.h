@@ -51,4 +51,6 @@ double draw_svg_to_cairo(cairo_t *w, int x, int y, char *filename, int max_width
 /* requests repaint of window from gui thread */
 void request_async_repaint(int win);
 
+void write_to_png(int window_handle, char *png_filename);
+
 #endif
