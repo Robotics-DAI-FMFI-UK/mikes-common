@@ -10,4 +10,6 @@ void shutdown_x_gridmap();
 
 void x_gridmap_toggle_pose_visible(int visible);
 
+void x_gridmap_pose_changed();
+
 #endif

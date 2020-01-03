@@ -5,11 +5,14 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include "core/config_mikes.h"
+
 #include "../mikes-common/bites/mikes.h"
 #include "../../bites/util.h"
 #include "../passive/mikes_logs.h"
 #include "../passive/pose.h"
 #include "../passive/gridmap.h"
+#include "../passive/x_gridmap.h"
 #include "tim571.h"
 #include "t265.h"
 
@@ -18,7 +21,10 @@
 static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static t265_pose_type 	pose_local_copy;
-static pose_type initial_pose;
+
+static int initial_pose_x;
+static int initial_pose_y;
+static double heading;
 
 static volatile uint8_t  need_new_data;
 static volatile uint8_t  need_new_pos;
@@ -32,17 +38,20 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     need_new_data = 0;
-    need_new_pos = 1;
     alert_new_data(fd);
+    
   }
 }
 
-void t265_newpos_callback(t265_pose_type *pose)
+void t265_newpos_callback(t265_pose_type *pose, double *new_heading)
 {
   if (need_new_pos)
   {
-	pose_local_copy = (t265_pose_type) *pose;
-    need_new_pos = 0;
+	pose_local_copy.translation.x = pose->translation.x;
+	pose_local_copy.translation.y = pose->translation.y;
+	pose_local_copy.translation.z = pose->translation.z;
+	heading = *new_heading;
+	need_new_pos = 0;
   }
 }
 
@@ -120,25 +129,20 @@ int line_cell_intersects(double x, double y, double alpha, double cell_x, double
 	return 0;
 }
 
-void put_tim571_data_to_gridmap()
-{
-	pose_type pos;
-	get_pose(&pos);
+void put_tim571_data_to_gridmap(){
 	
 	for (int i= 0; i<TIM571_DATA_COUNT;i++){
 		if (dist_local_copy[i]==0) continue;
 		double angle = tim571_ray2azimuth(i);
 		if (angle<0) angle+=360; 
-		double map_angle = angle / 180 * M_PI + pos.heading;
+		double map_angle = angle / 180 * M_PI - heading;
 		while (map_angle < 0) map_angle+=2*M_PI;
 		while (map_angle > 2*M_PI) map_angle-=2*M_PI;
-		//int x = pos.x;
-		//int y = pos.y;
-		int pos_x = initial_pose.x + pose_local_copy.translation.x*100;
-		int pos_y = initial_pose.y + pose_local_copy.translation.y*100;
+		int pos_x = initial_pose_x + pose_local_copy.translation.x*100;
+		int pos_y = initial_pose_y - pose_local_copy.translation.z*100;
 		int x = pos_x;
 		int y = pos_y;
-		int dx; 
+		int dx;
 		int dy;
 		if (map_angle< M_PI_2){
 			dx = 10;
@@ -195,7 +199,9 @@ void *gridmapping_thread(void *args)
       continue;
     }
     put_tim571_data_to_gridmap();
-    need_new_data = 1;
+    x_gridmap_pose_changed();
+    //need_new_data = 1;
+    //need_new_pos = 1;
   }
 
   mikes_log(ML_INFO, "gridmapping quits.");
@@ -205,9 +211,10 @@ void *gridmapping_thread(void *args)
 
 void init_gridmapping(){
 
-  need_new_data = 1;
-  need_new_pos = 1;
-  get_pose(&initial_pose);
+  need_new_data = 0;
+  need_new_pos = 0;
+  initial_pose_x = mikes_config.gridmap_width/2*10;
+  initial_pose_y = mikes_config.gridmap_height/2*10;
   pthread_t t;
   
   if (pipe(fd) != 0)
@@ -233,3 +240,7 @@ void shutdown_gridmapping()
   close(fd[1]);
 }
 
+void start_scanning(){
+    need_new_data = 1;
+    need_new_pos = 1;
+}

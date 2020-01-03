@@ -7,7 +7,7 @@
 
 typedef rs2_pose t265_pose_type;
 
-typedef void (*t265_receive_data_callback)(t265_pose_type *pose);
+typedef void (*t265_receive_data_callback)(t265_pose_type *pose, double *);
 
 void init_t265();
 
@@ -17,6 +17,6 @@ void register_t265_callback(t265_receive_data_callback callback);    // register
 void unregister_t265_callback(t265_receive_data_callback callback);  // remove previously registered callback
 void log_t265_pose(t265_pose_type *pose);
 
-void get_ypr(t265_pose_type *pose, double *yaw, double *pitch, double *roll);
+void get_t265_heading(t265_pose_type *pose, double *heading);
 
 #endif

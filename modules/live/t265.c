@@ -74,6 +74,11 @@ void *t265_thread(void *args)
  
         rs2_release_frame(frame);
         rs2_release_frame(frames);
+        
+        double heading;
+        get_t265_heading(&local_pose_data, &heading);
+        for (int i =0; i< callbacks_count; i++)
+            callbacks[i](&local_pose_data, &heading);
     }
 
     rs2_pipeline_stop(pipeline, &e);
@@ -150,37 +155,21 @@ void get_t265_pose(t265_pose_type *pose)
 void log_t265_pose(t265_pose_type *pose)
 {
     char str[POSE_LOGSTR_LEN];
-    double yaw, pitch, roll;
+    double heading;
 
-    get_ypr(pose, &yaw, &pitch, &roll);
+    get_t265_heading(pose, &heading);
 
-    sprintf(str, "[main] pose::log_t265_pose(): x=%.2f, y=%.2f, z=%.2f, yaw=%.2f(%.2f deg), pitch=%.2f(%.2f deg), roll=%.2f(%.2f deg)",
+    sprintf(str, "[main] pose::log_t265_pose(): x=%.2f, y=%.2f, z=%.2f, heading=%.2f(%.2f deg)",
         pose->translation.x, pose->translation.y, pose->translation.z,
-        yaw, yaw / M_PI * 180, 
-        pitch, pitch / M_PI * 180, 
-        roll, roll / M_PI * 180);
+        heading, heading / M_PI * 180);
 
     mikes_log(ML_DEBUG, str);
     printf("%s\n", str);
 }
 
-void get_ypr(t265_pose_type *pose, double *yaw, double *pitch, double *roll)
+
+void get_t265_heading(t265_pose_type *pose, double *heading)
 {
-    rs2_quaternion *q = &(pose->rotation);
-    // roll (x-axis rotation)
-    double sinr_cosp = 2 * (q->w * q->x + q->y * q->z);
-    double cosr_cosp = 1 - 2 * (q->x * q->x + q->y * q->y);
-    *roll = atan2(sinr_cosp, cosr_cosp);
-
-    // pitch (y-axis rotation)
-    double sinp = 2 * (q->w * q->y - q->z * q->x);
-    if (sinp >= 1) *pitch = M_PI / 2; // use 90 degrees if out of range
-    else if (sinp <= -1) *pitch = -M_PI / 2;
-    else *pitch = asin(sinp);
-
-    // yaw (z-axis rotation)
-    double siny_cosp = 2 * (q->w * q->z + q->x * q->y);
-    double cosy_cosp = 1 - 2 * (q->y * q->y + q->z * q->z);
-    *yaw = atan2(siny_cosp, cosy_cosp);
+  rs2_quaternion *q = &(pose->rotation);
+  *heading = M_PI-(atan2((2 * q->w * q->y - 2 * q->x * q->z),(q->x * q->x + q->y * q->y - q->w * q->w - q->z * q->z)));
 }
-
