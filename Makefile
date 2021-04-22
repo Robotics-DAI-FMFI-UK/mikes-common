@@ -145,6 +145,9 @@ TEST_SHAKE_SRCS=tests/test_shake.c \
                 modules/passive/pose.c \
                 modules/live/base_module.c \
                 ${MIKES_BASIC}
+TEST_HCSR04_SRCS=tests/test_hcsr04.c \
+		modules/live/hcsr04.c \
+		${MIKES_BASIC}
 
 TEST_ASTAR_OBJS=${TEST_ASTAR_SRCS:.c=.o}
 TEST_POSE_OBJS=${TEST_POSE_SRCS:.c=.o}
@@ -174,6 +177,7 @@ TEST_NXT_OBJS=${TEST_NXT_SRCS:.c=.o}
 TEST_WHEELS_OBJS=${TEST_WHEELS_SRCS:.c=.o}
 TEST_ACTUATOR_OBJS=${TEST_ACTUATOR_SRCS:.c=.o}
 TEST_SHAKE_OBJS=${TEST_SHAKE_SRCS:.c=.o}
+TEST_HCSR04_OBJS=${TEST_HCSR04_SRCS:.c=.o}
 
 TEST_CPPSRCS=
 TEST_CPPOBJS=${TEST_CPPSRCS:.cpp=.o}
@@ -197,7 +201,7 @@ all: test
 install:
 
 #test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
-test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_wheels test_x_navig test_x_avoid test_actuator test_shake test_t265
+test:	test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_wheels test_x_navig test_x_avoid test_actuator test_shake test_t265 test_hcsr04
 #test_nxt
 
 test_pq: ${TEST_PQ_OBJS}
@@ -259,12 +263,14 @@ test_actuator: ${TEST_ACTUATOR_OBJS}
 	${CC} -o test_actuator $^ ${LDFLAGS} ${DEBUG_FLAGS}
 test_shake: ${TEST_SHAKE_OBJS}
 	${CC} -o test_shake $^ ${LDFLAGS} ${DEBUG_FLAGS}
+test_hcsr04: ${TEST_HCSR04_OBJS}
+	${CC} -o test_hcsr04 $^ ${LDFLAGS} ${DEBUG_FLAGS}
 
 uninstall:
 
 clean:
 	#rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_xtion test_x_xtion test_x_line_map test_line_map test_hough test_math_2d test_nxt test_wheels test_x_navig test_x_avoid test_actuator test_shake
-	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_wheels test_x_navig test_x_avoid test_actuator test_shake test_t265
+	rm -f *.o */*.o */*/*.o test_pq test_astar test_pose test_base test_ncurses_control test_tim571 test_gui test_x_tim571 test_x_base test_rfid test_ust10lx test_x_ust10lx test_rplidar test_x_rplidar test_pngwriter test_x_line_map test_line_map test_hough test_math_2d test_wheels test_x_navig test_x_avoid test_actuator test_shake test_t265 test_hcsr04
 #test_nxt
 	rm -rf modules/live/xtion/Arm-Release
 #	make -C nxt clean

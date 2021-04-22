@@ -20,8 +20,8 @@
 
 #define MAX_BASE_CALLBACKS 20
 
-static base_receive_data_callback callbacks[MAX_BASE_CALLBACKS];
-static int callbacks_count;
+static volatile base_receive_data_callback callbacks[MAX_BASE_CALLBACKS];
+static volatile int callbacks_count;
 
 static int current_azimuth;
 
