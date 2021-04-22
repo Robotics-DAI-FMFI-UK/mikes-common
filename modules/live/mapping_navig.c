@@ -18,6 +18,7 @@
 #define ARC_DIST 1500 
 #define MIN_ARC_ANGLE 30
 #define MAX_RAY_DIST 5000
+#define US_COUNT 8
 
 double tim_arc_angle; //angle to check in distance in target direction
 
@@ -27,7 +28,6 @@ static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static uint16_t             gauss_dist[TIM571_DATA_COUNT];
 
-static int US_COUNT = 8;	//ultrasound
 static uint16_t				us_data_local_copy[US_COUNT];
 
 static double pose_x;
@@ -48,26 +48,30 @@ double tim_scan_pose_x;
 double tim_scan_pose_y;
 
 
+void gaussian_filter(uint16_t *gauss);
+void find_arcs(uint16_t *dist, uint16_t arcs[][2], int *arcs_size, int *widest_arc_idx);
+
+
 void process_navigation(){
-	gaussian_filter(&gauss_dist);
+	gaussian_filter(gauss_dist);
 	
 	uint16_t arcs[TIM571_DATA_COUNT][2];
 	int arcs_size = 0;
 	int widest_arc_idx = -1;
-	find_arcs(&gauss_dist, &arcs, &arcs_size, &widest_arc_idx);
+	find_arcs(gauss_dist, arcs, &arcs_size, &widest_arc_idx);
 	//target_heading = choose_best_dir(&arcs, &arcs_size);
 	int angle;
 	if (widest_arc_idx == -1) // no arc found
 	{
 		//turn around and go back( or reverse)
-		azimuth = 180;
+		angle = 180;
 	}
 	else{
 		int middle_ray = arcs[widest_arc_idx][0]+(arcs[widest_arc_idx][1]-arcs[widest_arc_idx][0])/2;
 		angle = tim571_ray2azimuth(middle_ray);	
 		//if (angle<0) angle+=360; 
-		target_heading = angle / 180 * M_PI - heading;
 	}
+	target_heading = angle / 180 * M_PI - heading;
 }
 
 void process_movement(){
@@ -76,7 +80,7 @@ void process_movement(){
 		//set_motor_speeds(0,0);
 		//perform map scan
 		double heading_dif = target_heading-heading;
-		int turn_motor_speed = 6+6*((angle_tolerance-fabs(heading_dif))/angle_tolerance)
+		int turn_motor_speed = 6+6*((angle_tolerance-fabs(heading_dif))/angle_tolerance);
 		if (heading_dif < 0){
 			set_motor_speeds(turn_motor_speed,12);
 		}
@@ -101,7 +105,7 @@ uint8_t check_obstacles()
 	int ray_start = tim571_azimuth2ray(angle/2);
 	int ray_end = tim571_azimuth2ray(-angle/2);
 	
-	for (ray_start; ray_start<ray_end;ray_start++)
+	for (; ray_start<ray_end;ray_start++)
 	{
 		if (dist_local_copy[ray_start]<target_distance){
 			
@@ -112,7 +116,7 @@ uint8_t check_obstacles()
 }
 
 
-void find_arcs(uint16_t *dist, uint16_t *arcs, int *arcs_size, int *widest_arc_idx)
+void find_arcs(uint16_t *dist, uint16_t arcs[][2], int *arcs_size, int *widest_arc_idx)
 {
 	uint8_t inside_arc = 0;
 	uint16_t idx = 0;
@@ -129,7 +133,7 @@ void find_arcs(uint16_t *dist, uint16_t *arcs, int *arcs_size, int *widest_arc_i
 					if(i-arcs[idx][0] > best_arc_size)
 					{
 						best_arc_size = i-arcs[idx][0];
-						widest_arc_idx = idx;
+						*widest_arc_idx = idx;
 					}
 					arcs[idx][1] = i-1;
 					idx++;
@@ -146,18 +150,17 @@ void find_arcs(uint16_t *dist, uint16_t *arcs, int *arcs_size, int *widest_arc_i
 			}
 		}
 	}
-	arcs_size = idx;
+	*arcs_size = idx;
 }
 
 int choose_best_dir(uint16_t *arcs, int *arcs_size)
 {
 	
-	
+  return 0;	
 }
 
 
 void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rssi values example needed)
-	if (sizeof(gauss)/sizeof(gauss[0])<TIM571_DATA_COUNT) return;
 	for (int i=0;i<TIM571_DATA_COUNT;i++)
 	{
 		if (dist_local_copy[i]<=MAX_RAY_DIST) // && rssi_local_copy[i] >= MIN_RAY_INTENSITY)
@@ -165,7 +168,7 @@ void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rs
 			gauss[i]=dist_local_copy[i];
 			continue; 		// skip smoothing if ray not satisfactional
 		}
-		double w = {1,4,6,4,1};
+		double w[] = {1,4,6,4,1};
 		int res = 0;
 		int res_w = 0;
 		int j = -2;
@@ -173,9 +176,10 @@ void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rs
 		if (i<2){ j = 0-i; }
 		if (i>TIM571_DATA_COUNT-3){	limit = TIM571_DATA_COUNT - i; }
 		
-		for (j;j<limit;j++)
+		for (;j<limit;j++)
 		{
 			if (dist_local_copy[i+j]<=MAX_RAY_DIST) // && rssi_local_copy[i+j] >= MIN_RAY_INTENSITY)
+                        {
 				//w[j+2] *= rssi_local_copy[i+j]; 
 				res += w[j+2]*dist_local_copy[i+j];
 				res_w += w[j+2]; 
@@ -193,7 +197,7 @@ void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rs
 	}
 }
 
-double get_arc_angle_in_dist(double *width, double *distance)
+double get_arc_angle_in_dist(double width, double distance)
 {
 	double angle = atan2(width/2,distance);
 	return angle*2;

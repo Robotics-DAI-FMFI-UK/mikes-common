@@ -78,7 +78,7 @@ void send_start_measurement()
 
 void skip_to_sentence_start()
 {
-	uint8_t readbuf;
+    uint8_t readbuf;
     while (program_runs)
     {
         int nread = read(sockfd, &readbuf, 1);
@@ -89,15 +89,15 @@ void skip_to_sentence_start()
             break;
         }
         if (readbuf == STX) return;
-	}
+    }
 }
 
 static uint8_t sentence[MAX_SENTENCE_LENGTH];
 
 void read_sentence()
 {
-	uint8_t *readbuf = sentence;
-	skip_to_sentence_start();
+    uint8_t *readbuf = sentence;
+    skip_to_sentence_start();
 
     while (program_runs)
     {
@@ -110,44 +110,44 @@ void read_sentence()
         }
         if (readbuf[0] == ETX)
         {
-			readbuf[0] = 0;
-//			printf("TiM571: %s\n", sentence);
-			return;
-		}
-		readbuf++;
-	}
+            readbuf[0] = 0;
+//            printf("TiM571: %s\n", sentence);
+            return;
+        }
+        readbuf++;
+    }
 }
 
 static char *sp;
 char *get_next_word()
 {
-	if (sp == 0) return "END";
+    if (sp == 0) return "END";
 
-	char *nxt = strchr(sp, ' ');
-	char *wrd = sp;
-	if (nxt != 0)
-	{
-		*nxt = 0;
-	    sp = nxt + 1;
-	}
-	else sp = 0;
-	return wrd;
+    char *nxt = strchr(sp, ' ');
+    char *wrd = sp;
+    if (nxt != 0)
+    {
+        *nxt = 0;
+        sp = nxt + 1;
+    }
+    else sp = 0;
+    return wrd;
 }
 
 char *get_next_str()
 {
-	if (sp == 0) return "END";
+    if (sp == 0) return "END";
 
-	uint32_t str_len;
-	sscanf(get_next_word(), "%x", &str_len);
+    uint32_t str_len;
+    sscanf(get_next_word(), "%x", &str_len);
 
-	if (sp == 0) return "END";
+    if (sp == 0) return "END";
 
-	*(sp + str_len) = 0;
-	char *wrd = sp;
+    *(sp + str_len) = 0;
+    char *wrd = sp;
 
-	sp += (str_len + 1);
-	return wrd;
+    sp += (str_len + 1);
+    return wrd;
 }
 
 static uint16_t tim571_firmware;
@@ -188,161 +188,161 @@ void copy_status_data(tim571_status_data *status_data)
 
 void process_sentence()
 {
-	sp = (char *)sentence;
-	char *token = get_next_word();
+    sp = (char *)sentence;
+    char *token = get_next_word();
 
-	if (strcmp(token, "sSN") != 0)
-	{
-		mikes_log_str(ML_ERR, "TiM571: unexpected start of TiM571 sentence: ", token);
-		return;
-	}
-	token = get_next_word();
-	if (strcmp(token, "LMDscandata") != 0)
-	{
-		mikes_log_str(ML_ERR, "TiM571: unexpected data response string of TiM571 sentence: ", token);
-		return;
-	}
+    if (strcmp(token, "sSN") != 0)
+    {
+        mikes_log_str(ML_ERR, "TiM571: unexpected start of TiM571 sentence: ", token);
+        return;
+    }
+    token = get_next_word();
+    if (strcmp(token, "LMDscandata") != 0)
+    {
+        mikes_log_str(ML_ERR, "TiM571: unexpected data response string of TiM571 sentence: ", token);
+        return;
+    }
 
-	uint32_t tval32;
+    uint32_t tval32;
 
-	token = get_next_word();
-	sscanf(token, "%x", &tval32);
+    token = get_next_word();
+    sscanf(token, "%x", &tval32);
 
     if (status_data_requested)
         pthread_mutex_lock(&tim571_lock);
 
-	tim571_firmware = (uint16_t)tval32;
+    tim571_firmware = (uint16_t)tval32;
 
-	if (tim571_firmware != 1)
-		mikes_log_str(ML_WARN, "TiM571: unexpected firmware version: ", token);
+    if (tim571_firmware != 1)
+        mikes_log_str(ML_WARN, "TiM571: unexpected firmware version: ", token);
 
-	token = get_next_word();
-	sscanf(token, "%x", &tval32);
+    token = get_next_word();
+    sscanf(token, "%x", &tval32);
     tim571_sopas_device_id = tval32;
 
-	token = get_next_word();
-	sscanf(token, "%x", &tim571_serial_num);
+    token = get_next_word();
+    sscanf(token, "%x", &tim571_serial_num);
 
-	token = get_next_word();
+    token = get_next_word();
     if (strcmp(token, "0") != 0)
     {
-		tim571_error = 1;
-		mikes_log_str(ML_WARN, "TiM571: status1 is device error: ", token);
-		if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
-		return;
-	}
+        tim571_error = 1;
+        mikes_log_str(ML_WARN, "TiM571: status1 is device error: ", token);
+        if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
+        return;
+    }
 
-	token = get_next_word();
-	if (strcmp(token, "0") != 0)
-	{
-		tim571_error = 1;
-		mikes_log_str(ML_WARN, "TiM571: status2 is device error: ", token);
-		if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
-	    return;
-	}
-	tim571_error = 0;
+    token = get_next_word();
+    if (strcmp(token, "0") != 0)
+    {
+        tim571_error = 1;
+        mikes_log_str(ML_WARN, "TiM571: status2 is device error: ", token);
+        if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
+        return;
+    }
+    tim571_error = 0;
 
-	uint32_t cnt;
-	sscanf(get_next_word(), "%x", &cnt);
-	if (tim571_telegram_counter && (cnt != tim571_telegram_counter + 1))
-		mikes_log_double2(ML_WARN, "TiM571: out of order telegram counter: ", (double)cnt, (double)tim571_telegram_counter);
-	tim571_telegram_counter = cnt;
+    uint32_t cnt;
+    sscanf(get_next_word(), "%x", &cnt);
+    if (tim571_telegram_counter && (cnt != tim571_telegram_counter + 1))
+        mikes_log_double2(ML_WARN, "TiM571: out of order telegram counter: ", (double)cnt, (double)tim571_telegram_counter);
+    tim571_telegram_counter = cnt;
 
-	get_next_word(); // scan counter
+    get_next_word(); // scan counter
 
-	token = get_next_word();
-	sscanf(token, "%x", &tim571_timestamp); // time since startup
-	get_next_word(); // time of transmission
-	get_next_word(); // input status
-	get_next_word();
-	get_next_word(); // output status
-	get_next_word();
-	get_next_word(); // reserved byte
+    token = get_next_word();
+    sscanf(token, "%x", &tim571_timestamp); // time since startup
+    get_next_word(); // time of transmission
+    get_next_word(); // input status
+    get_next_word();
+    get_next_word(); // output status
+    get_next_word();
+    get_next_word(); // reserved byte
 
-	token = get_next_word();
-	sscanf(token, "%x", &tim571_scanning_frequency);
-	if (tim571_scanning_frequency != 1500)
-		mikes_log_str(ML_WARN, "TiM571: scanning frequency is not 1500: ", token);
+    token = get_next_word();
+    sscanf(token, "%x", &tim571_scanning_frequency);
+    if (tim571_scanning_frequency != 1500)
+        mikes_log_str(ML_WARN, "TiM571: scanning frequency is not 1500: ", token);
 
-	get_next_word(); // measurement frequency
-	get_next_word(); // number of encoders
-	get_next_word(); // number of channels
+    get_next_word(); // measurement frequency
+    get_next_word(); // number of encoders
+    get_next_word(); // number of channels
 
-	token = get_next_word();
-	if (strcmp(token, "DIST1") != 0)
-	{
-		mikes_log_str(ML_ERR, "TiM571: expected data header DIST1: ", token);
-		if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
-		return;
-	}
+    token = get_next_word();
+    if (strcmp(token, "DIST1") != 0)
+    {
+        mikes_log_str(ML_ERR, "TiM571: expected data header DIST1: ", token);
+        if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
+        return;
+    }
 
-	token = get_next_word();
-	uint32_t multiplier;
-	sscanf(token, "%x", &multiplier);
-	float *multiplier_as_float;
-	multiplier_as_float = (float *)(&multiplier);
-	tim571_multiplier = *multiplier_as_float;
-	if (tim571_multiplier != 1.0)
-		mikes_log_val(ML_WARN, "TiM571: unusual multiplier (1 expected): ", tim571_multiplier);
+    token = get_next_word();
+    uint32_t multiplier;
+    sscanf(token, "%x", &multiplier);
+    float *multiplier_as_float;
+    multiplier_as_float = (float *)(&multiplier);
+    tim571_multiplier = *multiplier_as_float;
+    if (tim571_multiplier != 1.0)
+        mikes_log_val(ML_WARN, "TiM571: unusual multiplier (1 expected): ", tim571_multiplier);
 
-	get_next_word(); // scaling offset
+    get_next_word(); // scaling offset
 
-	token = get_next_word();
-	sscanf(token, "%x", &tval32);
-	tim571_starting_angle = *((int32_t *)(&tval32));
+    token = get_next_word();
+    sscanf(token, "%x", &tval32);
+    tim571_starting_angle = *((int32_t *)(&tval32));
 
-	token = get_next_word();
-	sscanf(token, "%x", &tval32);
-	tim571_angular_step = (uint16_t)tval32;
+    token = get_next_word();
+    sscanf(token, "%x", &tval32);
+    tim571_angular_step = (uint16_t)tval32;
 
-	token = get_next_word();
-	sscanf(token, "%x", &tval32);
-	tim571_data_count = (uint16_t)tval32;
+    token = get_next_word();
+    sscanf(token, "%x", &tval32);
+    tim571_data_count = (uint16_t)tval32;
 
-	for (int i = 0; i < tim571_data_count; i++)
-	{
-		token = get_next_word();
-		sscanf(token, "%x", &tval32);
-		tim571_data[i] = (uint16_t)tval32;
-	}
+    for (int i = 0; i < tim571_data_count; i++)
+    {
+        token = get_next_word();
+        sscanf(token, "%x", &tval32);
+        tim571_data[i] = (uint16_t)tval32;
+    }
 
-	int will_send_RSSI;
-	sscanf(get_next_word(), "%d", &will_send_RSSI);
+    int will_send_RSSI;
+    sscanf(get_next_word(), "%d", &will_send_RSSI);
 
-	if (will_send_RSSI)
-	{
-		token = get_next_word();
-		if (strcmp(token, "RSSI1") != 0)
-		{
-			mikes_log_str(ML_ERR, "TiM571: expected data header RSSI1: ", token);
-			if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
-			return;
-		}
+    if (will_send_RSSI)
+    {
+        token = get_next_word();
+        if (strcmp(token, "RSSI1") != 0)
+        {
+            mikes_log_str(ML_ERR, "TiM571: expected data header RSSI1: ", token);
+            if (status_data_requested) pthread_mutex_unlock(&tim571_lock);
+            return;
+        }
 
-		for (int i = 0; i < tim571_data_count; i++)
-		{
-			token = get_next_word();
-			sscanf(token, "%x", &tval32);
-			tim571_rssi_data[i] = (uint8_t)tval32;
-		}
-	}
-	tim571_rssi_channels = will_send_RSSI;
+        for (int i = 0; i < tim571_data_count; i++)
+        {
+            token = get_next_word();
+            sscanf(token, "%x", &tval32);
+            tim571_rssi_data[i] = (uint8_t)tval32;
+        }
+    }
+    tim571_rssi_channels = will_send_RSSI;
 
-	get_next_word(); // no position data
+    get_next_word(); // no position data
 
-	int will_send_name;
-	sscanf(get_next_word(), "%d", &will_send_name);
+    int will_send_name;
+    sscanf(get_next_word(), "%d", &will_send_name);
 
-	if (will_send_name)
-	{
-		token = get_next_str();
-		strncpy(tim571_name, token, 17);
-	}
-	else tim571_name[0] = 0;
+    if (will_send_name)
+    {
+        token = get_next_str();
+        strncpy(tim571_name, token, 17);
+    }
+    else tim571_name[0] = 0;
 
-	get_next_word(); // no comment information
-	get_next_word(); // no time information
-	get_next_word(); // no event information
+    get_next_word(); // no comment information
+    get_next_word(); // no time information
+    get_next_word(); // no event information
 
   if (!status_data_requested)
     pthread_mutex_lock(&tim571_lock);
@@ -351,8 +351,8 @@ void process_sentence()
   memcpy(local_rssi, tim571_rssi_data, sizeof(uint8_t) * TIM571_DATA_COUNT);
   copy_status_data(&local_status_data);
 
-	if (status_data_requested) status_data_available = 1;
-	pthread_mutex_unlock(&tim571_lock);
+    if (status_data_requested) status_data_available = 1;
+    pthread_mutex_unlock(&tim571_lock);
 
   for (int i = 0; i < callbacks_count; i++)
     callbacks[i](local_data, local_rssi, &local_status_data);
@@ -365,9 +365,9 @@ void *tim571_thread(void *args)
 
   while (program_runs)
   {
-		read_sentence();
-		process_sentence();
-	}
+        read_sentence();
+        process_sentence();
+    }
 
   mikes_log(ML_INFO, "tim571 quits.");
   threads_running_add(-1);
@@ -390,9 +390,9 @@ void init_tim571()
   local_data = (uint16_t *) malloc(sizeof(int) * TIM571_DATA_COUNT);
   local_rssi = (uint8_t *) malloc(sizeof(uint8_t) * TIM571_DATA_COUNT);
   tim571_error = 0;
-	tim571_telegram_counter = 0;
-	status_data_requested = 0;
-	status_data_available = 0;
+    tim571_telegram_counter = 0;
+    status_data_requested = 0;
+    status_data_available = 0;
   callbacks_count = 0;
   if ((tim571_data == 0) || (local_data == 0) )
   {
@@ -433,11 +433,11 @@ void get_tim571_status_data(tim571_status_data *status_data)
   if (!online) return;
 
   pthread_mutex_lock(&tim571_lock);
-	status_data_available = 0;
-	status_data_requested = 1;
+    status_data_available = 0;
+    status_data_requested = 1;
   pthread_mutex_unlock(&tim571_lock);
 
-	while (!status_data_available) usleep(10000);
+    while (!status_data_available) usleep(10000);
 
   pthread_mutex_lock(&tim571_lock);
 
@@ -448,8 +448,8 @@ void get_tim571_status_data(tim571_status_data *status_data)
 
 void pretty_print_status_data(char *buffer, tim571_status_data *sd)
 {
-	sprintf(buffer, "TIM571 firmware version: %d\nSOPAS device id:         %d\nSerial number:           %d\nDevice error:            %d\nScanning frequency:      %u\nMultiplier:              %.3f\nStarting angle:          %d\nAngular step:            %u\nData count:              %d\nRSSI in data:            %d\n",
-	                 sd->firmware_version, sd->sopas_device_id, sd->serial_number, sd->error, sd->scanning_frequency, sd->multiplier, sd->starting_angle, sd->angular_step, sd->data_count, sd->rssi_available);
+    sprintf(buffer, "TIM571 firmware version: %d\nSOPAS device id:         %d\nSerial number:           %d\nDevice error:            %d\nScanning frequency:      %u\nMultiplier:              %.3f\nStarting angle:          %d\nAngular step:            %u\nData count:              %d\nRSSI in data:            %d\n",
+                     sd->firmware_version, sd->sopas_device_id, sd->serial_number, sd->error, sd->scanning_frequency, sd->multiplier, sd->starting_angle, sd->angular_step, sd->data_count, sd->rssi_available);
 }
 
 #define TIM571_LOGSTR_LEN 1024

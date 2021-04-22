@@ -31,7 +31,7 @@ static volatile uint8_t  need_new_pos;
 
 static int                  fd[2];
 
-void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
+void tim571_newdata_gridmapping_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
   if (need_new_data)
   {
@@ -43,7 +43,7 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
   }
 }
 
-void t265_newpos_callback(t265_pose_type *pose, double *new_heading)
+void t265_newpos_gridmapping_callback(t265_pose_type *pose, double *new_heading)
 {
   if (need_new_pos)
   {
@@ -224,8 +224,8 @@ void init_gridmapping(){
     return;
   }
   
-  register_tim571_callback(tim571_newdata_callback);
-  register_t265_callback(t265_newpos_callback);
+  register_tim571_callback(tim571_newdata_gridmapping_callback);
+  register_t265_callback(t265_newpos_gridmapping_callback);
   if (pthread_create(&t, 0, gridmapping_thread, 0) != 0)
   {
     perror("mikes:gridmapping");
