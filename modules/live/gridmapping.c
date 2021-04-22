@@ -35,9 +35,9 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
 {
   if (need_new_data)
   {
+    need_new_data = 0;
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
-    need_new_data = 0;
     alert_new_data(fd);
     
   }
@@ -47,11 +47,11 @@ void t265_newpos_callback(t265_pose_type *pose, double *new_heading)
 {
   if (need_new_pos)
   {
+	need_new_pos = 0;
 	pose_local_copy.translation.x = pose->translation.x;
 	pose_local_copy.translation.y = pose->translation.y;
 	pose_local_copy.translation.z = pose->translation.z;
 	heading = *new_heading;
-	need_new_pos = 0;
   }
 }
 
