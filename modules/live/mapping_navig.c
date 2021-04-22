@@ -12,6 +12,7 @@
 #include "../passive/mikes_logs.h"
 #include "../passive/x_gridmap.h"
 #include "base_module.h"
+#include "gridmapping.h"
 #include "tim571.h"
 #include "t265.h"
 
@@ -241,11 +242,12 @@ void *mapping_navig_thread(void *args)
       continue;
     }
     if (!paused_navig){
-		traveled_distance = sqrt(tim_scan_pose_x);
+		traveled_distance = sqrt((pose_x-tim_scan_pose_x)*(pose_x-tim_scan_pose_x)+(pose_y-tim_scan_pose_y)*(pose_y-tim_scan_pose_y));
 		need_new_data = 1;
 		need_new_pos = 1;
 			
 		if (traveled_distance>target_distance && check_obstacles()){ //make a new scan
+			start_scanning();
 			process_navigation();	
 		}
 		else			//continue target heading
