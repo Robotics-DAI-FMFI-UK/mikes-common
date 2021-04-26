@@ -32,7 +32,7 @@ static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 //static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static uint16_t             gauss_dist[TIM571_DATA_COUNT];
 
-static hcsr04_data_type1		hcsr04_data_local_copy;
+static hcsr04_data_type		hcsr04_data_local_copy;
 
 static volatile double pose_x;
 static volatile double pose_y;
@@ -56,17 +56,18 @@ double tim_scan_pose_y;
 int first_navigation;
 
 //crossing variables
-uint16_t crossings[MAX_NUM_CROSSINGS];
-uint8_t visited[MAX_NUM_CROSSINGS];
-double cross_pos[MAX_NUM_CROSSINGS][2];
-uint8_t cross_size = 0;
-uint8_t in_crossing = 0;
+static uint16_t crossings[MAX_NUM_CROSSINGS];
+static uint8_t visited[MAX_NUM_CROSSINGS];
+static double cross_pos[MAX_NUM_CROSSINGS][2];
+static uint8_t cross_size = 0;
+static uint8_t in_crossing = 0;
 
 
 
 void gaussian_filter(uint16_t *gauss);
 void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size);
-double choose_best_dir(uint16_t arcs[][2], uint8_t *arcs_size);
+double choose_best_dir(uint16_t arcs[][2], uint8_t arcs_size);
+void process_crossing(uint16_t arcs[][2], uint8_t arcs_size);
 
 
 void process_navigation(){
@@ -79,7 +80,7 @@ void process_navigation(){
 	{
 		process_crossing(arcs, arcs_size);
 	}
-	target_heading = choose_best_dir(&arcs, &arcs_size);
+	target_heading = choose_best_dir(arcs, arcs_size);
 	mikes_log_double(ML_INFO,"target_heading: ", target_heading);
 }
 
@@ -95,7 +96,7 @@ void process_movement(){
 
 		double heading_dif = target_heading-heading;
 		int turn_motor_speed = 3 + (int)(0.5 + 3 * (fabs(heading_dif)/angle_tolerance));
-		mikes_log_int(ML_INFO, "turn motor speed:", turn_motor_speed);
+		mikes_log_val(ML_INFO, "turn motor speed:", turn_motor_speed);
 		if (heading_dif < 0){
 			set_motor_speeds(turn_motor_speed,6);
 		}
@@ -114,7 +115,7 @@ void process_movement(){
 	need_new_pos = 1;
 }
 
-void process_crossing(uint16_t arcs[][2], uint8_t *arcs_size)
+void process_crossing(uint16_t arcs[][2], uint8_t arcs_size)
 {
 	if (!pref_heading)
 	{
@@ -122,7 +123,7 @@ void process_crossing(uint16_t arcs[][2], uint8_t *arcs_size)
 	}
 	if (arcs_size == 2)
 	{
-		continue; //possible false cross when robot facing wall and seeing paths on both sides
+		return; //possible false cross when robot facing wall and seeing paths on both sides
 	}
 	mikes_log(ML_INFO, "Crossing Found");
 	if (!in_crossing)
@@ -133,7 +134,8 @@ void process_crossing(uint16_t arcs[][2], uint8_t *arcs_size)
 		{
 			crossings[cross_size] -= M_2_PI;
 		}
-		cross_pos[cross_size] = {pose_x, pose_y};
+		cross_pos[cross_size][0] = pose_x;
+		cross_pos[cross_size][1] = pose_y;
 		visited[cross_size] = 1;
 		cross_size++;
 		for (int i = 0; i < arcs_size; i++)
@@ -174,7 +176,7 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 		{
 			if (dist[i] < ARC_DIST)
 			{
-				if (i - arcs[idx][0] >= min_arc_angle*3C)
+				if (i - arcs[idx][0] >= min_arc_angle*3)
 				{
 					arcs[idx][1] = i - 1;
 					idx++;
@@ -192,19 +194,20 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 		}
 	}
 	*arcs_size = idx;
-	mikes_log_val2(ML_INFO, "arcs: ", *arcs_size);
+	mikes_log_val(ML_INFO, "arcs: ", *arcs_size);
 }
 
-double choose_best_dir(uint16_t arcs[][2], uint8_t *arcs_size)
+double choose_best_dir(uint16_t arcs[][2], uint8_t arcs_size)
 {
 	int angle;
 	if (arcs_size == 0) // no arc found
 	{
-		
-		if (!check_front_sensors)
+		/*
+		if (!check_front_sensors())
 		{
 			return target_heading;
 		}
+		*/
 		//turn around and go back( or reverse)
 		angle = 45;
 		first_navigation = 1;
@@ -283,6 +286,45 @@ double get_arc_angle_in_dist(double width, double distance)
 	return angle*2;
 }
 
+
+uint8_t check_front_sensors(){
+	uint8_t min_us_range = 210;
+	uint8_t min_bottom_range = 5;
+	uint8_t max_bottom_range = 10;
+	if (hcsr04_data_local_copy[HCSR04_MIDDLE_LEFT] < min_us_range || hcsr04_data_local_copy[HCSR04_TOP_LEFT] < min_us_range
+	 || hcsr04_data_local_copy[HCSR04_DOWN_LEFT] < min_bottom_range || hcsr04_data_local_copy[HCSR04_DOWN_LEFT] > max_bottom_range)
+	{
+		return 1;
+	}
+	if (hcsr04_data_local_copy[HCSR04_MIDDLE_RIGHT] < min_us_range || hcsr04_data_local_copy[HCSR04_TOP_RIGHT] < min_us_range
+	 || hcsr04_data_local_copy[HCSR04_DOWN_RIGHT] < min_bottom_range || hcsr04_data_local_copy[HCSR04_DOWN_RIGHT] > max_bottom_range)
+	{
+		return 2;
+	}
+	return 0;
+}
+
+
+void add_ultrasonic_to_tim_data()
+{//TODO: Use LEFT/RIGHT sensors
+	switch(check_front_sensors())
+	{
+		case 1:
+			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
+			{
+				dist_local_copy[i] = 1;
+			}
+			break;
+			
+		case 2:
+			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
+			{
+				dist_local_copy[i] = 1;
+			}
+	}
+	
+}
+
 void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
   if (need_new_data)
@@ -316,7 +358,7 @@ void t265_newpos_callback(t265_pose_type *pose, double *new_heading)
   }
 }
 
-void hcsr04_newdata_callback(hcsr04_data_type *hcsr04_data)
+void hcsr04_newdata_callback(hcsr04_data_type hcsr04_data)
 {
   if (need_new_hcsr04_data)
   {
@@ -325,43 +367,6 @@ void hcsr04_newdata_callback(hcsr04_data_type *hcsr04_data)
 		alert_new_data(fd);
   }
 }
-
-void add_ultrasonic_to_tim_data()
-{//TODO: Use LEFT/RIGHT sensors
-	switch(check_front_sensors())
-	{
-		case 1:
-			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
-			{
-				dist_local_copy[i] = 1;
-			}
-			break;
-			
-		case 2:
-			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
-			{
-				dist_local_copy[i] = 1;
-			}
-	}
-	
-}
-
-uint8_t check_front_sensors(){
-	uint8_t min_us_range = 210;
-	uint8_t min_bottom_range = 5;
-	uint8_t max_bottom_range = 10;
-	if (hcsr04_data_local_copy.MIDDLE_LEFT < min_us_range || hcsr04_data_local_copy.TOP_LEFT < min_us_range
-	 || hcsr04_data_local_copy.DOWN_LEFT < min_bottom_range || hcsr04_data_local_copy.DOWN_LEFT > max_bottom_range)
-	{
-		return 1;
-	}
-	if (hcsr04_data_local_copy.MIDDLE_RIGHT < min_us_range || hcsr04_data_local_copy.TOP_RIGHT < min_us_range
-	 || hcsr04_data_local_copy.DOWN_RIGHT < min_bottom_range || hcsr04_data_local_copy.DOWN_RIGHT > max_bottom_range)
-	{
-		return 2;
-	}
-}
-
 
 void *mapping_navig_thread(void *args)
 {

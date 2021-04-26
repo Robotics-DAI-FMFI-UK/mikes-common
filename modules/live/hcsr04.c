@@ -31,6 +31,21 @@ static pthread_mutex_t hcsr04_module_lock;
 
 static hcsr04_data_type local_hcsr04_data;
 
+int hcsr04_get_sensor_posx(int sensor_index)
+{
+	return 0;
+}
+
+int hcsr04_get_sensor_posy(int sensor_index)
+{
+	return 0;
+}
+
+double hcsr04_get_sensor_heading(int sensor_index)
+{
+	return 0.0;
+}
+
 
 void connect_hcsr04()
 {
