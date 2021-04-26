@@ -75,9 +75,9 @@ void process_navigation(){
 	uint16_t arcs[TIM571_DATA_COUNT][2];
 	uint8_t arcs_size = 0;
 	find_arcs(gauss_dist, arcs, &arcs_size);
-	if (arcs_size>1)
+	if (arcs_size > 1)
 	{
-			process_crossing(arcs, arcs_size);
+		process_crossing(arcs, arcs_size);
 	}
 	target_heading = choose_best_dir(&arcs, &arcs_size);
 	mikes_log_double(ML_INFO,"target_heading: ", target_heading);
@@ -200,9 +200,15 @@ double choose_best_dir(uint16_t arcs[][2], uint8_t *arcs_size)
 	int angle;
 	if (arcs_size == 0) // no arc found
 	{
+		
+		if (!check_front_sensors)
+		{
+			return target_heading;
+		}
 		//turn around and go back( or reverse)
 		angle = 45;
 		first_navigation = 1;
+		
 		mikes_log_val(ML_INFO, "NO ARC FOUND", angle);
 
 	}
@@ -290,6 +296,7 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
 		tim_scan_pose_x = pose_x;
 		tim_scan_pose_y = pose_y;
 	}
+	add_ultrasonic_to_tim_data();
   }
 }
 
@@ -317,6 +324,42 @@ void hcsr04_newdata_callback(hcsr04_data_type *hcsr04_data)
 		memcpy(hcsr04_data_local_copy, hcsr04_data, sizeof(uint16_t) * NUM_ULTRASONIC_SENSORS);
 		alert_new_data(fd);
   }
+}
+
+void add_ultrasonic_to_tim_data()
+{//TODO: Use LEFT/RIGHT sensors
+	switch(check_front_sensors())
+	{
+		case 1:
+			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
+			{
+				dist_local_copy[i] = 1;
+			}
+			break;
+			
+		case 2:
+			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
+			{
+				dist_local_copy[i] = 1;
+			}
+	}
+	
+}
+
+uint8_t check_front_sensors(){
+	uint8_t min_us_range = 210;
+	uint8_t min_bottom_range = 5;
+	uint8_t max_bottom_range = 10;
+	if (hcsr04_data_local_copy.MIDDLE_LEFT < min_us_range || hcsr04_data_local_copy.TOP_LEFT < min_us_range
+	 || hcsr04_data_local_copy.DOWN_LEFT < min_bottom_range || hcsr04_data_local_copy.DOWN_LEFT > max_bottom_range)
+	{
+		return 1;
+	}
+	if (hcsr04_data_local_copy.MIDDLE_RIGHT < min_us_range || hcsr04_data_local_copy.TOP_RIGHT < min_us_range
+	 || hcsr04_data_local_copy.DOWN_RIGHT < min_bottom_range || hcsr04_data_local_copy.DOWN_RIGHT > max_bottom_range)
+	{
+		return 2;
+	}
 }
 
 
