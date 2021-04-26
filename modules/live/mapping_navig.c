@@ -74,8 +74,7 @@ void process_navigation(){
 	
 	uint16_t arcs[TIM571_DATA_COUNT][2];
 	uint8_t arcs_size = 0;
-	int widest_arc_idx = -1;
-	find_arcs(gauss_dist, arcs, &arcs_size, &widest_arc_idx);
+	find_arcs(gauss_dist, arcs, &arcs_size);
 	if (arcs_size>1)
 	{
 			process_crossing(arcs, arcs_size);
