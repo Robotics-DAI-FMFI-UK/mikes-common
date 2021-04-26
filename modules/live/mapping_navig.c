@@ -22,6 +22,8 @@
 #define MAX_RAY_DIST 5000
 #define MAX_NUM_CROSSINGS 50
 
+#define REPLAN_MAXIMUM_PERIOD 1000
+
 double min_arc_angle;
 
 double tim_arc_angle; //angle to check in distance in target direction
@@ -52,6 +54,9 @@ int target_distance = 20;
 int traveled_distance;
 double tim_scan_pose_x;
 double tim_scan_pose_y;
+
+long long last_replan_time_in_ms;
+int request_replan = 0;
 
 int first_navigation;
 
@@ -89,14 +94,16 @@ void process_movement(){
 		sprintf(logstr, "process_movement: target %.3lf head %.3lf\n", target_heading / M_PI * 180, heading / M_PI * 180);
 		mikes_log(ML_INFO, logstr);
 
-	if (heading<target_heading+angle_tolerance && heading > target_heading - angle_tolerance)
+	//if (heading<target_heading+angle_tolerance && heading > target_heading - angle_tolerance)
+	if (fabs(angle_rad_difference(target_heading, heading)) < angle_tolerance)
 	{
 		//set_motor_speeds(0,0);
 		//perform map scan
 
-		double heading_dif = target_heading-heading;
-		int turn_motor_speed = 3 + (int)(0.5 + 3 * (fabs(heading_dif)/angle_tolerance));
+		double heading_dif = angle_rad_difference(heading, target_heading);
+		int turn_motor_speed = 6 - (int)(0.5 + 3 * (fabs(heading_dif)/angle_tolerance));
 		mikes_log_val(ML_INFO, "turn motor speed:", turn_motor_speed);
+		mikes_log_double(ML_INFO, "heading_diff:", heading_dif);
 		if (heading_dif < 0){
 			set_motor_speeds(turn_motor_speed,6);
 		}
@@ -105,10 +112,12 @@ void process_movement(){
 		}
 	}
 	else{
-		if (target_heading < heading){
+		if (angle_rad_difference(heading, target_heading) > 0){
+		    mikes_log(ML_INFO, "extreme diff, rotate right");
 			set_motor_speeds(6, -6);
 		}
 		else{
+		    mikes_log(ML_INFO, "extreme diff, rotate left");
 			set_motor_speeds(-6, 6);
 		}
 	}
@@ -333,10 +342,13 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     //memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
     alert_new_data(fd);
-    if (traveled_distance >= target_distance)
+    long long time_in_ms = msec();
+    if ((traveled_distance >= target_distance) || (time_in_ms - last_replan_time_in_ms > REPLAN_MAXIMUM_PERIOD))
     {
 		tim_scan_pose_x = pose_x;
 		tim_scan_pose_y = pose_y;
+		last_replan_time_in_ms = time_in_ms;
+		request_replan = 1;
 	}
 	add_ultrasonic_to_tim_data();
   }
@@ -349,7 +361,7 @@ void t265_newpos_callback(t265_pose_type *pose, double *new_heading)
 	need_new_pos = 0;
 	pose_x = pose->translation.x*100;
 	pose_y = pose->translation.z*100; //?neg z value
-	heading = *new_heading;
+	heading = - (*new_heading);  // we prefer clockwise positivity
 	mikes_log_double(ML_INFO, "t265 x", pose_x);
 	mikes_log_double(ML_INFO, "t265 y", pose_y);
 	mikes_log_double(ML_INFO, "t265 nh", *new_heading);
@@ -389,10 +401,11 @@ void *mapping_navig_thread(void *args)
 		
 		mikes_log_val(ML_INFO, "mapping_navig obs", chk_obst);
 			
-		if (first_navigation || (traveled_distance >= target_distance && chk_obst))
+		if (first_navigation || (request_replan && chk_obst))
 		{ //make a new scan
 			mikes_log(ML_INFO, "mikes:mapping_navig newscan");
 			first_navigation = 0;
+			request_replan = 0;
 
 			start_scanning();
 			process_navigation();	
