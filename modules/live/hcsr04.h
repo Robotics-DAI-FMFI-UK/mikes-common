@@ -7,6 +7,17 @@
 
 typedef uint16_t hcsr04_data_type[NUM_ULTRASONIC_SENSORS];
 
+typedef struct hcsr04_str{
+		uint16_t LEFT;
+		uint16_t TOP_LEFT;
+		uint16_t TOP_RIGHT;
+		uint16_t RIGHT;
+		uint16_t MIDDLE_LEFT;
+		uint16_t MIDDLE_RIGHT;
+		uint16_t DOWN_LEFT;
+		uint16_t DOWN_RIGHT;
+	} hcsr04_data_type1;
+
 typedef void (*hcsr04_receive_data_callback)(hcsr04_data_type);
 
 void get_hcsr04_data(hcsr04_data_type buffer);
