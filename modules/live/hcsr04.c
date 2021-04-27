@@ -31,18 +31,72 @@ static pthread_mutex_t hcsr04_module_lock;
 
 static hcsr04_data_type local_hcsr04_data;
 
+
+// distance(TOP_LEFT, TOP_RIGHT) = 19 cm
+// forward_distance(TIM, TOP_LEFT,TOP_RIGHT) = 5 cm
+// distance(LEFT, RIGHT) = 31 cm
+// backward_distance(TIM, LEFT,RIGHT) = 10 cm
+// distance(MIDDLE_LEFT, MIDDLE_RIGHT) = 16 cm
+
+// these functions return the positions of the sensors
+// relative to the laser range sensor center and forward heading
+
 int hcsr04_get_sensor_posx(int sensor_index)
 {
+	if (sensor_index == HCSR04_TOP_LEFT)
+	{
+		return -10;
+	}
+	if (sensor_index == HCSR04_TOP_RIGHT)
+	{
+		return 10;
+	}
+	if (sensor_index == HCSR04_MIDDLE_LEFT)
+	{
+		return -8;
+	}
+	if (sensor_index == HCSR04_MIDDLE_RIGHT)
+	{
+		return 8;
+	}
+	if (sensor_index == HCSR04_LEFT)
+	{
+		return -15;
+	}
+	if (sensor_index == HCSR04_RIGHT)
+	{
+		return 15;
+	}
 	return 0;
 }
 
 int hcsr04_get_sensor_posy(int sensor_index)
 {
+	if (sensor_index == HCSR04_TOP_LEFT || sensor_index == HCSR04_TOP_RIGHT || sensor_index == HCSR04_MIDDLE_LEFT || sensor_index == HCSR04_MIDDLE_RIGHT)
+	{
+		return 5;
+	}
+	if (sensor_index == HCSR04_LEFT || sensor_index == HCSR04_RIGHT)
+	{
+		return -10;
+	}
 	return 0;
 }
 
 double hcsr04_get_sensor_heading(int sensor_index)
 {
+	if (sensor_index == HCSR04_TOP_LEFT || sensor_index == HCSR04_TOP_RIGHT || sensor_index == HCSR04_MIDDLE_LEFT || sensor_index == HCSR04_MIDDLE_RIGHT || sensor_index == HCSR04_DOWN_RIGHT || sensor_index == HCSR04_DOWN_LEFT)
+	{
+		return 0.0;
+	}
+	if (sensor_index == LEFT)
+	{
+		return - (M_PI_2);
+	}
+	if (sensor_index == RIGHT)
+	{
+		return M_PI_2;
+	}
 	return 0.0;
 }
 
