@@ -360,7 +360,7 @@ void t265_newpos_callback(t265_pose_type *pose, double *new_heading)
   {
 	need_new_pos = 0;
 	pose_x = pose->translation.x*100;
-	pose_y = pose->translation.z*100; //?neg z value
+	pose_y = - pose->translation.z*100; //?neg z value
 	heading = - (*new_heading);  // we prefer clockwise positivity
 	mikes_log_double(ML_INFO, "t265 x", pose_x);
 	mikes_log_double(ML_INFO, "t265 y", pose_y);
