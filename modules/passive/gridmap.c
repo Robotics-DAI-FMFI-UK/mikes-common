@@ -26,7 +26,6 @@ typedef struct node_struct {
 node *front = NULL;
 node *rear = NULL;
 
-
 void init_gridmap(){
 	grid_empty = (uint32_t **) malloc (mikes_config.gridmap_height * sizeof(uint32_t *));
 	grid_occupied = (uint32_t **) malloc (mikes_config.gridmap_height * sizeof(uint32_t *));

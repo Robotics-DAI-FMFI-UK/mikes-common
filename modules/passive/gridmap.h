@@ -15,6 +15,6 @@ void init_gridmap();
 void inc_grid_empty(int y, int x);
 void inc_grid_occupied(int y, int x);
 
-void find_path_in_gridmap(int start_x, int start_y,int dest_x,int dest_y);
+path_type find_path_in_gridmap(int start_x, int start_y,int dest_x,int dest_y);
 
 #endif
