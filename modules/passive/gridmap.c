@@ -3,11 +3,13 @@
 #include <inttypes.h>
 #include <math.h>
 
+#include "float.h"
+
 #include "pose.h"
 #include "core/config_mikes.h"
+#include "../live/base_module.h"
 #include "gridmap.h"
 #include "mikes_log.h"
-#include "float.h"
 
 uint32_t **grid_empty;
 uint32_t **grid_occupied;
@@ -30,13 +32,16 @@ void init_gridmap(){
 	grid_empty = (uint32_t **) malloc (mikes_config.gridmap_height * sizeof(uint32_t *));
 	grid_occupied = (uint32_t **) malloc (mikes_config.gridmap_height * sizeof(uint32_t *));
 	
-	for (int i= 0; i< mikes_config.gridmap_height; i++){
+	for (int i= 0; i< mikes_config.gridmap_height; i++)
+	{
 		grid_empty[i] = (uint32_t *) malloc (mikes_config.gridmap_width * sizeof(uint32_t));
 		grid_occupied[i] = (uint32_t *) malloc (mikes_config.gridmap_width * sizeof(uint32_t));
 	}
 	
-	for (int i= 0; i< mikes_config.gridmap_height; i++){
-		for (int j= 0; j< mikes_config.gridmap_width; j++){
+	for (int i= 0; i< mikes_config.gridmap_height; i++)
+	{
+		for (int j= 0; j< mikes_config.gridmap_width; j++)
+		{
 			grid_empty[i][j] = 0;
 			grid_occupied[i][j] = 0;
 		}
@@ -53,28 +58,65 @@ uint8_t cell_valid(int y, int x){
 }
 
 void inc_grid_empty(int y, int x){
-	if (cell_valid(y,x)){
+	if (cell_valid(y,x))
+	{
 		grid_empty[y][x]++;
 	}
 }
 
 
 void inc_grid_occupied(int y, int x){
-	if (cell_valid(y,x)){
+	if (cell_valid(y,x))
+	{
 		grid_occupied[y][x]++;
 	}
 }
 
 void get_merged_grid(double gridmap[][mikes_config.gridmap_width]){
-	for (int i = 0; i< mikes_config.gridmap_height; i++){
-		for (int j= 0; j< mikes_config.gridmap_width; j++){
+	for (int i = 0; i< mikes_config.gridmap_height; i++)
+	{
+		for (int j= 0; j< mikes_config.gridmap_width; j++)
+		{
 			gridmap[i][j] = -1; 									// Set all 
 			uint32_t total = grid_empty[i][j]+grid_occupied[i][j];
-			if (total>0){
+			if (total>0)
+			{
 				gridmap[i][j] = grid_occupied[i][j]/(double) total; 
 			}
 		}
 	}
+}
+
+void get_gridmap_extended_obstacles(double gridmap[][mikes_config.gridmap_width], uint16_t robot_radius){
+	
+	double **new_grid;
+	new_grid = (double **) malloc (mikes_config.gridmap_height * sizeof(double *));
+	for (int i= 0; i< mikes_config.gridmap_height; i++)
+	{
+		new_grid[i] = (double *) malloc (mikes_config.gridmap_width * sizeof(double));
+	}
+	
+	for (int i = 0; i< mikes_config.gridmap_height; i++)
+	{
+		for (int j= 0; j< mikes_config.gridmap_width; j++)
+		{
+			if (gridmap[i][j]>=0.35)
+			{
+				for (int y = i-robot_radius; y < i+robot_radius; y++)
+				{
+					for (int x = j - robot_radius; x < j + robot_radius; x++)
+					{
+						new_grid[y][x] = 1; 
+					}
+				}
+			}
+			else
+			{
+				new_grid[i][j] = gridmap[i][j]
+			}
+		}
+	}
+	gridmap = new_grid;
 }
 
 uint8_t cell_empty(double gridmap[][mikes_config.gridmap_width], int y, int x){
@@ -104,7 +146,8 @@ void enqueue(double f, int y, int x){
 }
 
 void dequeue(){
-	if (front == NULL){
+	if (front == NULL)
+	{
 		return;
 	}
 	node *tmp;
@@ -142,6 +185,7 @@ path_type find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){ 
 		gridmap[i] = (double *) malloc (mikes_config.gridmap_width * sizeof(double));
 	}
 	get_merged_grid(&gridmap);
+	get_gridmap_extended_obstacles(&gridmap, WHEEL_DIAMETER_IN_MM + 150)
 	if (!cell_valid(start_y, start_x) || !cell_empty(start_y, start_x) || (start_y == dest_y) && (start_x == dest_x)){
 		mikes_log(ML_DEBUG, "Path finding: invalid start point");
 		return path_res;
