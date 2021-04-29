@@ -73,13 +73,16 @@ void gaussian_filter(uint16_t *gauss);
 void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size);
 double choose_best_dir(uint16_t arcs[][2], uint8_t arcs_size);
 void process_crossing(uint16_t arcs[][2], uint8_t arcs_size);
+void sensor_fusion();
 
 
 void process_navigation(){
+	sensor_fusion();
 	gaussian_filter(gauss_dist);
 	
 	uint16_t arcs[TIM571_DATA_COUNT][2];
 	uint8_t arcs_size = 0;
+	
 	find_arcs(gauss_dist, arcs, &arcs_size);
 	if (arcs_size > 1)
 	{
@@ -295,6 +298,9 @@ double get_arc_angle_in_dist(double width, double distance)
 	return angle*2;
 }
 
+double get_arc_width_in_dist(double angle, double dist){
+	return d*atan2(angle)*2;
+}
 
 uint8_t check_front_sensors(){
 	uint8_t min_us_range = 210;
@@ -314,22 +320,12 @@ uint8_t check_front_sensors(){
 }
 
 
-void add_ultrasonic_to_tim_data()
-{//TODO: Use LEFT/RIGHT sensors
-	switch(check_front_sensors())
+void sensor_fusion()
+{//TODO:
+	for (int i = 0; i < NUM_ULTRASONIC_SENSORS; i++)
 	{
-		case 1:
-			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
-			{
-				dist_local_copy[i] = 1;
-			}
-			break;
-			
-		case 2:
-			for (int i = (int)(0.5+TIM571_DATA_COUNT/2 - (min_arc_angle / 2 * 3)); i < (int)(0.5+TIM571_DATA_COUNT/2); i++ )
-			{
-				dist_local_copy[i] = 1;
-			}
+		
+		
 	}
 	
 }
@@ -350,7 +346,6 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
 		last_replan_time_in_ms = time_in_ms;
 		request_replan = 1;
 	}
-	add_ultrasonic_to_tim_data();
   }
 }
 
@@ -433,8 +428,8 @@ void init_mapping_navig(){
   target_heading = 0;
   pref_heading = -123.0;
   angle_tolerance = 10.0 / 180.0 * M_PI;
-  tim_arc_angle = get_arc_angle_in_dist(WHEEL_DIAMETER_IN_MM + 150,target_distance);
-  min_arc_angle = get_arc_angle_in_dist(WHEEL_DIAMETER_IN_MM + 150, ARC_DIST);
+  tim_arc_angle = get_arc_angle_in_dist((WHEEL_DIAMETER_IN_MM + 150)/10,target_distance);
+  min_arc_angle = get_arc_angle_in_dist((WHEEL_DIAMETER_IN_MM + 150)/10, ARC_DIST);
   pthread_t t;
   
   if (pipe(fd) != 0)

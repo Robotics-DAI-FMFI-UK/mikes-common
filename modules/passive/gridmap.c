@@ -106,7 +106,10 @@ void get_gridmap_extended_obstacles(double gridmap[][mikes_config.gridmap_width]
 				{
 					for (int x = j - robot_radius; x < j + robot_radius; x++)
 					{
-						new_grid[y][x] = 1; 
+						if (cell_valid(i,j))
+						{
+							new_grid[y][x] = 1; 
+						}
 					}
 				}
 			}
@@ -185,7 +188,7 @@ path_type find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){ 
 		gridmap[i] = (double *) malloc (mikes_config.gridmap_width * sizeof(double));
 	}
 	get_merged_grid(&gridmap);
-	get_gridmap_extended_obstacles(&gridmap, WHEEL_DIAMETER_IN_MM + 150)
+	get_gridmap_extended_obstacles(&gridmap, (WHEEL_DIAMETER_IN_MM + 150)/10)
 	if (!cell_valid(start_y, start_x) || !cell_empty(start_y, start_x) || (start_y == dest_y) && (start_x == dest_x)){
 		mikes_log(ML_DEBUG, "Path finding: invalid start point");
 		return path_res;
