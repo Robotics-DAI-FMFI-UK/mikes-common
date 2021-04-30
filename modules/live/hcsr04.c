@@ -89,11 +89,11 @@ double hcsr04_get_sensor_heading(int sensor_index)
 	{
 		return 0.0;
 	}
-	if (sensor_index == LEFT)
+	if (sensor_index == HCSR04_LEFT)
 	{
 		return - (M_PI_2);
 	}
-	if (sensor_index == RIGHT)
+	if (sensor_index == HCSR04_RIGHT)
 	{
 		return M_PI_2;
 	}

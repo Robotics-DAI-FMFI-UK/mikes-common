@@ -96,17 +96,17 @@ void process_movement(){
 		char logstr[100];
 		sprintf(logstr, "process_movement: target %.3lf head %.3lf\n", target_heading / M_PI * 180, heading / M_PI * 180);
 		mikes_log(ML_INFO, logstr);
-
+	
+	double heading_dif = angle_rad_difference(heading, target_heading);
+	mikes_log_double(ML_INFO, "heading_diff:", heading_dif);
 	//if (heading<target_heading+angle_tolerance && heading > target_heading - angle_tolerance)
-	if (fabs(angle_rad_difference(target_heading, heading)) < angle_tolerance)
+	if (fabs(heading_dif) < angle_tolerance)
 	{
 		//set_motor_speeds(0,0);
-		//perform map scan
-
-		double heading_dif = angle_rad_difference(heading, target_heading);
+		//perform map scan 			
 		int turn_motor_speed = 6 - (int)(0.5 + 3 * (fabs(heading_dif)/angle_tolerance));
 		mikes_log_val(ML_INFO, "turn motor speed:", turn_motor_speed);
-		mikes_log_double(ML_INFO, "heading_diff:", heading_dif);
+		
 		if (heading_dif < 0){
 			set_motor_speeds(turn_motor_speed,6);
 		}
@@ -186,9 +186,9 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 	{
 		if (inside_arc)
 		{
-			if (dist[i] < ARC_DIST)
+			if ((dist[i] < ARC_DIST) && (dist[i] > 10))
 			{
-				if (i - arcs[idx][0] >= min_arc_angle*3)
+				if (i - arcs[idx][0] >= min_arc_angle * 3)
 				{
 					arcs[idx][1] = i - 1;
 					idx++;
@@ -198,7 +198,7 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 		}
 		else
 		{
-			if (dist[i] >= ARC_DIST)
+			if ((dist[i] >= ARC_DIST) || (dist[i] < 0))
 			{
 				arcs[idx][0] = i;
 				inside_arc = 1;
@@ -206,6 +206,15 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 		}
 	}
 	*arcs_size = idx;
+	char logtim[5000];
+	for (int i = 0; i < 5000; i++) logtim[i] = ' ';
+	for (int i = 0; i < TIM571_DATA_COUNT; i++)
+	{
+		int numchars = sprintf(logtim + i * 6, "%d", dist[i]);
+		*(logtim + i * 6 + numchars) = ' ';
+	}
+	logtim[TIM571_DATA_COUNT * 6] = 0;
+	mikes_log(ML_INFO, logtim);
 	mikes_log_val(ML_INFO, "arcs: ", *arcs_size);
 }
 
@@ -287,19 +296,19 @@ void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rs
 		else
 		{
 			gauss[i] = dist_local_copy[i];	
-			mikes_log(ML_INFO, "mapping_navig gaussian_filter res_w = 0");
+			//mikes_log(ML_INFO, "mapping_navig gaussian_filter res_w = 0");
 		}
 	}
 }
 
 double get_arc_angle_in_dist(double width, double distance)
 {
-	double angle = atan2(width/2,distance);
-	return angle*2;
+	double angle = atan2(width / 2, distance);
+	return angle * 2;
 }
 
 double get_arc_width_in_dist(double angle, double dist){
-	return d*atan2(angle)*2;
+	return dist * tan(angle) * 2;
 }
 
 uint8_t check_front_sensors(){
@@ -427,9 +436,9 @@ void init_mapping_navig(){
   need_new_hcsr04_data = 1;
   target_heading = 0;
   pref_heading = -123.0;
-  angle_tolerance = 10.0 / 180.0 * M_PI;
-  tim_arc_angle = get_arc_angle_in_dist((WHEEL_DIAMETER_IN_MM + 150)/10,target_distance);
-  min_arc_angle = get_arc_angle_in_dist((WHEEL_DIAMETER_IN_MM + 150)/10, ARC_DIST);
+  angle_tolerance = 30.0 / 180.0 * M_PI;
+  tim_arc_angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150),target_distance);
+  min_arc_angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150), ARC_DIST);
   pthread_t t;
   
   if (pipe(fd) != 0)

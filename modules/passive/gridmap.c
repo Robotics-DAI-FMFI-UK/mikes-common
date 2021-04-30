@@ -9,7 +9,7 @@
 #include "core/config_mikes.h"
 #include "../live/base_module.h"
 #include "gridmap.h"
-#include "mikes_log.h"
+#include "mikes_logs.h"
 
 uint32_t **grid_empty;
 uint32_t **grid_occupied;
@@ -22,7 +22,7 @@ typedef struct cell_struct {
 typedef struct node_struct {
 	int y,x;
 	double f;
-	node *next;
+	struct node_struct *next;
 } node;
 
 node *front = NULL;
@@ -72,7 +72,7 @@ void inc_grid_occupied(int y, int x){
 	}
 }
 
-void get_merged_grid(double gridmap[][mikes_config.gridmap_width]){
+void get_merged_grid(double **gridmap){
 	for (int i = 0; i< mikes_config.gridmap_height; i++)
 	{
 		for (int j= 0; j< mikes_config.gridmap_width; j++)
@@ -87,7 +87,7 @@ void get_merged_grid(double gridmap[][mikes_config.gridmap_width]){
 	}
 }
 
-void get_gridmap_extended_obstacles(double gridmap[][mikes_config.gridmap_width], uint16_t robot_radius){
+void get_gridmap_extended_obstacles(double **gridmap, uint16_t robot_radius){
 	
 	double **new_grid;
 	new_grid = (double **) malloc (mikes_config.gridmap_height * sizeof(double *));
@@ -115,14 +115,14 @@ void get_gridmap_extended_obstacles(double gridmap[][mikes_config.gridmap_width]
 			}
 			else
 			{
-				new_grid[i][j] = gridmap[i][j]
+				new_grid[i][j] = gridmap[i][j];
 			}
 		}
 	}
 	gridmap = new_grid;
 }
 
-uint8_t cell_empty(double gridmap[][mikes_config.gridmap_width], int y, int x){
+uint8_t cell_empty(double **gridmap, int y, int x){
 	return (gridmap[y][x] < 0.35 && gridmap[y][x] != -1);
 }
 
@@ -159,45 +159,58 @@ void dequeue(){
 	free(tmp);
 }
 
-path_type trace_path(cell cells[][mikes_config.gridmap_width], int y, int x){
-	path_type path_res;
-	path_res.path_size = 0;
+path_type *trace_path(cell cells[][mikes_config.gridmap_width], int y, int x){
+	path_type *path_res;
+	path_res = (path_type *) malloc(sizeof(path_type));
+	path_res->path_size = 0;
 	front = NULL;
 	rear = NULL;
+	
 	while (!( cells[y][x].parent_y == y && cells[y][x].parent_x == x) )
 	{
 		enqueue(cells[y][x].g,y,x);
+		path_res->path_size++;
 		int temp_x = cells[y][x].parent_x;
 		y = cells[y][x].parent_y;
 		x = temp_x;
 	}
 	enqueue(cells[y][x].g,y,x);
+	path_res->path_size++;
+	
+	path_res->path = malloc(path_res->path_size * 2 * sizeof(int));
 	while (front != NULL)
 	{
-		path_res.path[path_res.path_size][0] = front->y;
-		path_res.path[path_res.path_size][1] = front->x;
-		path_res.path_size++;
+		(*(path_res->path))[path_res->path_size][0] = front->y;
+		(*(path_res->path))[path_res->path_size][1] = front->x;
 		dequeue();
 	}
+	return path_res;
 }
 
-path_type find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){ // A* search
-	path_type path_res;
+void release_path(path_type *path)
+{
+	free(path->path);
+	free(path);
+}
+
+path_type *find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){ // A* search
 	double **gridmap = (double **) malloc (mikes_config.gridmap_height * sizeof(double *));
 	for (int i= 0; i< mikes_config.gridmap_height; i++){
 		gridmap[i] = (double *) malloc (mikes_config.gridmap_width * sizeof(double));
 	}
-	get_merged_grid(&gridmap);
-	get_gridmap_extended_obstacles(&gridmap, (WHEEL_DIAMETER_IN_MM + 150)/10)
-	if (!cell_valid(start_y, start_x) || !cell_empty(start_y, start_x) || (start_y == dest_y) && (start_x == dest_x)){
+	get_merged_grid(gridmap);
+	get_gridmap_extended_obstacles(gridmap, (WHEEL_DIAMETER_IN_MM + 150)/10);
+	if (!cell_valid(start_y, start_x) || 
+	    !cell_empty(gridmap, start_y, start_x) || 
+	    ((start_y == dest_y) && (start_x == dest_x))) {
 		mikes_log(ML_DEBUG, "Path finding: invalid start point");
-		return path_res;
+		return 0;
 	}
-	if (!cell_valid(dest_y, dest_x) || !cell_empty(dest_y, dest_x)){
+	if (!cell_valid(dest_y, dest_x) || !cell_empty(gridmap, dest_y, dest_x)){
 		mikes_log(ML_DEBUG, "Path finding: invalid destination point");
-		return path_res;
+		return 0;
 	}
-	uint8_t visited[mikes_config.gridmap_height][mikes_config.gridmap_width] = {0};
+	uint8_t visited[mikes_config.gridmap_height][mikes_config.gridmap_width];
 	cell cells[mikes_config.gridmap_height][mikes_config.gridmap_width];
 	for (int i = 0; i < mikes_config.gridmap_height; i++)
 	{
@@ -219,7 +232,6 @@ path_type find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){ 
 	cells[start_y][start_x].parent_y = y;
 	
 	enqueue(0.0,start_y,start_x);
-	uint8_t found_destination = 0;
 	
 	while(front != NULL)
 	{
@@ -262,7 +274,7 @@ path_type find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){ 
 		}
 		dequeue();
 	}
-	return path_res;
+	return 0;
 }
 
 
