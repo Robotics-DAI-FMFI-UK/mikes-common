@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define NUM_ULTRASONIC_SENSORS 8
+#define HCSR04_SCAN_ANGLE 30
 
 typedef uint16_t hcsr04_data_type[NUM_ULTRASONIC_SENSORS];
 

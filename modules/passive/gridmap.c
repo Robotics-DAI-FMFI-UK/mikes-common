@@ -95,7 +95,7 @@ void get_gridmap_extended_obstacles(double **gridmap, uint16_t robot_radius){
 	{
 		new_grid[i] = (double *) malloc (mikes_config.gridmap_width * sizeof(double));
 	}
-	
+	robot_radius = robot_radius/10;
 	for (int i = 0; i< mikes_config.gridmap_height; i++)
 	{
 		for (int j= 0; j< mikes_config.gridmap_width; j++)
@@ -120,6 +120,11 @@ void get_gridmap_extended_obstacles(double **gridmap, uint16_t robot_radius){
 		}
 	}
 	gridmap = new_grid;
+}
+
+void get_gridmap_for_navigation(double **gridmap){
+	get_merged_grid(gridmap);
+	get_gridmap_extended_obstacles(gridmap, (WHEELS_DISTANCE + 150)/10);
 }
 
 uint8_t cell_empty(double **gridmap, int y, int x){
@@ -198,8 +203,7 @@ path_type *find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){
 	for (int i= 0; i< mikes_config.gridmap_height; i++){
 		gridmap[i] = (double *) malloc (mikes_config.gridmap_width * sizeof(double));
 	}
-	get_merged_grid(gridmap);
-	get_gridmap_extended_obstacles(gridmap, (WHEEL_DIAMETER_IN_MM + 150)/10);
+	get_gridmap_for_navigation(gridmap);
 	if (!cell_valid(start_y, start_x) || 
 	    !cell_empty(gridmap, start_y, start_x) || 
 	    ((start_y == dest_y) && (start_x == dest_x))) {
@@ -278,7 +282,12 @@ path_type *find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){
 }
 
 
-
+double get_robotangle2mappoint(int x, int y, double heading, int map_x, int map_y){
+	int delta_x = map_x - x;
+	int delta_y = y - map_y;
+	double angle = atan2(delta_x, delta_y);
+	return heading + angle;
+}
 
 
 

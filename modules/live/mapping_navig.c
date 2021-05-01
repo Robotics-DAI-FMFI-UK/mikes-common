@@ -36,9 +36,18 @@ static uint16_t             gauss_dist[TIM571_DATA_COUNT];
 
 static hcsr04_data_type		hcsr04_data_local_copy;
 
+static path_type path;
+static int path_index;
+static double path_heading;
+
 static volatile double pose_x;
 static volatile double pose_y;
 static volatile double heading;
+
+static int gridmap_pose_x;
+static int gridmap_pose_y;
+static int initial_pose_x;
+static int initial_pose_y;
 
 static volatile uint8_t  need_new_data;
 static volatile uint8_t  need_new_pos;
@@ -301,14 +310,20 @@ void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rs
 	}
 }
 
-double get_arc_angle_in_dist(double width, double distance)
-{
-	double angle = atan2(width / 2, distance);
-	return angle * 2;
+double get_arc_angle_in_dist(double width, double dist){
+	return 2*asin(width / 2, dist);
 }
 
 double get_arc_width_in_dist(double angle, double dist){
-	return dist * tan(angle) * 2;
+	return sqrt(2*dist*dist- 2*dist*dist*cos(angle));
+}
+
+/*double get_arc_width_in_dist(double angle, double dist){
+	return 2*sin(angle/2)*dist;
+}*/
+
+double get_height_of_arc_width(double angle, double dist){
+	return cos(angle/2)*dist;
 }
 
 uint8_t check_front_sensors(){
@@ -327,17 +342,172 @@ uint8_t check_front_sensors(){
 	}
 	return 0;
 }
+void update_pose_on_gridmap(){
+	gridmap_pose_x = (int)(0.5 + initial_pose_x + pose_x);
+	gridmap_pose_y = (int)(0.5 + initial_pose_x - pose_y);
+}
 
-
-void sensor_fusion()
-{//TODO:
-	for (int i = 0; i < NUM_ULTRASONIC_SENSORS; i++)
+void sensor_fusion() // TIM571 + ULTRASONIC
+{
+	for (int i = 0; i < NUM_ULTRASONIC_SENSORS-2; i++)
 	{
+		if (hcsr04_data_local_copy[i] > 450 || hcsr04_data_local_copy[i] <= 0){
+			continue;
+		}
+		int x = hcsr04_get_sensor_posx(i);
+		int y = hcsr04_get_sensor_posy(i);
+		int head = hcsr04_get_sensor_heading(i);
+		double w = get_arc_width_in_dist(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i]);
+		double h = get_height_of_arc_width(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i])
 		
+		double w1_x = x - w/2; 
+		double w1_y = y + h;
+		double w1_dist = sqrt(w1_x * w1_x + w1_y * w1_y);
 		
+		double w2_x = x + w/2;
+		double w2_y = y + h;
+		double w2_dist = sqrt(w2_x * w2_x + w2_y * w2_y);
+		
+		double tim_angle = acos((w1_dist * w1_dist + w2_dist * w2_dist - w * w) / (2 * w1_dist * w2_dist));
+		//double theta = acos((( x + w/2)*( x + w/2) + w2_dst * w2_dist - (y + h) * (y + h)) / (2 * w2_dist * ( x + w/2)));
+		double theta = acos(((y + h) * (y + h) + w1_dst * w1_dist - ( x - w/2) * ( x - w/2)) / (2 * w1_dist * ( y + h))) + head;
+		
+		int tim_ray_start = tim571_azimuth2ray((int)0.5+theta);
+		int tim_ray_end = tim571_azimuth2ray((int)0.5+theta+tim_angle);
+		double hop = w / (tim_ray_end - tim_ray_start);
+		
+		int count = 0;
+		for (int j = tim_ray_start; j < tim_ray_end; j++){
+			dist_local_copy[j] = w1_dist + hop * count;
+			count++;
+		}
 	}
 	
 }
+
+double dist_2pts(int x, int y, int a, int b){
+	return sqrt((x - a) * (x - a) + (y - b) * (y - b));
+}
+
+uint8_t is_segment_closer(int new, int old){
+	
+	return ()
+	
+}
+
+void choose_best_dir_on_gridmap(){
+	double **gridmap = (double **) malloc (mikes_config.gridmap_height * sizeof(double *));
+	for (int i= 0; i< mikes_config.gridmap_height; i++){
+		gridmap[i] = (double *) malloc (mikes_config.gridmap_width * sizeof(double));
+	}
+	get_gridmap_for_navigation(gridmap);
+	update_pose_on_gridmap();
+	uint16_t path8dir[8];
+	uint8_t index[8] = {7,0,1,6,2,5,4,3};
+	uint8_t c = 0;
+	double h = heading;
+	if (h < 0){
+		h += M_2_PI;
+	}
+	if (h > M_2_PI){
+		h -= M_2_PI;
+	}
+	int segment = (int) (0.5 + (h / M_PI_4));
+	int best_segment = 3;
+	for (int i = - 1; i < 3; i++){
+		for (int j = - 1; j < 3; j++){
+			if (i == 0 && 0 == j){
+				continue;
+			}
+			int dx = gridmap_pose_y + j;
+			int dy = gridmap_pose_x + i;
+			for (int a = 0; a < target_distance; a++){
+				if (!cell_valid(dy,dx) || gridmap[dy][dx] > 0.35 || gridmap[dy][dx] < 0 || a == target_distance-1){
+					path8dir[index[c]] = a;
+					/*if (path8dir[best_segment] < path8dir[index[c]){
+						if (path8dir[best_segment] < target_distance - 5){
+							best_segment = index[c]
+						}
+						else{
+							if (path8dir[index[c]] >= target_distance - 5 && (index[c] - 8 <  ) || ( ))
+							
+						}
+					}
+					
+					*/
+					c++;
+					break;
+				}
+				dx+=j;
+				dy+=i;
+			}
+		}	
+	}
+	if (segment = 0){
+		if (path8dir[segment] >= target_distance-5){
+			int res = path8dir[7] + path8dir[0] + path8dir[1];
+			path_heading = heading + (path8dir[0]/res + (path8dir[7]/res - path8dir[1]/res)) * M_PI_4;
+			return;
+		}
+	}
+	if (segment = 7){
+		if (path8dir[segment] >= target_distance-5){
+			int res = path8dir[6] + path8dir[7] + path8dir[0];
+			path_heading = heading + (path8dir[7]/res + (path8dir[6]/res - path8dir[0]/res)) * M_PI_4;
+			return;
+		}
+	}
+	if (segment != 0 || segment != 7){
+		if (path8dir[segment] >= target_distance-5){
+			int res = path8dir[i-1] + path8dir[i] + path8dir[i+1];
+			path_heading = heading + (path8dir[i]/res + (path8dir[i-1]/res - path8dir[i+1]/res)) * M_PI_4;
+			return;
+		}
+	}
+	for (int i = 0; i < 8; i++){
+		if (path8dir[i] >= target_distance-5){
+			if (i = 0){
+		if (path8dir[segment] >= target_distance-5){
+			int res = path8dir[7] + path8dir[0] + path8dir[1];
+			path_heading = heading + (path8dir[0]/res + (path8dir[7]/res - path8dir[1]/res)) * M_PI_4;
+			return;
+		}
+	}
+	if (i = 7){
+		if (path8dir[segment] >= target_distance-5){
+			int res = path8dir[6] + path8dir[7] + path8dir[0];
+			path_heading = heading + (path8dir[7]/res + (path8dir[6]/res - path8dir[0]/res)) * M_PI_4;
+			return;
+		}
+	}
+	if (i != 0 || i != 7){
+		if (path8dir[segment] >= target_distance-5){
+			int res = path8dir[i-1] + path8dir[i] + path8dir[i+1];
+			path_heading = heading + (path8dir[i]/res + (path8dir[i-1]/res - path8dir[i+1]/res)) * M_PI_4;
+			return;
+		}
+	}
+			
+		}
+	}
+	
+	
+	path_heading = -5.0;
+	return; 
+}
+
+void follow_path(){ // input gridmap.h path_type
+	while (path_index < path.path_size){
+		double dist_mikes_from_mappoint = dist_2pts(gridmap_pose_x, gridmap_pose_y, path.path[path_index][1], path.path[path_index][0]);
+		if (dist_mikes_from_mappoint < 2.0){
+			path_index++;
+			continue();
+		}
+		break;
+	}
+	path_heading = get_robotangle2mappoint(gridmap_pose_x, gridmap_pose_y, heading, path.path[path_index][1], path.path[path_index][0]);
+}
+
 
 void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *status_data)
 {
@@ -410,9 +580,17 @@ void *mapping_navig_thread(void *args)
 			mikes_log(ML_INFO, "mikes:mapping_navig newscan");
 			first_navigation = 0;
 			request_replan = 0;
+			
 
 			start_scanning();
-			process_navigation();	
+			//process_navigation();	
+			find_path_in_gridmap();
+			if (path_heading < -4){
+				process_navigation();
+			}
+			else{
+				target_heading = path_heading;
+			}
 		}
 		else			//continue target heading
 		{
@@ -431,6 +609,8 @@ void *mapping_navig_thread(void *args)
 
 void init_mapping_navig(){
 
+  initial_pose_x = mikes_config.gridmap_width/2*10;
+  initial_pose_y = mikes_config.gridmap_height/2*10;
   need_new_data = 1;
   need_new_pos = 1;
   need_new_hcsr04_data = 1;

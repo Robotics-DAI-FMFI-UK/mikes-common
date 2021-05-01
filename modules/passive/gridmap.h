@@ -17,4 +17,7 @@ void inc_grid_occupied(int y, int x);
 
 path_type *find_path_in_gridmap(int start_x, int start_y,int dest_x,int dest_y);
 
+uint8_t cell_valid(int y, int x);
+double get_robotangle2mappoint(int x, int y, double heading, int map_x, int map_y);
+
 #endif
