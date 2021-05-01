@@ -106,7 +106,7 @@ void get_gridmap_extended_obstacles(double **gridmap, uint16_t robot_radius){
 				{
 					for (int x = j - robot_radius; x < j + robot_radius; x++)
 					{
-						if (cell_valid(i,j))
+						if (cell_valid(y, x))
 						{
 							new_grid[y][x] = 1; 
 						}

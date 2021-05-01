@@ -584,14 +584,16 @@ void *mapping_navig_thread(void *args)
 			
 
 			start_scanning();
-			//process_navigation();	
-			choose_best_dir_on_gridmap();
+			process_navigation();	
+			/*choose_best_dir_on_gridmap();
+			mikes_log_double(ML_INFO, "mapping_navig path_heading", path_heading);
+
 			if (path_heading < -4){
 				process_navigation();
 			}
 			else{
 				target_heading = path_heading;
-			}
+			}*/
 		}
 		else			//continue target heading
 		{
