@@ -17,6 +17,7 @@
 #include "tim571.h"
 #include "t265.h"
 #include "hcsr04.h"
+#include "../passive/gridmap.h"
 
 #define ARC_DIST 2000 
 #define MAX_RAY_DIST 5000
@@ -311,7 +312,7 @@ void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rs
 }
 
 double get_arc_angle_in_dist(double width, double dist){
-	return 2*asin(width / 2, dist);
+	return 2*asin(width / 2 / dist);
 }
 
 double get_arc_width_in_dist(double angle, double dist){
@@ -358,7 +359,7 @@ void sensor_fusion() // TIM571 + ULTRASONIC
 		int y = hcsr04_get_sensor_posy(i);
 		int head = hcsr04_get_sensor_heading(i);
 		double w = get_arc_width_in_dist(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i]);
-		double h = get_height_of_arc_width(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i])
+		double h = get_height_of_arc_width(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i]);
 		
 		double w1_x = x - w/2; 
 		double w1_y = y + h;
@@ -370,7 +371,7 @@ void sensor_fusion() // TIM571 + ULTRASONIC
 		
 		double tim_angle = acos((w1_dist * w1_dist + w2_dist * w2_dist - w * w) / (2 * w1_dist * w2_dist));
 		//double theta = acos((( x + w/2)*( x + w/2) + w2_dst * w2_dist - (y + h) * (y + h)) / (2 * w2_dist * ( x + w/2)));
-		double theta = acos(((y + h) * (y + h) + w1_dst * w1_dist - ( x - w/2) * ( x - w/2)) / (2 * w1_dist * ( y + h))) + head;
+		double theta = acos(((y + h) * (y + h) + w1_dist * w1_dist - ( x - w/2) * ( x - w/2)) / (2 * w1_dist * ( y + h))) + head;
 		
 		int tim_ray_start = tim571_azimuth2ray((int)0.5+theta);
 		int tim_ray_end = tim571_azimuth2ray((int)0.5+theta+tim_angle);
@@ -391,7 +392,7 @@ double dist_2pts(int x, int y, int a, int b){
 
 uint8_t is_segment_closer(int new, int old){
 	
-	return ()
+	return 0;
 	
 }
 
@@ -413,7 +414,7 @@ void choose_best_dir_on_gridmap(){
 		h -= M_2_PI;
 	}
 	int segment = (int) (0.5 + (h / M_PI_4));
-	int best_segment = 3;
+	//int best_segment = 3;
 	for (int i = - 1; i < 3; i++){
 		for (int j = - 1; j < 3; j++){
 			if (i == 0 && 0 == j){
@@ -443,14 +444,14 @@ void choose_best_dir_on_gridmap(){
 			}
 		}	
 	}
-	if (segment = 0){
+	if (segment == 0){
 		if (path8dir[segment] >= target_distance-5){
 			int res = path8dir[7] + path8dir[0] + path8dir[1];
 			path_heading = heading + (path8dir[0]/res + (path8dir[7]/res - path8dir[1]/res)) * M_PI_4;
 			return;
 		}
 	}
-	if (segment = 7){
+	if (segment == 7){
 		if (path8dir[segment] >= target_distance-5){
 			int res = path8dir[6] + path8dir[7] + path8dir[0];
 			path_heading = heading + (path8dir[7]/res + (path8dir[6]/res - path8dir[0]/res)) * M_PI_4;
@@ -459,21 +460,21 @@ void choose_best_dir_on_gridmap(){
 	}
 	if (segment != 0 || segment != 7){
 		if (path8dir[segment] >= target_distance-5){
-			int res = path8dir[i-1] + path8dir[i] + path8dir[i+1];
-			path_heading = heading + (path8dir[i]/res + (path8dir[i-1]/res - path8dir[i+1]/res)) * M_PI_4;
+			int res = path8dir[segment - 1] + path8dir[segment] + path8dir[segment + 1];
+			path_heading = heading + (path8dir[segment]/res + (path8dir[segment - 1]/res - path8dir[segment + 1]/res)) * M_PI_4;
 			return;
 		}
 	}
 	for (int i = 0; i < 8; i++){
 		if (path8dir[i] >= target_distance-5){
-			if (i = 0){
+			if (i == 0){
 		if (path8dir[segment] >= target_distance-5){
 			int res = path8dir[7] + path8dir[0] + path8dir[1];
 			path_heading = heading + (path8dir[0]/res + (path8dir[7]/res - path8dir[1]/res)) * M_PI_4;
 			return;
 		}
 	}
-	if (i = 7){
+	if (i == 7){
 		if (path8dir[segment] >= target_distance-5){
 			int res = path8dir[6] + path8dir[7] + path8dir[0];
 			path_heading = heading + (path8dir[7]/res + (path8dir[6]/res - path8dir[0]/res)) * M_PI_4;
@@ -498,14 +499,14 @@ void choose_best_dir_on_gridmap(){
 
 void follow_path(){ // input gridmap.h path_type
 	while (path_index < path.path_size){
-		double dist_mikes_from_mappoint = dist_2pts(gridmap_pose_x, gridmap_pose_y, path.path[path_index][1], path.path[path_index][0]);
+		double dist_mikes_from_mappoint = dist_2pts(gridmap_pose_x, gridmap_pose_y, (*(path.path))[path_index][1], (*(path.path))[path_index][0]);
 		if (dist_mikes_from_mappoint < 2.0){
 			path_index++;
-			continue();
+			continue;
 		}
 		break;
 	}
-	path_heading = get_robotangle2mappoint(gridmap_pose_x, gridmap_pose_y, heading, path.path[path_index][1], path.path[path_index][0]);
+	path_heading = get_robotangle2mappoint(gridmap_pose_x, gridmap_pose_y, heading, (*(path.path))[path_index][1], (*(path.path))[path_index][0]);
 }
 
 
@@ -584,7 +585,7 @@ void *mapping_navig_thread(void *args)
 
 			start_scanning();
 			//process_navigation();	
-			find_path_in_gridmap();
+			choose_best_dir_on_gridmap();
 			if (path_heading < -4){
 				process_navigation();
 			}

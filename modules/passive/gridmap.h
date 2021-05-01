@@ -15,9 +15,10 @@ void init_gridmap();
 void inc_grid_empty(int y, int x);
 void inc_grid_occupied(int y, int x);
 
-path_type *find_path_in_gridmap(int start_x, int start_y,int dest_x,int dest_y);
-
 uint8_t cell_valid(int y, int x);
 double get_robotangle2mappoint(int x, int y, double heading, int map_x, int map_y);
+void get_gridmap_for_navigation(double **gridmap);
+path_type *find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x);
+
 
 #endif

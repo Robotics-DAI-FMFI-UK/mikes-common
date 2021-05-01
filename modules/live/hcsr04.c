@@ -129,7 +129,7 @@ void connect_hcsr04()
         close(fdW[1]);
 
         if (execl("/usr/bin/plink", "/usr/bin/plink", "/dev/ultrasonic",
-                  "-serial", "-sercfg", "9600,N,n,8,1", NULL) < 0)
+                  "-serial", "-sercfg", "115200,N,n,8,1", NULL) < 0)
         {
             mikes_log(ML_ERR, "hcsr04: child execl()");
             hcsr04_initialized = 0;
