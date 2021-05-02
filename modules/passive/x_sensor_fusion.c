@@ -175,7 +175,7 @@ void init_x_sensor_fusion(int max_range_in_mm, int window_update_period_in_ms)
    if (!mikes_config.with_gui) return;
    if (!mikes_config.use_tim571)
    {
-        mikes_log(ML_INFO, "tim571 gui supressed by config.");
+        mikes_log(ML_INFO, "tim571-sensor_fusion gui supressed by config.");
         return;
    }
 
