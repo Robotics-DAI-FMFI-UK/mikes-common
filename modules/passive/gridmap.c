@@ -131,8 +131,26 @@ uint8_t cell_empty(double **gridmap, int y, int x){
 	return (gridmap[y][x] < 0.35 && gridmap[y][x] != -1);
 }
 
-double calc_h_val(int y, int x, int dest_y, int dest_x){
-	return ( (double) sqrt( (y-dest_y) * (y-dest_y) + (x - dest_x) * (x - dest_x) ) );
+double calc_h_val(double **gridmap, int y, int x, int dest_y, int dest_x){
+	int dist = 20; 
+	for (int i = - 1; i < 3; i++){
+		for (int j = - 1; j < 3; j++){
+			if (i == 0 && 0 == j){
+				continue;
+			}
+			int dx = x + j;
+			int dy = y + i;
+			for (int a = 0; a < 20; a++){
+				if (!cell_valid(dy,dx) || gridmap[dy][dx] > 0.35 || gridmap[dy][dx] < 0 || a == 20-1){
+					if (dist>a){
+						dist = a;
+					}
+					break;
+				}
+			}
+		}
+	}
+	return  (double) sqrt( (y-dest_y) * (y-dest_y) + (x - dest_x) * (x - dest_x) )+(20-dist) ;
 }
 
 void enqueue(double f, int y, int x){
@@ -262,7 +280,7 @@ path_type *find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){
 				else if(!visited[i][j])
 				{
 					g_new = cells[y][x].g + 1.0; //may be modified for travel cost from cell2another
-					h_new = calc_h_val(i,j,dest_y,dest_x);
+					h_new = calc_h_val(gridmap,i,j,dest_y,dest_x);
 					f_new = g_new + h_new;
 					if (cells[i][j].f > f_new)
 					{
