@@ -45,6 +45,10 @@ static volatile double pose_x;
 static volatile double pose_y;
 static volatile double heading;
 
+static double correction_heading;
+static double correction_distance = 30;
+static uint8_t override = 0;
+
 static int gridmap_pose_x;
 static int gridmap_pose_y;
 static int initial_pose_x;
@@ -85,6 +89,30 @@ double choose_best_dir(uint16_t arcs[][2], uint8_t arcs_size);
 void process_crossing(uint16_t arcs[][2], uint8_t arcs_size);
 void sensor_fusion();
 
+void reset_correction_dist(){
+	correction_distance = get_traveled_dist();
+}
+
+double get_traveled_dist(){
+	return sqrt(pose_x*pose_x+pose_y*pose_y);
+}
+
+void correct_movement(){
+	
+	uint16_t us_left = hcsr04_data_local_copy[HCSR04_LEFT];
+	uint16_t us_right = hcsr04_data_local_copy[HCSR04_RIGHT];
+	if (us_left > 30 || us_left <= 0) {
+		us_left = 30;
+	}
+	if (us_right > 30 || us_right <= 0){
+		us_right = 30;
+	}
+	correction_heading = (us_right - us_left) / 180 * M_PI;
+	mikes_log_double(ML_INFO, "correction_heading", correction_heading);
+	reset_correction_dist();
+	
+	
+}
 
 void process_navigation(){
 	sensor_fusion();
@@ -100,7 +128,43 @@ void process_navigation(){
 	}
 	target_heading = choose_best_dir(arcs, arcs_size);
 	mikes_log_double(ML_INFO,"target_heading: ", target_heading);
+	if (fabs(correction_distance-get_traveled_dist()) > 20){
+		correct_movement();
+	}
+	target_heading +=correction_heading;
 }
+
+uint8_t front_sensors(int distance){
+	if (hcsr04_data_local_copy[HCSR04_TOP_LEFT] < distance && hcsr04_data_local_copy[HCSR04_TOP_LEFT] > 0 || 
+	hcsr04_data_local_copy[HCSR04_TOP_RIGHT] < distance && hcsr04_data_local_copy[HCSR04_TOP_RIGHT] > 0 || 
+	hcsr04_data_local_copy[HCSR04_MIDDLE_LEFT] < distance  && hcsr04_data_local_copy[HCSR04_MIDDLE_LEFT] > 0 || 
+	hcsr04_data_local_copy[HCSR04_MIDDLE_RIGHT]< distance  && hcsr04_data_local_copy[HCSR04_MIDDLE_RIGHT] > 0 ){
+		return 1;
+	}
+	return 0;
+}
+
+void override_movement(){
+	mikes_log(ML_INFO,"OVERRIDE");
+	reset_correction_dist();
+	if ( ( hcsr04_data_local_copy[HCSR04_LEFT]  < 10 || hcsr04_data_local_copy[HCSR04_RIGHT] < 10 ) && front_sensors(10) ){
+		set_motor_speeds(-6,-6);
+		override = 1;
+	}
+	else if (hcsr04_data_local_copy[HCSR04_LEFT] < 10){
+		correction_heading = M_PI_4;
+		override = 0;
+	}
+	else if (hcsr04_data_local_copy[HCSR04_RIGHT] < 10){
+		correction_heading = -M_PI_4;
+		override = 0;
+	}
+	else if (front_sensors(10)){ // TODO >>>???
+		set_motor_speeds(-6,-6);
+		override = 1;
+	}
+}
+
 
 void process_movement(){
 		char logstr[100];
@@ -114,24 +178,24 @@ void process_movement(){
 	{
 		//set_motor_speeds(0,0);
 		//perform map scan 			
-		int turn_motor_speed = 6 - (int)(0.5 + 3 * (fabs(heading_dif)/angle_tolerance));
+		int turn_motor_speed = 10 - (int)(0.5 + 5 * (fabs(heading_dif)/angle_tolerance));
 		mikes_log_val(ML_INFO, "turn motor speed:", turn_motor_speed);
 		
 		if (heading_dif < 0){
-			set_motor_speeds(turn_motor_speed,6);
+			set_motor_speeds(turn_motor_speed,10);
 		}
 		else{
-			set_motor_speeds(6,turn_motor_speed);
+			set_motor_speeds(10,turn_motor_speed);
 		}
 	}
 	else{
 		if (angle_rad_difference(heading, target_heading) > 0){
 		    mikes_log(ML_INFO, "extreme diff, rotate right");
-			set_motor_speeds(6, -6);
+			set_motor_speeds(10, 0);
 		}
 		else{
 		    mikes_log(ML_INFO, "extreme diff, rotate left");
-			set_motor_speeds(-6, 6);
+			set_motor_speeds(0, 10);
 		}
 	}
 	need_new_pos = 1;
@@ -173,7 +237,7 @@ void process_crossing(uint16_t arcs[][2], uint8_t arcs_size)
 
 uint8_t check_obstacles()
 {
-	double angle = tim_arc_angle / M_PI * 180;
+	/*double angle = tim_arc_angle / M_PI * 180;
 	int ray_start = tim571_azimuth2ray(angle / 2);
 	int ray_end = tim571_azimuth2ray(- angle / 2);
 	
@@ -181,6 +245,32 @@ uint8_t check_obstacles()
 	{
 		if (gauss_dist[ray_start] < target_distance){
 			return 0;
+		}
+	}
+	return 1;*/
+	if (check_front_sensors(10) || hcsr04_data_local_copy[HCSR04_LEFT] < 10 || hcsr04_data_local_copy[HCSR04_RIGHT] < 10){
+		return 1;
+	}
+	if (hcsr04_data_local_copy[HCSR04_DOWN_LEFT] > 15 || hcsr04_data_local_copy[HCSR04_DOWN_RIGHT] > 15){
+		stop_now();
+		return 1;
+	}
+	return 0;
+}
+
+uint8_t arc_valid(uint16_t dist, uint16_t mid_ray){
+	for (int i = 1; i < 4; i++){//check if robot can move towards arcs' mid
+		double d = (target_distance / 4) * i;
+		double angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150),d);
+		int start_arc = (tim571_azimuth2ray(-angle/2));
+		int end_arc = (tim571_azimuth2ray(angle/2));
+		int offset = mid_ray - (start_arc + int(0.5+(end_arc - start_arc)/2) ) ;
+		start_arc += offset;
+		end_arc += offset;
+		for (; start_arc < end_arc; start_arc++;){
+			if (dist[start_arc] < d * 10){
+				return 0;
+			}
 		}
 	}
 	return 1;
@@ -198,9 +288,10 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 		{
 			if ((dist[i] < ARC_DIST) && (dist[i] > 10))
 			{
-				if (i - arcs[idx][0] >= min_arc_angle * 3)
+				if (i - arcs[idx][0] >= min_arc_angle * 3 && arc_valid(dist, (uint16_t) (0.5 + ((i -1) - arcs[idx][0]) /2 )))
 				{
 					arcs[idx][1] = i - 1;
+					mikes_log_val2(ML_INFO, "Mikes arc [start,end]", arcs[idx][0], i-1);
 					idx++;
 				}
 				inside_arc = 0;
@@ -216,6 +307,8 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 		}
 	}
 	*arcs_size = idx;
+	
+	
 	char logtim[5000];
 	for (int i = 0; i < 5000; i++) logtim[i] = ' ';
 	for (int i = 0; i < TIM571_DATA_COUNT; i++)
@@ -383,7 +476,6 @@ void sensor_fusion() // TIM571 + ULTRASONIC
 			count++;
 		}
 	}
-	
 }
 
 double dist_2pts(int x, int y, int a, int b){
@@ -572,6 +664,18 @@ void *mapping_navig_thread(void *args)
 		need_new_data = 1;
 		need_new_pos = 1;
 		//int chk_obst = check_obstacles();
+		if (override){
+			if (fabs(correction_distance-get_traveled_dist())> 20){
+				override = 0 ;
+			}
+			
+			usleep(500000L);
+			continue;
+		}
+		if (check_obstacles()){
+			override_movement();
+			continue;
+		}
 		int chk_obst = 1;
 		
 		mikes_log_val(ML_INFO, "mapping_navig obs", chk_obst);
@@ -618,6 +722,7 @@ void init_mapping_navig(){
   need_new_pos = 1;
   need_new_hcsr04_data = 1;
   target_heading = 0;
+  correction_heading = 0;
   pref_heading = -123.0;
   angle_tolerance = 30.0 / 180.0 * M_PI;
   tim_arc_angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150),target_distance);
