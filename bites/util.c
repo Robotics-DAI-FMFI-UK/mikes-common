@@ -117,3 +117,19 @@ double math_azimuth_to_robot_azimuth(double alpha)
 {
   return normAlpha(90.0 - alpha);
 }
+
+// ----------------------------------------------------
+// -------------------  DISTANCES ---------------------
+// ----------------------------------------------------
+
+double get_arc_width_in_dist(double angle, double dist){
+	return sqrt(2*dist*dist- 2*dist*dist*cos(angle));
+}
+
+double get_height_of_arc_width(double angle, double dist){
+	return cos(angle/2)*dist;
+}
+
+double get_arc_angle_in_dist(double width, double dist){
+	return 2*asin(width / 2 / dist);
+}

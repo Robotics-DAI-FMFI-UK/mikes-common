@@ -33,4 +33,10 @@ double compass_heading_to_map_heading(double alpha);
 // Change start of nagle from (1:0) to (0:1) and from anticlockwise to clockwise
 double math_azimuth_to_robot_azimuth(double alpha);
 
+
+double get_arc_width_in_dist(double angle, double dist);
+double get_height_of_arc_width(double angle, double dist);
+double get_arc_angle_in_dist(double width, double dist);
+
+
 #endif

@@ -6,6 +6,7 @@
 #include "mikes_logs.h"
 #include "core/config_mikes.h"
 #include "../../bites/mikes.h"
+#include "../../bites/util.h"
 
 #include "../live/tim571.h"
 
@@ -35,15 +36,7 @@ static int range;
 static double scale_factor;
 
 
-double get_arc_width_in_dist(double angle, double dist){
-	return sqrt(2*dist*dist- 2*dist*dist*cos(angle));
-}
-
-double get_height_of_arc_width(double angle, double dist){
-	return cos(angle/2)*dist;
-}
-
-void sensor_fusion() // TIM571 + ULTRASONIC
+void sensor_fusion(hcsr04_data_type hcsr04_data_local_copy, uint16_t *dist_local_copy) // TIM571 + ULTRASONIC
 {
 	for (int i = 0; i < NUM_ULTRASONIC_SENSORS-2; i++)
 	{
@@ -127,7 +120,7 @@ void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
 void x_sensor_fusion_paint(cairo_t *w)
 {
   cairo_push_group(w);
-	sensor_fusion();
+	sensor_fusion(hcsr04_data_local_copy, dist_local_copy);
   cairo_set_source_rgb(w, 1, 1, 1);
   cairo_paint(w);
   cairo_set_line_width(w, 1);

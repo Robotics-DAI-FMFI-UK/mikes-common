@@ -18,6 +18,8 @@
 #include "t265.h"
 #include "hcsr04.h"
 #include "../passive/gridmap.h"
+#include "../passive/x_sensor_fusion.h"
+
 
 #define ARC_DIST 2000 
 #define MAX_RAY_DIST 5000
@@ -87,15 +89,22 @@ void gaussian_filter(uint16_t *gauss);
 void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size);
 double choose_best_dir(uint16_t arcs[][2], uint8_t arcs_size);
 void process_crossing(uint16_t arcs[][2], uint8_t arcs_size);
-void sensor_fusion();
+
+double get_traveled_dist(){
+	return sqrt(pose_x*pose_x+pose_y*pose_y);
+}
 
 void reset_correction_dist(){
 	correction_distance = get_traveled_dist();
 }
 
-double get_traveled_dist(){
-	return sqrt(pose_x*pose_x+pose_y*pose_y);
-}
+
+
+
+/*double get_arc_width_in_dist(double angle, double dist){
+	return 2*sin(angle/2)*dist;
+}*/
+
 
 void correct_movement(){
 	
@@ -115,7 +124,8 @@ void correct_movement(){
 }
 
 void process_navigation(){
-	sensor_fusion();
+	sensor_fusion(hcsr04_data_local_copy, dist_local_copy);
+
 	gaussian_filter(gauss_dist);
 	
 	uint16_t arcs[TIM571_DATA_COUNT][2];
@@ -135,10 +145,10 @@ void process_navigation(){
 }
 
 uint8_t front_sensors(int distance){
-	if (hcsr04_data_local_copy[HCSR04_TOP_LEFT] < distance && hcsr04_data_local_copy[HCSR04_TOP_LEFT] > 0 || 
-	hcsr04_data_local_copy[HCSR04_TOP_RIGHT] < distance && hcsr04_data_local_copy[HCSR04_TOP_RIGHT] > 0 || 
-	hcsr04_data_local_copy[HCSR04_MIDDLE_LEFT] < distance  && hcsr04_data_local_copy[HCSR04_MIDDLE_LEFT] > 0 || 
-	hcsr04_data_local_copy[HCSR04_MIDDLE_RIGHT]< distance  && hcsr04_data_local_copy[HCSR04_MIDDLE_RIGHT] > 0 ){
+	if (((hcsr04_data_local_copy[HCSR04_TOP_LEFT] < distance) && (hcsr04_data_local_copy[HCSR04_TOP_LEFT] > 0)) || 
+	((hcsr04_data_local_copy[HCSR04_TOP_RIGHT] < distance) && (hcsr04_data_local_copy[HCSR04_TOP_RIGHT] > 0)) || 
+	((hcsr04_data_local_copy[HCSR04_MIDDLE_LEFT] < distance)  && (hcsr04_data_local_copy[HCSR04_MIDDLE_LEFT] > 0)) || 
+	((hcsr04_data_local_copy[HCSR04_MIDDLE_RIGHT] < distance)  && (hcsr04_data_local_copy[HCSR04_MIDDLE_RIGHT] > 0 ))) {
 		return 1;
 	}
 	return 0;
@@ -248,7 +258,7 @@ uint8_t check_obstacles()
 		}
 	}
 	return 1;*/
-	if (check_front_sensors(10) || hcsr04_data_local_copy[HCSR04_LEFT] < 10 || hcsr04_data_local_copy[HCSR04_RIGHT] < 10){
+	if (front_sensors(10) || hcsr04_data_local_copy[HCSR04_LEFT] < 10 || hcsr04_data_local_copy[HCSR04_RIGHT] < 10){
 		return 1;
 	}
 	if (hcsr04_data_local_copy[HCSR04_DOWN_LEFT] > 15 || hcsr04_data_local_copy[HCSR04_DOWN_RIGHT] > 15){
@@ -258,16 +268,16 @@ uint8_t check_obstacles()
 	return 0;
 }
 
-uint8_t arc_valid(uint16_t dist, uint16_t mid_ray){
+uint8_t arc_valid(uint16_t *dist, uint16_t mid_ray){
 	for (int i = 1; i < 4; i++){//check if robot can move towards arcs' mid
 		double d = (target_distance / 4) * i;
 		double angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150),d);
 		int start_arc = (tim571_azimuth2ray(-angle/2));
 		int end_arc = (tim571_azimuth2ray(angle/2));
-		int offset = mid_ray - (start_arc + int(0.5+(end_arc - start_arc)/2) ) ;
+		int offset = mid_ray - (start_arc + (int)(0.5+(end_arc - start_arc)/2) ) ;
 		start_arc += offset;
 		end_arc += offset;
-		for (; start_arc < end_arc; start_arc++;){
+		for (; start_arc < end_arc; start_arc++){
 			if (dist[start_arc] < d * 10){
 				return 0;
 			}
@@ -404,21 +414,6 @@ void gaussian_filter(uint16_t *gauss){// TODO: take in account ray intensity (rs
 	}
 }
 
-double get_arc_angle_in_dist(double width, double dist){
-	return 2*asin(width / 2 / dist);
-}
-
-double get_arc_width_in_dist(double angle, double dist){
-	return sqrt(2*dist*dist- 2*dist*dist*cos(angle));
-}
-
-/*double get_arc_width_in_dist(double angle, double dist){
-	return 2*sin(angle/2)*dist;
-}*/
-
-double get_height_of_arc_width(double angle, double dist){
-	return cos(angle/2)*dist;
-}
 
 uint8_t check_front_sensors(){
 	uint8_t min_us_range = 210;
@@ -436,46 +431,10 @@ uint8_t check_front_sensors(){
 	}
 	return 0;
 }
+
 void update_pose_on_gridmap(){
 	gridmap_pose_x = (int)(0.5 + initial_pose_x + pose_x);
 	gridmap_pose_y = (int)(0.5 + initial_pose_x - pose_y);
-}
-
-void sensor_fusion() // TIM571 + ULTRASONIC
-{
-	for (int i = 0; i < NUM_ULTRASONIC_SENSORS-2; i++)
-	{
-		if (hcsr04_data_local_copy[i] > 450 || hcsr04_data_local_copy[i] <= 0){
-			continue;
-		}
-		int x = hcsr04_get_sensor_posx(i);
-		int y = hcsr04_get_sensor_posy(i);
-		int head = hcsr04_get_sensor_heading(i);
-		double w = get_arc_width_in_dist(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i]);
-		double h = get_height_of_arc_width(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i]);
-		
-		double w1_x = x - w/2; 
-		double w1_y = y + h;
-		double w1_dist = sqrt(w1_x * w1_x + w1_y * w1_y);
-		
-		double w2_x = x + w/2;
-		double w2_y = y + h;
-		double w2_dist = sqrt(w2_x * w2_x + w2_y * w2_y);
-		
-		double tim_angle = acos((w1_dist * w1_dist + w2_dist * w2_dist - w * w) / (2 * w1_dist * w2_dist));
-		//double theta = acos((( x + w/2)*( x + w/2) + w2_dst * w2_dist - (y + h) * (y + h)) / (2 * w2_dist * ( x + w/2)));
-		double theta = acos(((y + h) * (y + h) + w1_dist * w1_dist - ( x - w/2) * ( x - w/2)) / (2 * w1_dist * ( y + h))) + head;
-		
-		int tim_ray_start = tim571_azimuth2ray((int)0.5+theta);
-		int tim_ray_end = tim571_azimuth2ray((int)0.5+theta+tim_angle);
-		double hop = w / (tim_ray_end - tim_ray_start);
-		
-		int count = 0;
-		for (int j = tim_ray_start; j < tim_ray_end; j++){
-			dist_local_copy[j] = w1_dist + hop * count;
-			count++;
-		}
-	}
 }
 
 double dist_2pts(int x, int y, int a, int b){
