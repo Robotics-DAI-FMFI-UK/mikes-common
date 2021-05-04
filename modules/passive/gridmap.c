@@ -263,9 +263,9 @@ path_type *find_path_in_gridmap(int start_y, int start_x,int dest_y,int dest_x){
 		
 		uint8_t f_new, g_new, h_new;
 		
-		for (int i = y - 1; i < 3; i++)
+		for (int i = y - 1; i < y + 2; i++)
 		{
-			for (int j = x - 1; j < 3; j++)
+			for (int j = x - 1; j < y + 2; j++)
 			{
 				if ((y == i && j == x ) || !cell_valid(i,j))
 				{

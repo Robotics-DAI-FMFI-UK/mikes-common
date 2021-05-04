@@ -274,7 +274,7 @@ uint8_t check_obstacles()
 uint8_t arc_valid(uint16_t *dist, uint16_t mid_ray){
 	for (int i = 1; i < 4; i++){//check if robot can move towards arcs' mid
 		double d = (target_distance / 4) * i;
-		double angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150),d);
+		double angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150),d)*180/M_PI;
 		int start_arc = (tim571_azimuth2ray(-angle/2));
 		int end_arc = (tim571_azimuth2ray(angle/2));
 		int offset = mid_ray - (start_arc + (int)(0.5+(end_arc - start_arc)/2) ) ;
@@ -625,6 +625,7 @@ void *mapping_navig_thread(void *args)
 		traveled_distance = sqrt((pose_x-tim_scan_pose_x)*(pose_x-tim_scan_pose_x)+(pose_y-tim_scan_pose_y)*(pose_y-tim_scan_pose_y));
 		need_new_data = 1;
 		need_new_pos = 1;
+		need_new_hcsr04_data = 1;
 		//int chk_obst = check_obstacles();
 		if (!first_navigation && override){
 			if (fabs(correction_distance-get_traveled_dist())> 20){
@@ -668,6 +669,7 @@ void *mapping_navig_thread(void *args)
 		//x_gridmap_pose_changed();
 		need_new_data = 1;
 		need_new_pos = 1;
+		need_new_hcsr04_data = 1;
 	}
   }
 

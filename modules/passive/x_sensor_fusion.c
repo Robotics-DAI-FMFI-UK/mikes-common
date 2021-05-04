@@ -57,19 +57,25 @@ void sensor_fusion(hcsr04_data_type hcsr04_data_local_copy, uint16_t *dist_local
 		double w2_y = y + h;
 		double w2_dist = sqrt(w2_x * w2_x + w2_y * w2_y);
 		
-		double tim_angle = acos((w1_dist * w1_dist + w2_dist * w2_dist - w * w) / (2 * w1_dist * w2_dist));
+		double tim_angle = acos((w1_dist * w1_dist + w2_dist * w2_dist - w * w) / (2 * w1_dist * w2_dist))*180/M_PI;
 		//double theta = acos((( x + w/2)*( x + w/2) + w2_dst * w2_dist - (y + h) * (y + h)) / (2 * w2_dist * ( x + w/2)));
-		double theta = acos(((y + h) * (y + h) + w1_dist * w1_dist - ( x - w/2) * ( x - w/2)) / (2 * w1_dist * ( y + h))) + head;
+		double theta = acos(((y + h) * (y + h) + w1_dist * w1_dist - ( x - w/2) * ( x - w/2)) / (2 * w1_dist * ( y + h))) + head * 180 / M_PI;
 		
 		int tim_ray_start = tim571_azimuth2ray((int)0.5+theta);
 		int tim_ray_end = tim571_azimuth2ray((int)0.5+theta+tim_angle);
 		double hop = w / (tim_ray_end - tim_ray_start);
 		
+		mikes_log_val(ML_INFO, "ray_start", tim_ray_start);
+		mikes_log_val(ML_INFO, "ray_end", tim_ray_end);
+		
 		int count = 0;
 		for (int j = tim_ray_start; j < tim_ray_end; j++){
-			dist_local_copy[j] = w1_dist + hop * count;
+			if(dist_local_copy[j] > w1_dist + hop * count){
+			    dist_local_copy[j] = w1_dist + hop * count;
+			}
 			count++;
 		}
+		mikes_log_val(ML_INFO,"US dist", hcsr04_data_local_copy[i] );
 	}	
 }
 
