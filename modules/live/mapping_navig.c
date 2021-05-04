@@ -155,23 +155,26 @@ uint8_t front_sensors(int distance){
 }
 
 void override_movement(){
-	mikes_log(ML_INFO,"OVERRIDE");
 	reset_correction_dist();
 	if ( ( hcsr04_data_local_copy[HCSR04_LEFT]  < 10 || hcsr04_data_local_copy[HCSR04_RIGHT] < 10 ) && front_sensors(10) ){
 		set_motor_speeds(-6,-6);
 		override = 1;
+	mikes_log(ML_INFO,"OVERRIDE  front and sides");
 	}
 	else if (hcsr04_data_local_copy[HCSR04_LEFT] < 10){
 		correction_heading = M_PI_4;
 		override = 0;
+	mikes_log(ML_INFO,"OVERRIDE left side");
 	}
 	else if (hcsr04_data_local_copy[HCSR04_RIGHT] < 10){
 		correction_heading = -M_PI_4;
 		override = 0;
+	mikes_log(ML_INFO,"OVERRIDE right side");
 	}
 	else if (front_sensors(10)){ // TODO >>>???
 		set_motor_speeds(-6,-6);
 		override = 1;
+	mikes_log(ML_INFO,"OVERRIDE front");
 	}
 }
 
@@ -623,7 +626,7 @@ void *mapping_navig_thread(void *args)
 		need_new_data = 1;
 		need_new_pos = 1;
 		//int chk_obst = check_obstacles();
-		if (override){
+		if (!first_navigation && override){
 			if (fabs(correction_distance-get_traveled_dist())> 20){
 				override = 0 ;
 			}
@@ -631,7 +634,7 @@ void *mapping_navig_thread(void *args)
 			usleep(500000L);
 			continue;
 		}
-		if (check_obstacles()){
+		if (!first_navigation && check_obstacles()){
 			override_movement();
 			continue;
 		}
