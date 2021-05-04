@@ -73,7 +73,7 @@ void sensor_fusion(hcsr04_data_type hcsr04_data_local_copy, uint16_t *dist_local
 	}	
 }
 
-void tim571_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
+void sensor_fusion_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
 {
    int x = 0, y=0, center_x=0, center_y=0;
    double alpha = M_PI * tim571_ray2azimuth(i) / 180.0;
@@ -131,7 +131,7 @@ void x_sensor_fusion_paint(cairo_t *w)
     uint8_t  r = rssi_local_copy[i];
 
     if (d > range) d = range;
-    tim571_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
+    sensor_fusion_draw_ray(w, i, d, r, (d == 0) ? RAY_ZERO_TYPE : RAY_USUAL_TYPE);
   }
 
   cairo_pop_group_to_source(w);
