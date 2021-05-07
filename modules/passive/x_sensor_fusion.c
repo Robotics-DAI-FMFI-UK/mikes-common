@@ -36,47 +36,104 @@ static int range;
 static double scale_factor;
 
 
-void sensor_fusion(hcsr04_data_type hcsr04_data_local_copy, uint16_t *dist_local_copy) // TIM571 + ULTRASONIC
-{
+
+void sensor_fusion(hcsr04_data_type hcsr04_data_local_copy, uint16_t *dist) // TIM571 + ULTRASONIC
+{	
+  uint8_t debug_this = 0;
 	for (int i = 0; i < NUM_ULTRASONIC_SENSORS-2; i++)
 	{
-		if (hcsr04_data_local_copy[i] > 450 || hcsr04_data_local_copy[i] <= 0){
+		if (hcsr04_data_local_copy[i] > 150 || hcsr04_data_local_copy[i] <= 0){
 			continue;
 		}
 		int x = hcsr04_get_sensor_posx(i);
 		int y = hcsr04_get_sensor_posy(i);
-		int head = hcsr04_get_sensor_heading(i);
-		double w = get_arc_width_in_dist(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i]);
-		double h = get_height_of_arc_width(HCSR04_SCAN_ANGLE/180.0 * M_PI, hcsr04_data_local_copy[i]);
-		
+		//int head = hcsr04_get_sensor_heading(i);
+		double w = fabs(get_arc_width_in_dist(HCSR04_SCAN_ANGLE * M_PI / 180.0, hcsr04_data_local_copy[i] ));
+		double h = fabs(get_height_of_arc_width(w, hcsr04_data_local_copy[i] ));
 		double w1_x = x - w/2; 
 		double w1_y = y + h;
-		double w1_dist = sqrt(w1_x * w1_x + w1_y * w1_y);
-		
 		double w2_x = x + w/2;
 		double w2_y = y + h;
+		double a;
+		if (i == HCSR04_LEFT){
+		   a = -(w1_y - y) + x;
+		   w1_y = (w1_x - x) + y;
+		   w1_x = a;
+		   a = -(w2_y - y) + x;
+		   w2_y = w2_x - x + y;
+		   w2_x = a;
+		}
+		else if (i == HCSR04_RIGHT){
+		   a = w1_y - y + x;
+		   w1_y = -(w1_x - x) + y;
+		   w1_x = a;
+		   a = (w2_y - y) + x;
+		   w2_y = -(w2_x - x) + y;
+		   w2_x = a;
+		}
+		
+		double w1_dist = sqrt(w1_x * w1_x + w1_y * w1_y);
 		double w2_dist = sqrt(w2_x * w2_x + w2_y * w2_y);
 		
-		double tim_angle = acos((w1_dist * w1_dist + w2_dist * w2_dist - w * w) / (2 * w1_dist * w2_dist))*180/M_PI;
-		//double theta = acos((( x + w/2)*( x + w/2) + w2_dst * w2_dist - (y + h) * (y + h)) / (2 * w2_dist * ( x + w/2)));
-		double theta = acos(((y + h) * (y + h) + w1_dist * w1_dist - ( x - w/2) * ( x - w/2)) / (2 * w1_dist * ( y + h))) + head * 180 / M_PI;
+		double tim_angle = (acos((w1_dist * w1_dist + w2_dist * w2_dist - w * w) / (2 * w1_dist * w2_dist))*(w2_x / fabs(w2_x))) * 180 / M_PI;
+		double theta = (acos((w1_y * w1_y + w1_dist * w1_dist - w1_x * w1_x) / (2 * w1_dist * w1_y))*(w1_x / fabs(w1_x)) ) *180 / M_PI ;
+		
+		if (i == HCSR04_RIGHT){
+		  theta = (asin(w1_x/w1_dist)) *180 / M_PI ;
+		  tim_angle = fabs(tim_angle);
+		}
+		else if (i == HCSR04_LEFT){
+		  theta = -180-(asin(w1_x/w1_dist)) *180 / M_PI ;
+		  tim_angle = fabs(tim_angle);
+		}
+		
 		
 		int tim_ray_start = tim571_azimuth2ray((int)0.5+theta);
 		int tim_ray_end = tim571_azimuth2ray((int)0.5+theta+tim_angle);
-		double hop = w / (tim_ray_end - tim_ray_start);
-		
-		mikes_log_val(ML_INFO, "ray_start", tim_ray_start);
-		mikes_log_val(ML_INFO, "ray_end", tim_ray_end);
-		
+		double hop = (w2_dist - w1_dist) / (tim_ray_end - tim_ray_start);
 		int count = 0;
-		for (int j = tim_ray_start; j < tim_ray_end; j++){
-			if(dist_local_copy[j] > w1_dist + hop * count){
-			    dist_local_copy[j] = w1_dist + hop * count;
+		int dist_in_ray;
+		for (int j = tim_ray_start; j > tim_ray_end; j--){
+		  dist_in_ray = (w1_dist + hop * count) * 10;
+			if(dist[j] > dist_in_ray){
+			    dist[j] = dist_in_ray;
 			}
-			count++;
+		  count++;
 		}
-		mikes_log_val(ML_INFO,"US dist", hcsr04_data_local_copy[i] );
-	}	
+		if (debug_this){
+		  mikes_log_val2(ML_INFO, "Ray W, H : ", w, h);
+		  mikes_log_val2(ML_INFO, "W1: ", w1_x, w1_y);
+		  mikes_log_val2(ML_INFO, "w2: ", w2_x, w2_y);
+		  mikes_log_val2(ML_INFO, "w1 / w2 dist: ", w1_dist, w2_dist);
+		  mikes_log_val2(ML_INFO, "theeta, timangle: ", theta, tim_angle);
+		  
+		  mikes_log_double(ML_INFO, "hop: ", hop);
+		  
+		  mikes_log_val(ML_INFO, "ray_start: ", tim_ray_start);
+		  mikes_log_val2(ML_INFO, "ray_end: ", tim_ray_end, i);
+		  
+		  mikes_log_val(ML_INFO,"DIST IN RAY ::::: ", dist_in_ray);
+		  
+		  mikes_log_val2(ML_INFO,"US dist, :: count :: ", hcsr04_data_local_copy[i], count );
+	      }
+	}
+  if (debug_this){
+	char logtim[5000];
+	for (int i = 0; i < 5000; i++) logtim[i] = ' ';
+	for (int i = 0; i < TIM571_DATA_COUNT; i++)
+	{
+		int numchars = sprintf(logtim + i * 6, "%d", dist[i]);
+		if (i % 99 == 0) {
+		  
+		  *(logtim + i * 6 + numchars) = '\n';
+		}
+		else{
+		  *(logtim + i * 6 + numchars) = ' ';
+		}
+	}
+	logtim[TIM571_DATA_COUNT * 6] = 0;
+	mikes_log(ML_INFO, logtim);	
+  }
 }
 
 void sensor_fusion_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_type)
@@ -126,7 +183,7 @@ void sensor_fusion_draw_ray(cairo_t *w, int i, uint16_t d, uint8_t q, int ray_ty
 void x_sensor_fusion_paint(cairo_t *w)
 {
   cairo_push_group(w);
-	sensor_fusion(hcsr04_data_local_copy, dist_local_copy);
+  sensor_fusion(hcsr04_data_local_copy, dist_local_copy);
   cairo_set_source_rgb(w, 1, 1, 1);
   cairo_paint(w);
   cairo_set_line_width(w, 1);

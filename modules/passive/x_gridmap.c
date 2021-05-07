@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "../live/gui.h"
 #include "../live/base_module.h"    /* WHEELS_DISTANCE */
@@ -7,6 +8,7 @@
 #include "gridmap.h"
 #include "mikes_logs.h"
 #include "core/config_mikes.h"
+#include "../live/mapping_navig.h"
 
 #define BORDER_LEFT 20
 #define BORDER_RIGHT 20
@@ -79,6 +81,19 @@ void draw_map(cairo_t *w){
 	
 }
 
+void draw_trajectory(cairo_t *w){
+   cairo_set_source_rgb(w, 1.0, 0.1, 0.1);
+   int px1_win = XMM2WIN(robot_trajectory[0][1]); //*10 ???
+   int py1_win = YMM2WIN(robot_trajectory[0][0]);
+   cairo_move_to(w, px1_win, py1_win);
+   for (int i = 1; i < trajectory_size; i++){
+      px1_win = XMM2WIN(robot_trajectory[i][1]); //*10 ???
+      py1_win = YMM2WIN(robot_trajectory[i][0]);
+      cairo_line_to(w, px1_win, py1_win);
+   }
+   cairo_stroke(w);
+}
+
 void save_to_file(){
    char name[48];
    sprintf(name, "mapping/pictures/%dmap.png",counter);
@@ -95,6 +110,8 @@ void x_gridmap_paint(cairo_t *w)
    cairo_paint(w);
  
    draw_map(w);
+   
+   draw_trajectory(w);
       
    if (pose_visible) x_gridmap_draw_pose(w);
    
@@ -133,8 +150,8 @@ void init_x_gridmap(int win_width, int win_height, int window_update_period_in_m
    height = win_height;
    counter = 1000;
    pose_changed = 0;
-  initial_pose_x = mikes_config.gridmap_width/2*10;
-  initial_pose_y = mikes_config.gridmap_height/2*10;
+   initial_pose_x = mikes_config.gridmap_width/2*10;
+   initial_pose_y = mikes_config.gridmap_height/2*10;
    map_scale = (width- BORDER_LEFT - BORDER_RIGHT) / (double)(mikes_config.gridmap_width * 10);
    win = gui_open_window(x_gridmap_paint, win_width, win_height, window_update_period_in_ms);
    gui_set_window_title(win, "MAP");

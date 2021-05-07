@@ -126,10 +126,12 @@ double get_arc_width_in_dist(double angle, double dist){
 	return sqrt(2*dist*dist- 2*dist*dist*cos(angle));
 }
 
-double get_height_of_arc_width(double angle, double dist){
-	return cos(angle/2)*dist;
+double get_height_of_arc_width(double width, double dist){
+	return sqrt(dist*dist - (width/2.0) * (width/2.0));
 }
 
 double get_arc_angle_in_dist(double width, double dist){
-	return 2*asin(width / 2 / dist);
+  width = width / 100;
+  dist = dist / 100;
+	return acos((2*dist*dist - width * width)/(2*dist*dist));
 }

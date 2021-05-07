@@ -85,10 +85,6 @@ int hcsr04_get_sensor_posy(int sensor_index)
 
 double hcsr04_get_sensor_heading(int sensor_index)
 {
-	if (sensor_index == HCSR04_TOP_LEFT || sensor_index == HCSR04_TOP_RIGHT || sensor_index == HCSR04_MIDDLE_LEFT || sensor_index == HCSR04_MIDDLE_RIGHT || sensor_index == HCSR04_DOWN_RIGHT || sensor_index == HCSR04_DOWN_LEFT)
-	{
-		return 0.0;
-	}
 	if (sensor_index == HCSR04_LEFT)
 	{
 		return - (M_PI_2);
@@ -225,6 +221,9 @@ void read_hcsr04_packet()
     } while (program_runs && more_packets_in_queue);
 
     pthread_mutex_lock(&hcsr04_module_lock);
+    
+    mikes_log(ML_INFO, "ARUS");
+    mikes_log(ML_INFO, line);
       
     sscanf(line + 2, "%hu%hu%hu%hu%hu%hu%hu%hu",
                                   local_hcsr04_data, 

@@ -19,13 +19,19 @@
 #include "hcsr04.h"
 #include "../passive/gridmap.h"
 #include "../passive/x_sensor_fusion.h"
+#include "mapping_navig.h"
 
 
 #define ARC_DIST 2000 
 #define MAX_RAY_DIST 5000
 #define MAX_NUM_CROSSINGS 50
 
+
 #define REPLAN_MAXIMUM_PERIOD 1000
+
+#define HCSR04_FILTER_TOO_HIGH_CHANGE 30
+
+#define DO_NOT_USE_PREF_HEADING -123
 
 double min_arc_angle;
 
@@ -37,7 +43,11 @@ static uint16_t             dist_local_copy[TIM571_DATA_COUNT];
 //static uint8_t              rssi_local_copy[TIM571_DATA_COUNT];
 static uint16_t             gauss_dist[TIM571_DATA_COUNT];
 
+//static uint8_t useless_buffer[10000];
+
 static hcsr04_data_type		hcsr04_data_local_copy;
+
+//static uint8_t useless_buffer2[10000];
 
 static path_type path;
 static int path_index;
@@ -83,6 +93,8 @@ static double cross_pos[MAX_NUM_CROSSINGS][2];
 static uint8_t cross_size = 0;
 static uint8_t in_crossing = 0;
 
+int32_t robot_trajectory[MAX_TRAJECTORY_SIZE][2];
+uint32_t trajectory_size;
 
 
 void gaussian_filter(uint16_t *gauss);
@@ -98,16 +110,7 @@ void reset_correction_dist(){
 	correction_distance = get_traveled_dist();
 }
 
-
-
-
-/*double get_arc_width_in_dist(double angle, double dist){
-	return 2*sin(angle/2)*dist;
-}*/
-
-
 void correct_movement(){
-	
 	uint16_t us_left = hcsr04_data_local_copy[HCSR04_LEFT];
 	uint16_t us_right = hcsr04_data_local_copy[HCSR04_RIGHT];
 	if (us_left > 30 || us_left <= 0) {
@@ -116,11 +119,9 @@ void correct_movement(){
 	if (us_right > 30 || us_right <= 0){
 		us_right = 30;
 	}
-	correction_heading = (us_right - us_left) / 180 * M_PI;
+	correction_heading = (us_right - us_left) / 180.0 * M_PI;
 	mikes_log_double(ML_INFO, "correction_heading", correction_heading);
 	reset_correction_dist();
-	
-	
 }
 
 void process_navigation(){
@@ -135,6 +136,9 @@ void process_navigation(){
 	if (arcs_size > 1)
 	{
 		process_crossing(arcs, arcs_size);
+	}
+	else{
+		in_crossing = 0;
 	}
 	target_heading = choose_best_dir(arcs, arcs_size);
 	mikes_log_double(ML_INFO,"target_heading: ", target_heading);
@@ -154,26 +158,36 @@ uint8_t front_sensors(int distance){
 	return 0;
 }
 
+void log_hcsr04()
+{
+	for (int i = 0; i < 8; i++)
+	  mikes_log_val2(ML_INFO, "US", i, hcsr04_data_local_copy[i]);
+}
+
 void override_movement(){
 	reset_correction_dist();
-	if ( ( hcsr04_data_local_copy[HCSR04_LEFT]  < 10 || hcsr04_data_local_copy[HCSR04_RIGHT] < 10 ) && front_sensors(10) ){
-		set_motor_speeds(-6,-6);
+	if ( ( hcsr04_data_local_copy[HCSR04_LEFT]  < 15 || hcsr04_data_local_copy[HCSR04_RIGHT] < 15 ) && front_sensors(35) ){
+		set_motor_speeds(-8,-8);
 		override = 1;
+		log_hcsr04();
 	mikes_log(ML_INFO,"OVERRIDE  front and sides");
 	}
-	else if (hcsr04_data_local_copy[HCSR04_LEFT] < 10){
+	else if (hcsr04_data_local_copy[HCSR04_LEFT] < 15){
 		correction_heading = M_PI_4;
 		override = 0;
+		log_hcsr04();
 	mikes_log(ML_INFO,"OVERRIDE left side");
 	}
-	else if (hcsr04_data_local_copy[HCSR04_RIGHT] < 10){
+	else if (hcsr04_data_local_copy[HCSR04_RIGHT] < 15){
 		correction_heading = -M_PI_4;
 		override = 0;
+		log_hcsr04();
 	mikes_log(ML_INFO,"OVERRIDE right side");
 	}
-	else if (front_sensors(10)){ // TODO >>>???
-		set_motor_speeds(-6,-6);
+	else if (front_sensors(35)){ // TODO >>>???
+		set_motor_speeds(-8,-8);
 		override = 1;
+		log_hcsr04();
 	mikes_log(ML_INFO,"OVERRIDE front");
 	}
 }
@@ -204,11 +218,11 @@ void process_movement(){
 	else{
 		if (angle_rad_difference(heading, target_heading) > 0){
 		    mikes_log(ML_INFO, "extreme diff, rotate right");
-			set_motor_speeds(10, 0);
+			set_motor_speeds(8, -8);
 		}
 		else{
 		    mikes_log(ML_INFO, "extreme diff, rotate left");
-			set_motor_speeds(0, 10);
+			set_motor_speeds(-8, 8);
 		}
 	}
 	need_new_pos = 1;
@@ -240,7 +254,7 @@ void process_crossing(uint16_t arcs[][2], uint8_t arcs_size)
 		for (int i = 0; i < arcs_size; i++)
 		{
 			int middle_ray = arcs[i][0]+(arcs[i][1]-arcs[i][0])/2;
-			crossings[cross_size] = tim571_ray2azimuth(middle_ray)/ 180.0 * M_PI - heading;
+			crossings[cross_size] = tim571_ray2azimuth(middle_ray)/ 180.0 * M_PI + heading;
 			cross_size++;
 		}
 	} 
@@ -261,10 +275,10 @@ uint8_t check_obstacles()
 		}
 	}
 	return 1;*/
-	if (front_sensors(10) || hcsr04_data_local_copy[HCSR04_LEFT] < 10 || hcsr04_data_local_copy[HCSR04_RIGHT] < 10){
+	if (front_sensors(35) || hcsr04_data_local_copy[HCSR04_LEFT] < 15 || hcsr04_data_local_copy[HCSR04_RIGHT] < 15){
 		return 1;
 	}
-	if (hcsr04_data_local_copy[HCSR04_DOWN_LEFT] > 15 || hcsr04_data_local_copy[HCSR04_DOWN_RIGHT] > 15){
+	if (hcsr04_data_local_copy[HCSR04_DOWN_LEFT] > 25 || hcsr04_data_local_copy[HCSR04_DOWN_RIGHT] > 25){
 		stop_now();
 		return 1;
 	}
@@ -294,7 +308,7 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 {
 	uint8_t inside_arc = 0;
 	uint16_t idx = 0;
-	
+	uint8_t skip;
 	for(int i = 0; i < TIM571_DATA_COUNT; i++)
 	{
 		if (inside_arc)
@@ -303,9 +317,21 @@ void find_arcs(uint16_t *dist, uint16_t arcs[][2], uint8_t *arcs_size)
 			{
 				if (i - arcs[idx][0] >= min_arc_angle * 3 && arc_valid(dist, (uint16_t) (0.5 + ((i -1) - arcs[idx][0]) /2 )))
 				{
+					mikes_log_val(ML_INFO, "MIN ARC ANGLE", min_arc_angle);
 					arcs[idx][1] = i - 1;
 					mikes_log_val2(ML_INFO, "Mikes arc [start,end]", arcs[idx][0], i-1);
 					idx++;
+				}
+				skip = 0;
+				for (int j = 1; j < 4; j++){
+					if (i + j < TIM571_DATA_COUNT && dist[j] > ARC_DIST){
+						i+=j;
+						skip = 1;
+						break;
+					}
+				}
+				if (skip){
+					continue;
 				}
 				inside_arc = 0;
 			}
@@ -354,29 +380,33 @@ double choose_best_dir(uint16_t arcs[][2], uint8_t arcs_size)
 	}
 	else{
 		int best_arc = 0;
-		if (pref_heading != -123 && arcs_size>1)
+		if (pref_heading != DO_NOT_USE_PREF_HEADING && arcs_size>1)
 		{
 			double h_dif = 10;
 			for (int i = 0; i < arcs_size; i++)
 			{
 				int middle_ray = arcs[i][0]+(arcs[i][1]-arcs[i][0])/2;
 				angle = (int)(0.5 + tim571_ray2azimuth(middle_ray));
-				if (fabs(pref_heading-(angle / 180.0 * M_PI - heading))< h_dif){
+				if (fabs(pref_heading-(angle / 180.0 * M_PI + heading))< h_dif){
 					best_arc = i;
-					h_dif = fabs(pref_heading-(angle / 180.0 * M_PI - heading));
+					h_dif = fabs(pref_heading-(angle / 180.0 * M_PI + heading));
 				}
 			}
 		}//TODO: choose best way in crossing
+		
+		//WATCH OUT FOR THE NEXT LINE
+		// best_arc = 0;
+		
 		int middle_ray = arcs[best_arc][0]+(arcs[best_arc][1]-arcs[best_arc][0])/2;
 		mikes_log_val(ML_INFO, "best_middle_ray", middle_ray);
 		angle = (int)(0.5 + tim571_ray2azimuth(middle_ray));	
 		mikes_log_val(ML_INFO, "best_middle_ray angle", angle);
-		if (pref_heading == -123){
-			pref_heading = angle / 180.0 * M_PI - heading;
+		if (pref_heading == DO_NOT_USE_PREF_HEADING){
+			pref_heading = angle / 180.0 * M_PI + heading;
 		}
 		//if (angle<0) angle+=360; 
 	}
-	return angle / 180.0 * M_PI - heading;	
+	return angle / 180.0 * M_PI + heading;	
 }
 
 
@@ -438,6 +468,18 @@ uint8_t check_front_sensors(){
 void update_pose_on_gridmap(){
 	gridmap_pose_x = (int)(0.5 + initial_pose_x + pose_x);
 	gridmap_pose_y = (int)(0.5 + initial_pose_x - pose_y);
+}
+
+void add_pos_to_trajectory(){
+	update_pose_on_gridmap();
+	if (!trajectory_size || 
+	     ((trajectory_size < MAX_TRAJECTORY_SIZE) && 
+	      !(robot_trajectory[trajectory_size-1][0] == gridmap_pose_y &&
+	        robot_trajectory[trajectory_size-1][1] == gridmap_pose_x))){
+		robot_trajectory[trajectory_size][0] = gridmap_pose_y;
+		robot_trajectory[trajectory_size][1] = gridmap_pose_x;
+		trajectory_size++;
+	}
 }
 
 double dist_2pts(int x, int y, int a, int b){
@@ -571,7 +613,6 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
     need_new_data = 0;
     memcpy(dist_local_copy, dist, sizeof(uint16_t) * TIM571_DATA_COUNT);
     //memcpy(rssi_local_copy, rssi, sizeof(uint8_t) * TIM571_DATA_COUNT);
-    alert_new_data(fd);
     long long time_in_ms = msec();
     if ((traveled_distance >= target_distance) || (time_in_ms - last_replan_time_in_ms > REPLAN_MAXIMUM_PERIOD))
     {
@@ -580,6 +621,7 @@ void tim571_newdata_callback(uint16_t *dist, uint8_t *rssi, tim571_status_data *
 		last_replan_time_in_ms = time_in_ms;
 		request_replan = 1;
 	}
+    alert_new_data(fd);
   }
 }
 
@@ -595,18 +637,30 @@ void t265_newpos_callback(t265_pose_type *pose, double *new_heading)
 	mikes_log_double(ML_INFO, "t265 y", pose_y);
 	mikes_log_double(ML_INFO, "t265 nh", *new_heading);
 	mikes_log_double(ML_INFO, "t265 h", heading);
-	
+	add_pos_to_trajectory();
   }
 }
 
 void hcsr04_newdata_callback(hcsr04_data_type hcsr04_data)
 {
-  if (need_new_hcsr04_data)
-  {
-		need_new_hcsr04_data = 0;
-		memcpy(hcsr04_data_local_copy, hcsr04_data, sizeof(uint16_t) * NUM_ULTRASONIC_SENSORS);
-		alert_new_data(fd);
-  }
+	static hcsr04_data_type last_hcsr04_data;
+	static hcsr04_data_type last_last_hcsr04_data;
+	
+	for (int i = 0; i < 8; i++)
+	{
+		if (abs(last_hcsr04_data[i] - hcsr04_data[i]) > HCSR04_FILTER_TOO_HIGH_CHANGE)
+		{
+			if (abs(last_last_hcsr04_data[i] - hcsr04_data[i]) <= HCSR04_FILTER_TOO_HIGH_CHANGE)
+				 hcsr04_data_local_copy[i] = hcsr04_data[i];
+			else 
+			     hcsr04_data_local_copy[i] = last_hcsr04_data[i];
+		}
+		else
+			hcsr04_data_local_copy[i] = hcsr04_data[i];
+	}
+	
+	memcpy(last_last_hcsr04_data, last_hcsr04_data, sizeof(uint16_t) * NUM_ULTRASONIC_SENSORS);		
+	memcpy(last_hcsr04_data, hcsr04_data, sizeof(uint16_t) * NUM_ULTRASONIC_SENSORS);		
 }
 
 void *mapping_navig_thread(void *args)
@@ -614,6 +668,10 @@ void *mapping_navig_thread(void *args)
   first_navigation = 1;
   in_crossing = 0;
   usleep(1500000L);
+
+  long long time_in_ms = msec();
+  last_replan_time_in_ms = time_in_ms;
+
   while (program_runs)
   {
     if (wait_for_new_data(fd) < 0) {
@@ -680,6 +738,12 @@ void *mapping_navig_thread(void *args)
 
 void init_mapping_navig(){
 
+  /*double suma;
+  for (int i = 0; i < 10000; i++) useless_buffer[i] = useless_buffer2[10000 - i - 1] = i;
+  for (int i = 0; i < 10000; i++) suma += useless_buffer[i] + useless_buffer2[i];
+  printf("%e", suma);
+  */
+	//robot_trajectory = (uint16_t *) malloc (mikes_config.gridmap_height*10 * sizeof(uint16_t *));
   initial_pose_x = mikes_config.gridmap_width/2*10;
   initial_pose_y = mikes_config.gridmap_height/2*10;
   need_new_data = 1;
@@ -687,10 +751,11 @@ void init_mapping_navig(){
   need_new_hcsr04_data = 1;
   target_heading = 0;
   correction_heading = 0;
-  pref_heading = -123.0;
+  pref_heading = DO_NOT_USE_PREF_HEADING;
   angle_tolerance = 30.0 / 180.0 * M_PI;
   tim_arc_angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150),target_distance);
-  min_arc_angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150), ARC_DIST);
+  min_arc_angle = get_arc_angle_in_dist((WHEELS_DISTANCE + 150), ARC_DIST) * 180/ M_PI;
+  mikes_log_double(ML_INFO, "TIM ARC ANGLE", min_arc_angle* 180/ M_PI);
   pthread_t t;
   
   if (pipe(fd) != 0)
