@@ -33,6 +33,8 @@
 
 #define DO_NOT_USE_PREF_HEADING -123
 
+#define WAITING_ON_STEPS   5000
+
 double min_arc_angle;
 
 double tim_arc_angle; //angle to check in distance in target direction
@@ -113,13 +115,15 @@ void reset_correction_dist(){
 void correct_movement(){
 	uint16_t us_left = hcsr04_data_local_copy[HCSR04_LEFT];
 	uint16_t us_right = hcsr04_data_local_copy[HCSR04_RIGHT];
-	if (us_left > 30 || us_left <= 0) {
-		us_left = 30;
+	if (us_left <= 0 || us_right <= 0){
+		return;
 	}
-	if (us_right > 30 || us_right <= 0){
-		us_right = 30;
+	int16_t us_diff = us_left - us_right;
+	correction_heading = (us_diff / (us_left + us_right))*30 / 180.0 * M_PI;
+	if (us_left > us_right) {
+		correction_heading = -correction_heading;
 	}
-	correction_heading = (us_right - us_left) / 180.0 * M_PI;
+	//correction_heading = (us_right - us_left) / 180.0 * M_PI;
 	mikes_log_double(ML_INFO, "correction_heading", correction_heading);
 	reset_correction_dist();
 }
@@ -167,7 +171,8 @@ void log_hcsr04()
 void override_movement(){
 	reset_correction_dist();
 	if ( ( hcsr04_data_local_copy[HCSR04_LEFT]  < 15 || hcsr04_data_local_copy[HCSR04_RIGHT] < 15 ) && front_sensors(35) ){
-		set_motor_speeds(-8,-8);
+		set_motor_speeds(-12,-12);
+		mikes_log(ML_INFO, "o1 motor -12, -12");
 		override = 1;
 		log_hcsr04();
 	mikes_log(ML_INFO,"OVERRIDE  front and sides");
@@ -185,7 +190,8 @@ void override_movement(){
 	mikes_log(ML_INFO,"OVERRIDE right side");
 	}
 	else if (front_sensors(35)){ // TODO >>>???
-		set_motor_speeds(-8,-8);
+		set_motor_speeds(-12,-12);
+		mikes_log(ML_INFO, "o1 motor -12, -12");
 		override = 1;
 		log_hcsr04();
 	mikes_log(ML_INFO,"OVERRIDE front");
@@ -205,24 +211,25 @@ void process_movement(){
 	{
 		//set_motor_speeds(0,0);
 		//perform map scan 			
-		int turn_motor_speed = 10 - (int)(0.5 + 5 * (fabs(heading_dif)/angle_tolerance));
-		mikes_log_val(ML_INFO, "turn motor speed:", turn_motor_speed);
+		int turn_motor_speed = 12 - (int)(0.5 + 6 * (fabs(heading_dif)/angle_tolerance));
 		
 		if (heading_dif < 0){
-			set_motor_speeds(turn_motor_speed,10);
+   		    mikes_log_val2(ML_INFO, "turn motor speed:", turn_motor_speed, 10);
+			set_motor_speeds(turn_motor_speed,12);
 		}
 		else{
-			set_motor_speeds(10,turn_motor_speed);
+			mikes_log_val2(ML_INFO, "turn motor speed:", 10, turn_motor_speed);
+			set_motor_speeds(12,turn_motor_speed);
 		}
 	}
 	else{
 		if (angle_rad_difference(heading, target_heading) > 0){
-		    mikes_log(ML_INFO, "extreme diff, rotate right");
+		    mikes_log(ML_INFO, "extreme diff, rotate right 8 -8");
 			set_motor_speeds(8, -8);
 		}
 		else{
-		    mikes_log(ML_INFO, "extreme diff, rotate left");
-			set_motor_speeds(-8, 8);
+		    mikes_log(ML_INFO, "extreme diff, rotate left -11 8");
+			set_motor_speeds(-11, 8);
 		}
 	}
 	need_new_pos = 1;
@@ -264,6 +271,9 @@ void process_crossing(uint16_t arcs[][2], uint8_t arcs_size)
 
 uint8_t check_obstacles()
 {
+	static unsigned long no_steps_below = 0;
+	static uint8_t we_are_stopped = 0;
+	
 	/*double angle = tim_arc_angle / M_PI * 180;
 	int ray_start = tim571_azimuth2ray(angle / 2);
 	int ray_end = tim571_azimuth2ray(- angle / 2);
@@ -280,8 +290,19 @@ uint8_t check_obstacles()
 	}
 	if (hcsr04_data_local_copy[HCSR04_DOWN_LEFT] > 25 || hcsr04_data_local_copy[HCSR04_DOWN_RIGHT] > 25){
 		stop_now();
+		no_steps_below = msec();
+		we_are_stopped = 1;
 		return 1;
 	}
+	else
+	{
+		if (we_are_stopped && (msec() - no_steps_below > WAITING_ON_STEPS))
+		{
+			 set_motor_speeds(8, 8);
+			 we_are_stopped = 0;
+		}
+	}
+		
 	return 0;
 }
 
@@ -405,6 +426,14 @@ double choose_best_dir(uint16_t arcs[][2], uint8_t arcs_size)
 			pref_heading = angle / 180.0 * M_PI + heading;
 		}
 		//if (angle<0) angle+=360; 
+		
+		if (arcs_size != 1 && best_arc == arcs_size -1 && ((angle * M_PI/180.0 + heading)-pref_heading) < (65*M_PI/180.0)){//if angle < 60 - left way was probably chosen, we want right one
+			best_arc = 0;	
+			int middle_ray = arcs[best_arc][0]+(arcs[best_arc][1]-arcs[best_arc][0])/2;
+			mikes_log_val(ML_INFO, "best_middle_ray correction", middle_ray);
+			angle = (int)(0.5 + tim571_ray2azimuth(middle_ray));	
+			mikes_log_val(ML_INFO, "best_middle_ray angle correction", angle);	
+		}
 	}
 	return angle / 180.0 * M_PI + heading;	
 }
@@ -474,11 +503,13 @@ void add_pos_to_trajectory(){
 	update_pose_on_gridmap();
 	if (!trajectory_size || 
 	     ((trajectory_size < MAX_TRAJECTORY_SIZE) && 
-	      !(robot_trajectory[trajectory_size-1][0] == gridmap_pose_y &&
-	        robot_trajectory[trajectory_size-1][1] == gridmap_pose_x))){
+	      !((robot_trajectory[trajectory_size-1][0] == gridmap_pose_y) &&
+	        (robot_trajectory[trajectory_size-1][1] == gridmap_pose_x)))){
 		robot_trajectory[trajectory_size][0] = gridmap_pose_y;
 		robot_trajectory[trajectory_size][1] = gridmap_pose_x;
 		trajectory_size++;
+		if (trajectory_size % 1000 == 0)
+		  mikes_log_val(ML_INFO, "trajectory_size", trajectory_size);
 	}
 }
 
@@ -685,17 +716,22 @@ void *mapping_navig_thread(void *args)
 		need_new_pos = 1;
 		need_new_hcsr04_data = 1;
 		//int chk_obst = check_obstacles();
-		if (!first_navigation && override){
-			if (fabs(correction_distance-get_traveled_dist())> 20){
+		if (!first_navigation && override && !request_replan){
+			if (fabs(correction_distance-get_traveled_dist()) > 20){
 				override = 0 ;
 			}
-			
-			usleep(500000L);
-			continue;
+			request_replan = 1;
+			mikes_log(ML_INFO, "thread overriding");
+			//if (!request_replan){
+				usleep(200000L);
+				continue;
+			//}
 		}
-		if (!first_navigation && check_obstacles()){
+		if (!first_navigation && check_obstacles() ){
 			override_movement();
-			continue;
+			if (!request_replan){
+				continue;
+			}
 		}
 		int chk_obst = 1;
 		

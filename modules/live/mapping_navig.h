@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MAX_TRAJECTORY_SIZE 100000
+#define MAX_TRAJECTORY_SIZE 1000000
 
 extern int32_t robot_trajectory[MAX_TRAJECTORY_SIZE][2];
 extern uint32_t trajectory_size;

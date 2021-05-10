@@ -218,6 +218,7 @@ void set_motor_speeds_ex(int left_motor, int right_motor)
 void set_motor_speeds(int left_motor, int right_motor)
 {
     if (base_motor_blocked)  return;   
+    if (!base_initialized) return;
     
     set_motor_speeds_ex(left_motor, right_motor);
 }
@@ -233,6 +234,7 @@ void escape_now_and_quick()
 
 void stop_now()
 {
+    if (!base_initialized) return;
     if (write(fdR[1], "@S", 2) < 2)
     {
        perror("mikes:base");
@@ -318,6 +320,7 @@ void *base_module_thread(void *args)
     mikes_log(ML_INFO, "base quits.");
     stop_now();
     usleep(100000);
+    base_initialized = 0;
     kill(plink_child, SIGTERM);
     threads_running_add(-1);
     return 0;

@@ -19,6 +19,9 @@
 
 #define MAX_HCSR04_CALLBACKS 20
 
+#define US_FAR_ENOUGH 100
+#define US_INIFINITELY_FAR 600
+
 static volatile hcsr04_receive_data_callback callbacks[MAX_HCSR04_CALLBACKS];
 static volatile int callbacks_count;
 
@@ -153,6 +156,17 @@ void connect_hcsr04()
     hcsr04_initialized = 1;
 }
 
+void filter_hcsr04()
+{
+    if (local_hcsr04_data[0] > US_FAR_ENOUGH) local_hcsr04_data[0] = US_INIFINITELY_FAR;
+    if (local_hcsr04_data[1] > US_FAR_ENOUGH) local_hcsr04_data[1] = US_INIFINITELY_FAR;
+    if (local_hcsr04_data[2] > US_FAR_ENOUGH) local_hcsr04_data[2] = US_INIFINITELY_FAR;
+    if (local_hcsr04_data[3] > US_FAR_ENOUGH) local_hcsr04_data[3] = US_INIFINITELY_FAR;
+    if (local_hcsr04_data[4] > US_FAR_ENOUGH) local_hcsr04_data[4] = US_INIFINITELY_FAR;
+    if (local_hcsr04_data[5] > US_FAR_ENOUGH) local_hcsr04_data[5] = US_INIFINITELY_FAR;
+    
+}
+
 void read_hcsr04_packet()
 {
     unsigned char ch;
@@ -234,6 +248,8 @@ void read_hcsr04_packet()
                                   local_hcsr04_data + 5, 
                                   local_hcsr04_data + 6, 
                                   local_hcsr04_data + 7);
+    filter_hcsr04();
+
     //printf("%s\n", line);
     pthread_mutex_unlock(&hcsr04_module_lock);
     //mikes_log(ML_INFO, line);

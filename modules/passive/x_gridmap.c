@@ -90,6 +90,10 @@ void draw_trajectory(cairo_t *w){
       px1_win = XMM2WIN(robot_trajectory[i][1]); //*10 ???
       py1_win = YMM2WIN(robot_trajectory[i][0]);
       cairo_line_to(w, px1_win, py1_win);
+      if (i % 1000 == 0) {
+        cairo_stroke(w);
+        cairo_move_to(w, px1_win, py1_win);
+     }
    }
    cairo_stroke(w);
 }

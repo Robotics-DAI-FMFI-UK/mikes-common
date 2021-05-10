@@ -2,6 +2,8 @@ int trigs[] = { 17, 15, 5, 3, 13, 7, 9, 11 };
 int echos[] = { 16, 14, 4, 2, 12, 6, 8, 10 };
 int m[8];
 
+uint8_t scan_order[8] = { 1, 3, 2, 0, 4, 7, 5, 6 };
+
 /* indexes from 0 to 7:
 LEFT                  
 TOP_LEFT              
@@ -44,8 +46,9 @@ void roundtrip()
   long t0 = millis();
   for (int i = 0; i < 8; i++)
   {
-    while (millis() < t0 + 20 * i);
-    m[i] = measure(i);
+    uint8_t index = scan_order[i];
+    while (millis() < t0 + 40 * i);
+    m[index] = measure(index);
   }
 }
 
